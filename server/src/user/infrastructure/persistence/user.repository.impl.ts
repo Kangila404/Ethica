@@ -13,6 +13,6 @@ export class UserRepositoryImpl implements UserRepository {
     
     // findById
     async findById(id:string): Promise<User | null>{
-        return null;
+        return await this.ormRepository.findOne({ where: {id}});
     }
 }
