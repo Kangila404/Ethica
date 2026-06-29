@@ -10,4 +10,9 @@ export class UserRepositoryImpl implements UserRepository {
         @InjectRepository(User)
         private readonly ormRepository: Repository<User>,
     ){}
+    
+    // findById
+    async findById(id:string): Promise<User | null>{
+        return null;
+    }
 }
