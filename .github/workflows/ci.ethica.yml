@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: 4. Lint
-        run: npm run glint --workspace=server
+        run: npm run lint --workspace=server
 
       - name: 5. Test
         run: npm run test --workspace=server
