@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -22,8 +23,11 @@ import { UserModule } from './user/user.module';
       }),
     }),
 
-    // UserModule
-    UserModule
+    // ================= 모듈 모음
+    // 1. UserModule
+    UserModule,
+    // 2. OnboardingModule
+    OnboardingModule
   ],
   controllers: [AppController],
   providers: [AppService],

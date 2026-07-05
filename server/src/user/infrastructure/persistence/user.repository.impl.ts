@@ -12,7 +12,15 @@ export class UserRepositoryImpl implements UserRepository {
     ){}
     
     // findById
-    async findById(id:string): Promise<User | null>{
-        return await this.ormRepository.findOne({ where: {id}});
+    async findById(userId:string): Promise<User | null>{
+        return await this.ormRepository.findOne({ where: {userId}});
+    }
+
+    async save(user:User): Promise<void>{
+        await this.ormRepository.save(user);
+    }
+
+    async softRemove(user:User): Promise<User>{
+        return this.ormRepository.softRemove(user);
     }
 }

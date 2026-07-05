@@ -4,6 +4,7 @@ import { UserRole } from "../enum/user-role.enum";
 import { UserStatus } from "../enum/user-status.enum";
 import { OnboardingStatus } from "../enum/OnboardingStatus.enum";
 
+
 @Entity('users')
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn({type: 'bigint'})
@@ -45,6 +46,35 @@ export class User extends BaseEntity {
     @DeleteDateColumn({ nullable: true })
     deletedAt!: Date | null;
 
-    
+
+
+    // 비즈니스 로직
+    // 1. 닉네임 변경
+    changeName(name: string): void{
+        this.name = name;
+    }
+
+    // 2. 위젯 시간 등록
+    changeDailyTime(dailyQuestionTime:string, timezone:string): void{
+        this.dailyQuestionTime = dailyQuestionTime;
+        this.timezone = timezone;
+    }
+
+    // 3. 위젯 시간 업데이트
+    updateDailyTime(dailyQuestionTime:string, timezone:string): void{
+        this.dailyQuestionTime = dailyQuestionTime;
+        this.timezone = timezone;
+    }
+
+    // 4. 유저 탈퇴(soft delete)
+    withdraw():void{
+        this.userStatus = UserStatus.SUSPENDED;
+        this.notificationEnabled = false;
+    }
+
+    // 5. 알림 활성화/비활성화
+    updateNotification(notificationEnabled:boolean):void{
+        this.notificationEnabled = notificationEnabled;
+    }
 
 }
