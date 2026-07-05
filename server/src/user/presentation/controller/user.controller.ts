@@ -30,6 +30,12 @@ export class UserController {
         return this.userService.updateNickname(userId, request);
     }
 
+    @Delete("/me")
+    @ApiOperation({summary : '유저 soft delete'})
+    deleteUser(@Query('userId') userId: string): Promise<MessageResponse>{
+        return this.userService.deleteUser(userId);
+    }
+
     @Patch("/me/daily-time")
     @ApiOperation({summary: '위젯 시간 변경'})
     updateDailyTime(

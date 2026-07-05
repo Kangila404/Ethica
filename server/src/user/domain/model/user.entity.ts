@@ -3,7 +3,7 @@ import {BaseEntity} from '../../../common/Base.entity';
 import { UserRole } from "../enum/user-role.enum";
 import { UserStatus } from "../enum/user-status.enum";
 import { OnboardingStatus } from "../enum/OnboardingStatus.enum";
-import { time } from "console";
+
 
 @Entity('users')
 export class User extends BaseEntity {

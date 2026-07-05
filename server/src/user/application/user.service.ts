@@ -38,6 +38,7 @@ export class UserService {
     async deleteUser(userId:string): Promise<MessageResponse>{
         const user = await this.getUserOrThrow(userId);
         user.withdraw();
+        await this.userRepository.save(user);
         await this.userRepository.softRemove(user);
         return new MessageResponse('success');
     }
