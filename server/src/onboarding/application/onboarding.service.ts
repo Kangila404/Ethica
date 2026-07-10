@@ -27,7 +27,7 @@ export class OnboardingService {
 
     // 메서드
     private async getUserOrThrow(userId:string): Promise<User> {
-        const user = await this.userRepository.findById(userId);
+        const user = await this.userRepository.findByUserId(userId);
         if(!user) {
             throw new NotFoundException('유저를 찾을 수 없습니다.');
         }

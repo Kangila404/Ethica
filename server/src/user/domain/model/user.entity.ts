@@ -5,6 +5,7 @@ import { UserStatus } from "../enum/user-status.enum";
 import { OnboardingStatus } from "../enum/OnboardingStatus.enum";
 
 
+
 @Entity('users')
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn({type: 'bigint'})
@@ -34,10 +35,10 @@ export class User extends BaseEntity {
     @Column({type: 'bigint', nullable:true})
     interestCategoryId!: string | null;
 
-    @Column({ type: 'time' })
+    @Column({ type: 'time', nullable:true})
     dailyQuestionTime!: string;
 
-    @Column({ type: 'varchar', length: 50 })
+    @Column({ type: 'varchar', length: 50, nullable:true })
     timezone!: string;
 
     @Column({type: 'datetime', nullable: true})
@@ -76,5 +77,12 @@ export class User extends BaseEntity {
     updateNotification(notificationEnabled:boolean):void{
         this.notificationEnabled = notificationEnabled;
     }
+
+    // 6. Local 회원가입
+    static create(name: string): User {
+    const user = new User();
+    user.name = name;
+    return user;
+}
 
 }
