@@ -9,5 +9,5 @@ export interface RefreshTokenRepository {
 
     findByTokenHash(tokenHash: string): Promise<RefreshToken | null>;
 
-    deleteByTokenHash(tokenHash: string): Promise<void>;
+    deleteByTokenHash(tokenHash: string): Promise<number>;
 }

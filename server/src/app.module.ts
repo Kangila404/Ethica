@@ -26,10 +26,10 @@ import { DataSource } from 'typeorm';
       }),
 
       // transactional 옵션
-      dataSourceFactory: async (options) => {
-        if(!options) throw new Error('Invalid options');
-        return addTransactionalDataSource(new DataSource(options));
-      }
+      dataSourceFactory: (options) => {
+  if (!options) throw new Error('Invalid options');
+  return Promise.resolve(addTransactionalDataSource(new DataSource(options)));
+},
     }),
 
     // ================= 모듈 모음

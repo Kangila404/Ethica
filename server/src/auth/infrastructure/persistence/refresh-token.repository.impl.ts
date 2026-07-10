@@ -19,8 +19,9 @@ export class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
         return await this.ormRepository.findOne({where: {tokenHash}});
     }
 
-    async deleteByTokenHash(tokenHash: string): Promise<void>{
-        await this.ormRepository.delete({tokenHash});
+    async deleteByTokenHash(tokenHash: string): Promise<number>{
+        const result = await this.ormRepository.delete({ tokenHash });
+        return result.affected ?? 0;
     }
 
     

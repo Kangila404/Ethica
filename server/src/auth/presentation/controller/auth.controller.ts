@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query} from "@nestjs/common";
+import { Body, Controller, Post} from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "src/auth/application/auth.service";
 import { SignupRequest } from "../dto/req/signup-request.dto";

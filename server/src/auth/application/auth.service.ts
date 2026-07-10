@@ -18,9 +18,9 @@ import { MessageResponse } from "src/common/dto/res/message-response.dto";
 import {REFRESHTOKEN_REPOSITORY} from '../domain/repository/refresh-token.repository';
 import type { RefreshTokenRepository } from "../domain/repository/refresh-token.repository";
 import { sha256 } from "src/common/util/hash.util";
-import { request } from "http";
 import { LogoutRequest } from "../presentation/dto/req/refresh-token.dto";
 import { RefreshToken } from "../domain/model/refresh-token.entity";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class AuthService {
@@ -95,7 +95,7 @@ export class AuthService {
         let payload: {sub: string; type: string};
 
         try {
-            payload = await this.jwtService.verifyAsync(request.refreshToken);
+            payload = await this.jwtService.verifyAsync<{ sub: string; type: string }>(request.refreshToken);
         } catch {
             throw new UnauthorizedException('유효하지 않은 토큰입니다.');
         }
@@ -116,7 +116,11 @@ export class AuthService {
             throw new UnauthorizedException('해당 유저는 정지 상태입니다.');
         }
         
-        await this.refreshTokenRepository.deleteByTokenHash(tokenHash);
+        const deleted = await this.refreshTokenRepository.deleteByTokenHash(tokenHash);
+        if (deleted === 0) {
+            throw new UnauthorizedException('유효하지 않은 토큰입니다.');
+        }
+        
         return this.issueTokens(user);
     }
 
@@ -165,11 +169,11 @@ export class AuthService {
         );
 
         const refreshToken = await this.jwtService.signAsync(
-            { ...payload, type: 'refresh' },
+            { ...payload, type: 'refresh', jti: randomUUID() },
             { expiresIn: '14d' },
         );
 
-        const { exp } = this.jwtService.decode(refreshToken) as {exp: number};
+        const { exp } = this.jwtService.decode<{ exp: number }>(refreshToken);
 
         await this.refreshTokenRepository.save(
             RefreshToken.issue(user.id, sha256(refreshToken), new Date(exp * 1000))
