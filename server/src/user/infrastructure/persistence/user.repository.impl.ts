@@ -10,10 +10,13 @@ export class UserRepositoryImpl implements UserRepository {
         @InjectRepository(User)
         private readonly ormRepository: Repository<User>,
     ){}
-    
-    // findById
-    async findById(userId:string): Promise<User | null>{
+
+    async findByUserId(userId:string): Promise<User | null>{
         return await this.ormRepository.findOne({ where: {userId}});
+    }
+
+    async findById(id:string): Promise<User | null>{
+        return await this.ormRepository.findOne({ where: {id}});
     }
 
     async save(user:User): Promise<void>{

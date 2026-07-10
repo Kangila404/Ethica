@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { AuthModule } from './auth/auth.module';
+import { addTransactionalDataSource } from 'typeorm-transactional';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -21,13 +24,21 @@ import { OnboardingModule } from './onboarding/onboarding.module';
         autoLoadEntities: true,
         synchronize: true,
       }),
+
+      // transactional 옵션
+      dataSourceFactory: async (options) => {
+        if(!options) throw new Error('Invalid options');
+        return addTransactionalDataSource(new DataSource(options));
+      }
     }),
 
     // ================= 모듈 모음
     // 1. UserModule
     UserModule,
     // 2. OnboardingModule
-    OnboardingModule
+    OnboardingModule,
+    // 3. AuthModule
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
