@@ -6,24 +6,24 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserRepositoryImpl implements UserRepository {
-    constructor(
-        @InjectRepository(User)
-        private readonly ormRepository: Repository<User>,
-    ){}
+  constructor(
+    @InjectRepository(User)
+    private readonly ormRepository: Repository<User>,
+  ) {}
 
-    async findByUserId(userId:string): Promise<User | null>{
-        return await this.ormRepository.findOne({ where: {userId}});
-    }
+  async findByUserId(userId: string): Promise<User | null> {
+    return await this.ormRepository.findOne({ where: { userId } });
+  }
 
-    async findById(id:string): Promise<User | null>{
-        return await this.ormRepository.findOne({ where: {id}});
-    }
+  async findById(id: string): Promise<User | null> {
+    return await this.ormRepository.findOne({ where: { id } });
+  }
 
-    async save(user:User): Promise<void>{
-        await this.ormRepository.save(user);
-    }
+  async save(user: User): Promise<void> {
+    await this.ormRepository.save(user);
+  }
 
-    async softRemove(user:User): Promise<User>{
-        return this.ormRepository.softRemove(user);
-    }
+  async softRemove(user: User): Promise<User> {
+    return this.ormRepository.softRemove(user);
+  }
 }

@@ -1,13 +1,11 @@
-import { RefreshToken } from "../model/refresh-token.entity"
+import { RefreshToken } from '../model/refresh-token.entity';
 
-
-export const REFRESHTOKEN_REPOSITORY = Symbol('REFRESHTOKEN_REPOSITORY')
+export const REFRESHTOKEN_REPOSITORY = Symbol('REFRESHTOKEN_REPOSITORY');
 
 export interface RefreshTokenRepository {
+  save(token: RefreshToken): Promise<void>;
 
-    save(token: RefreshToken): Promise<void>;
+  findByTokenHash(tokenHash: string): Promise<RefreshToken | null>;
 
-    findByTokenHash(tokenHash: string): Promise<RefreshToken | null>;
-
-    deleteByTokenHash(tokenHash: string): Promise<number>;
+  deleteByTokenHash(tokenHash: string): Promise<number>;
 }

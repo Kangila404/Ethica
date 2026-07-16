@@ -6,8 +6,13 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AuthModule } from './auth/auth.module';
-import { addTransactionalDataSource } from 'typeorm-transactional';
+import {
+  addTransactionalDataSource,
+  getDataSourceByName,
+} from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
+import { CategoryModule } from './category/category.module';
+import { PhilosopherModule } from './philosopher/philosopher.module';
 
 @Module({
   imports: [
@@ -27,9 +32,12 @@ import { DataSource } from 'typeorm';
 
       // transactional 옵션
       dataSourceFactory: (options) => {
-  if (!options) throw new Error('Invalid options');
-  return Promise.resolve(addTransactionalDataSource(new DataSource(options)));
-},
+        if (!options) throw new Error('Invalid options');
+        return Promise.resolve(
+          getDataSourceByName('default') ??
+            addTransactionalDataSource(new DataSource(options)),
+        );
+      },
     }),
 
     // ================= 모듈 모음
@@ -38,7 +46,11 @@ import { DataSource } from 'typeorm';
     // 2. OnboardingModule
     OnboardingModule,
     // 3. AuthModule
-    AuthModule
+    AuthModule,
+    // 4. CategoryModule
+    CategoryModule,
+    // 5. PhilosopherModule
+    PhilosopherModule,
   ],
   controllers: [AppController],
   providers: [AppService],
