@@ -22,6 +22,9 @@ export class Question extends BaseEntity {
   @Column({ type: 'enum', enum: QuestionType })
   type!: QuestionType;
 
+  @Column({type: 'varchar', length: 100})
+  title!: string;
+
   @Column({ type: 'text' })
   stage1Body!: string;
 

@@ -12,6 +12,10 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     private readonly ormRepository: Repository<Question>,
   ) {}
 
+  async findById(id:string):Promise<Question | null>{
+    return this.ormRepository.findOne({where : {id}});
+  }
+
   async findOnboardingByCategory(
     categoryId: string,
     limit: number,
@@ -29,5 +33,28 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       .addOrderBy('a.id', 'ASC')
       .take(limit)
       .getMany();
+  }
+
+  async findByIdWithAnswers(questionId: string): Promise<Question | null> {
+    return this.ormRepository.findOne({
+      where: { id: questionId },
+      relations: {
+        answers: true,
+        followupAnswers: true,
+        categories: true,
+      },
+    });
+  }
+
+  async findRandomDailyExcluding(excludeIds: string[]):Promise<Question | null>{
+    const qb = this.ormRepository.createQueryBuilder('q')
+    .where('q.usage = :usage', {usage: QuestionUsage.DAILY})
+    .andWhere('q.isActive = true');
+
+    if (excludeIds.length > 0) {
+    qb.andWhere('q.id NOT IN (:...excludeIds)', { excludeIds });
+  }
+  
+  return qb.orderBy('RAND()').limit(1).getOne();
   }
 }

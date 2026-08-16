@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from 'typeorm';
 
-
 @Entity('philosopher')
 export class Philosopher extends BaseEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })

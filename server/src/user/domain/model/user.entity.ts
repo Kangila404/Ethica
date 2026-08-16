@@ -38,6 +38,9 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   notificationEnabled!: boolean;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  fcmToken!: string | null;
+
   @Column({ type: 'bigint', nullable: true })
   interestCategoryId!: string | null;
 
@@ -92,5 +95,13 @@ export class User extends BaseEntity {
   // 7. 카테고리 선택
   selectInterestCategory(categoryId: string): void {
     this.interestCategoryId = categoryId;
+  }
+
+  // 8. 온보딩 상태 변경
+  completeOnboarding(): void {
+    if (this.onboardingStatus === OnboardingStatus.COMPLETE) {
+    throw new Error('이미 온보딩을 완료한 유저입니다.');
+  }
+    this.onboardingStatus = OnboardingStatus.COMPLETE;
   }
 }

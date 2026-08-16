@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { User } from 'src/user/domain/model/user.entity';
 import { USER_REPOSITORY } from 'src/user/domain/repository/user.repository';
@@ -23,6 +24,7 @@ import { QUESTION_REPOSITORY } from 'src/question/domain/repository/question.rep
 import type { QuestionRepository } from 'src/question/domain/repository/question.repository';
 import { UserAnswer } from 'src/user-answer/domain/model/user-answer.entity';
 import { UserFollowupAnswer } from 'src/user-answer/domain/model/user-followup-answer.entity';
+import { QuestionUsage } from 'src/question/domain/enum/question-usage.enum';
 @Injectable()
 export class OnboardingService {
   constructor(
@@ -45,6 +47,7 @@ export class OnboardingService {
   ): Promise<DailyTimeResponse> {
     const user = await this.getUserOrThrow(userId);
     user.changeDailyTime(request.dailyQuestionTime, request.timezone);
+    user.completeOnboarding();
     await this.userRepository.save(user);
     return DailyTimeResponse.from(user);
   }
@@ -88,12 +91,47 @@ export class OnboardingService {
     userId: string,
     request: OnboardingAnswerRequest,
   ): Promise<OnboardingAnswerResponse> {
-    const user = await this.getUserOrThrow(userId);
+      const user = await this.getUserOrThrow(userId);
+
+      if (!user.interestCategoryId) {
+      throw new BadRequestException('관심 분야를 먼저 선택해주세요.');
+    }
+
+      const question = await this.questionRepository.findByIdWithAnswers(
+      request.questionId,
+    );
+
+    if (!question || question.usage !== QuestionUsage.ONBOARDING) {
+      throw new BadRequestException('유효하지 않은 온보딩 문제입니다.');
+    }
+
+    const inCategory = question.categories.some(
+      (qc) => qc.categoryId === user.interestCategoryId,
+    );
+    if (!inCategory) {
+      throw new BadRequestException('선택한 관심 분야의 문제가 아닙니다.');
+    }
+
+    if (!question.answers.some((a) => a.id === request.answerId)) {
+      throw new BadRequestException('해당 문제의 선택지가 아닙니다.');
+    }
+
+    if (
+      request.followupAnswerId &&
+      !question.followupAnswers.some((f) => f.id === request.followupAnswerId)
+    ) {
+      throw new BadRequestException('해당 문제의 후속 선택지가 아닙니다.');
+    }
+
+    const answered = await this.userAnswerRepository.findByUserId(user.id, true);
+    const answeredIds = new Set(answered.map((ua) => ua.answerId));
+    if (question.answers.some((a) => answeredIds.has(a.id))) {
+      throw new ConflictException('이미 답변한 문제입니다.');
+    }
 
     await this.userAnswerRepository.save(
       UserAnswer.onboarding(user.id, request.answerId),
     );
-
     if (request.followupAnswerId) {
       await this.userFollowupAnswerRepository.save(
         UserFollowupAnswer.onboarding(user.id, request.followupAnswerId),
@@ -104,7 +142,6 @@ export class OnboardingService {
       user.id,
       true,
     );
-
     return OnboardingAnswerResponse.of(answeredCount);
   }
 

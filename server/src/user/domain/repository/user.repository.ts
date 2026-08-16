@@ -12,4 +12,6 @@ export interface UserRepository {
   save(user: User): Promise<void>;
 
   softRemove(user: User): Promise<User>;
+
+  findAllActive(): Promise<User[]>;
 }

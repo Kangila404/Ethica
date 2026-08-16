@@ -59,6 +59,12 @@ export class UserService {
     return NotificationResponse.from(user);
   }
 
+  async updateFcmToken(userId:string, fcmToken:string):Promise<void>{
+    const user = await this.getUserOrThrow(userId);
+    user.fcmToken = fcmToken;
+    await this.userRepository.save(user);
+  }
+
   // 메서드
   private async getUserOrThrow(userId: string): Promise<User> {
     const user = await this.userRepository.findByUserId(userId);
