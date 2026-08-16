@@ -13,9 +13,12 @@ import {
 import { DataSource } from 'typeorm';
 import { CategoryModule } from './category/category.module';
 import { PhilosopherModule } from './philosopher/philosopher.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DailyModule } from './daily/daily.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -51,6 +54,8 @@ import { PhilosopherModule } from './philosopher/philosopher.module';
     CategoryModule,
     // 5. PhilosopherModule
     PhilosopherModule,
+    // 6. DailyModule
+    DailyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

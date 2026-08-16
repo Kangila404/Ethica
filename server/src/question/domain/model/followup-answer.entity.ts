@@ -24,6 +24,6 @@ export class FollowupAnswer extends BaseEntity {
 
   // 관계
   @ManyToOne(() => Question, (q) => q.followupAnswers, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'questionId' })
+  @JoinColumn({ name: 'question_id' })
   question!: Question;
 }

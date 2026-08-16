@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: ko-KR
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: false
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+  path_filters:
+    - "!node_modules/**"
+    - "!server/dist/**"
+    - "!server/coverage/**"
+    - "!coverage/**"
+    - "!package-lock.json"
+  path_instructions:
+    - path: "server/src/**/*.ts"
+      instructions: |
+        This is NestJS backend code. Focus on dependency injection, layered architecture,
+        DTO validation, exception handling, TypeORM entity/repository usage, async/await
+        handling, and type safety.
+    - path: "server/src/**/*controller.ts"
+      instructions: |
+        For controllers, focus on request/response DTOs, authentication guards, Swagger
+        decorators, HTTP status behavior, and API route consistency.
+    - path: "server/src/**/*service.ts"
+      instructions: |
+        For services, focus on business rules, whether transactions are needed, duplicate
+        write prevention, exception messages, and repository call flow.
+
+chat:
+  auto_reply: true
