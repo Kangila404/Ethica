@@ -34,7 +34,10 @@ export class UserAnswer extends BaseEntity {
   }
 
   // 2. 유저 답 생성
-  static createUserStageOneAnswer(userId:string, answerId:string): UserAnswer {
+  static createUserStageOneAnswer(
+    userId: string,
+    answerId: string,
+  ): UserAnswer {
     const ua = new UserAnswer();
     ua.userId = userId;
     ua.answerId = answerId;

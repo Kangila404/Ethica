@@ -59,7 +59,7 @@ export class UserService {
     return NotificationResponse.from(user);
   }
 
-  async updateFcmToken(userId:string, fcmToken:string):Promise<void>{
+  async updateFcmToken(userId: string, fcmToken: string): Promise<void> {
     const user = await this.getUserOrThrow(userId);
     user.fcmToken = fcmToken;
     await this.userRepository.save(user);

@@ -91,13 +91,13 @@ export class OnboardingService {
     userId: string,
     request: OnboardingAnswerRequest,
   ): Promise<OnboardingAnswerResponse> {
-      const user = await this.getUserOrThrow(userId);
+    const user = await this.getUserOrThrow(userId);
 
-      if (!user.interestCategoryId) {
+    if (!user.interestCategoryId) {
       throw new BadRequestException('관심 분야를 먼저 선택해주세요.');
     }
 
-      const question = await this.questionRepository.findByIdWithAnswers(
+    const question = await this.questionRepository.findByIdWithAnswers(
       request.questionId,
     );
 
@@ -123,7 +123,10 @@ export class OnboardingService {
       throw new BadRequestException('해당 문제의 후속 선택지가 아닙니다.');
     }
 
-    const answered = await this.userAnswerRepository.findByUserId(user.id, true);
+    const answered = await this.userAnswerRepository.findByUserId(
+      user.id,
+      true,
+    );
     const answeredIds = new Set(answered.map((ua) => ua.answerId));
     if (question.answers.some((a) => answeredIds.has(a.id))) {
       throw new ConflictException('이미 답변한 문제입니다.');

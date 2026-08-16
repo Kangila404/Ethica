@@ -1,4 +1,4 @@
 export enum DailyQuestionStatus {
-    PENDING = 'pending',
-    COMPLETED = 'completed',
+  PENDING = 'pending',
+  COMPLETED = 'completed',
 }

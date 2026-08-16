@@ -100,8 +100,8 @@ export class User extends BaseEntity {
   // 8. 온보딩 상태 변경
   completeOnboarding(): void {
     if (this.onboardingStatus === OnboardingStatus.COMPLETE) {
-    throw new Error('이미 온보딩을 완료한 유저입니다.');
-  }
+      throw new Error('이미 온보딩을 완료한 유저입니다.');
+    }
     this.onboardingStatus = OnboardingStatus.COMPLETE;
   }
 }

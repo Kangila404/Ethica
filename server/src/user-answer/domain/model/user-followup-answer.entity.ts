@@ -37,12 +37,14 @@ export class UserFollowupAnswer extends BaseEntity {
   }
 
   // 2. User followup Answer 생성
-  static createUserFollowupAnswer(userId:string, followupAnswerId:string):UserFollowupAnswer{
+  static createUserFollowupAnswer(
+    userId: string,
+    followupAnswerId: string,
+  ): UserFollowupAnswer {
     const ufa = new UserFollowupAnswer();
     ufa.userId = userId;
     ufa.followupAnswerId = followupAnswerId;
     ufa.isOnboarding = false;
     return ufa;
   }
-
 }

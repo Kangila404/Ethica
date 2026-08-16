@@ -28,9 +28,9 @@ export class UserRepositoryImpl implements UserRepository {
     return this.ormRepository.softRemove(user);
   }
 
-  async findAllActive(): Promise<User[]>{
+  async findAllActive(): Promise<User[]> {
     return this.ormRepository.find({
-      where: {userStatus: UserStatus.ACTIVE}
-    })
+      where: { userStatus: UserStatus.ACTIVE },
+    });
   }
 }

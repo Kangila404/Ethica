@@ -1,7 +1,7 @@
-import { FollowupAnswer } from "../model/followup-answer.entity";
+import { FollowupAnswer } from '../model/followup-answer.entity';
 
-export const FOLLOWUP_ANSWER_REPOSITORY = Symbol("FOLLOWUP_ANSWER_REPOSITORY");
+export const FOLLOWUP_ANSWER_REPOSITORY = Symbol('FOLLOWUP_ANSWER_REPOSITORY');
 
 export interface FollowupAnswerRepository {
-    findById(id:string):Promise<FollowupAnswer | null>;
+  findById(id: string): Promise<FollowupAnswer | null>;
 }

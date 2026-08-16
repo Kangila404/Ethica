@@ -1,4 +1,4 @@
-import { FollowupAnswer } from "src/question/domain/model/followup-answer.entity";
+import { FollowupAnswer } from 'src/question/domain/model/followup-answer.entity';
 
 export class SubmitStageTwoResponse {
   explanation!: string | null;

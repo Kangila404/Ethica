@@ -24,7 +24,10 @@ import { FollowupAnswerRepositoryImpl } from './infrastructure/persistence/follo
   providers: [
     { provide: QUESTION_REPOSITORY, useClass: QuestionRepositoryImpl },
     { provide: ANSWER_REPOSITORY, useClass: AnswerRepositoryImpl },
-    { provide: FOLLOWUP_ANSWER_REPOSITORY, useClass: FollowupAnswerRepositoryImpl}
+    {
+      provide: FOLLOWUP_ANSWER_REPOSITORY,
+      useClass: FollowupAnswerRepositoryImpl,
+    },
   ],
   exports: [QUESTION_REPOSITORY, ANSWER_REPOSITORY, FOLLOWUP_ANSWER_REPOSITORY],
 })

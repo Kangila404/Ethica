@@ -12,8 +12,8 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     private readonly ormRepository: Repository<Question>,
   ) {}
 
-  async findById(id:string):Promise<Question | null>{
-    return this.ormRepository.findOne({where : {id}});
+  async findById(id: string): Promise<Question | null> {
+    return this.ormRepository.findOne({ where: { id } });
   }
 
   async findOnboardingByCategory(
@@ -46,15 +46,18 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     });
   }
 
-  async findRandomDailyExcluding(excludeIds: string[]):Promise<Question | null>{
-    const qb = this.ormRepository.createQueryBuilder('q')
-    .where('q.usage = :usage', {usage: QuestionUsage.DAILY})
-    .andWhere('q.isActive = true');
+  async findRandomDailyExcluding(
+    excludeIds: string[],
+  ): Promise<Question | null> {
+    const qb = this.ormRepository
+      .createQueryBuilder('q')
+      .where('q.usage = :usage', { usage: QuestionUsage.DAILY })
+      .andWhere('q.isActive = true');
 
     if (excludeIds.length > 0) {
-    qb.andWhere('q.id NOT IN (:...excludeIds)', { excludeIds });
-  }
-  
-  return qb.orderBy('RAND()').limit(1).getOne();
+      qb.andWhere('q.id NOT IN (:...excludeIds)', { excludeIds });
+    }
+
+    return qb.orderBy('RAND()').limit(1).getOne();
   }
 }
