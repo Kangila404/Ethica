@@ -26,10 +26,6 @@ import {
 } from 'src/user-answer/domain/repository/user-followup-answer.repository';
 import { UserStatus } from 'src/user/domain/enum/user-status.enum';
 import { User } from 'src/user/domain/model/user.entity';
-import {
-  UserSummary,
-  type UserSummaryInsight,
-} from 'src/user/domain/model/user-summary.entity';
 import type { UserRepository } from 'src/user/domain/repository/user.repository';
 import { USER_REPOSITORY } from 'src/user/domain/repository/user.repository';
 import {
@@ -71,7 +67,11 @@ export class AnalysisService {
       throw new NotFoundException('분석 결과 철학자 정보를 찾을 수 없습니다.');
     }
 
-    return AnaisysResponse.of(nearestPhilosopher, composition, 100);
+    return AnaisysResponse.of(
+      nearestPhilosopher,
+      composition,
+      composition[0].percent,
+    );
   }
 
   async getContradiction(userId: string): Promise<ContradictionResponse> {
@@ -107,7 +107,7 @@ export class AnalysisService {
       ),
     });
 
-    const saved = await this.saveUserSummary(
+    const saved = await this.userSummaryRepository.upsertAnalysis(
       user.id,
       nearest.id,
       aiResult.overallSummaries,
@@ -116,36 +116,6 @@ export class AnalysisService {
     );
 
     return ContradictionResponse.from(saved, nearest);
-  }
-
-  private async saveUserSummary(
-    userId: string,
-    nearestPhilosopherId: string,
-    overallSummaries: UserSummaryInsight[],
-    contradictions: UserSummaryInsight[],
-    accuracy: number,
-  ): Promise<UserSummary> {
-    const summary = await this.userSummaryRepository.findByUserId(userId);
-
-    if (!summary) {
-      return this.userSummaryRepository.save(
-        UserSummary.create(
-          userId,
-          nearestPhilosopherId,
-          overallSummaries,
-          contradictions,
-          accuracy,
-        ),
-      );
-    }
-
-    summary.update(
-      nearestPhilosopherId,
-      overallSummaries,
-      contradictions,
-      accuracy,
-    );
-    return this.userSummaryRepository.save(summary);
   }
 
   private async getPhilosopherComposition(
@@ -191,15 +161,31 @@ export class AnalysisService {
       throw new NotFoundException('분석할 후속 답변이 없습니다.');
     }
 
-    const followupAnswers = await this.followupAnswerRepository.findByIds([
-      ...new Set(userFollowupAnswers.map((answer) => answer.followupAnswerId)),
-    ]);
+    const followupAnswerIds = userFollowupAnswers.map(
+      (answer) => answer.followupAnswerId,
+    );
+    const followupAnswers =
+      await this.followupAnswerRepository.findByIds(followupAnswerIds);
 
     if (followupAnswers.length === 0) {
       throw new NotFoundException('후속 답변 정보를 찾을 수 없습니다.');
     }
 
-    return followupAnswers.map((answer) => answer.body);
+    const followupAnswerById = new Map(
+      followupAnswers.map((answer) => [answer.id, answer]),
+    );
+
+    return userFollowupAnswers.map((userFollowupAnswer) => {
+      const followupAnswer = followupAnswerById.get(
+        userFollowupAnswer.followupAnswerId,
+      );
+
+      if (!followupAnswer) {
+        throw new NotFoundException('?꾩냽 ?듬? ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.');
+      }
+
+      return followupAnswer.body;
+    });
   }
 
   async findUserByUserIdOrThrow(userId: string): Promise<User> {

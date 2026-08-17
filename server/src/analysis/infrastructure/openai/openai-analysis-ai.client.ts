@@ -39,6 +39,9 @@ export class OpenAiAnalysisAiClient implements AnalysisAiClient {
       return await this.client.responses.create({
         model: this.model,
         input: this.buildPrompt(input),
+        text: {
+          format: this.buildTextFormat(),
+        },
       });
     } catch (error: unknown) {
       this.logger.error('OpenAI analysis request failed', {
@@ -87,33 +90,16 @@ export class OpenAiAnalysisAiClient implements AnalysisAiClient {
     return `
 You are Ethica's warm philosophical reflection guide.
 You analyze a user's selected follow-up answers and turn them into accordion-ready user-facing insights.
-Return ONLY valid JSON with this exact shape:
-{
-  "overallSummaries": [
-    {
-      "title": "string",
-      "summary": "string"
-    }
-  ],
-  "contradictions": [
-    {
-      "title": "string",
-      "summary": "string"
-    }
-  ],
-  "accuracy": 0
-}
 
-Rules:
-- Write Korean.
-- Use friendly 요체, as if speaking directly to the user.
+Writing rules:
+- Write Korean in friendly, natural "요" style.
 - Do not list facts mechanically. Interpret what those answers mean for the user's inner priorities.
 - overallSummaries: 3 to 5 accordion items about the user's overall patterns.
 - contradictions: 2 to 5 accordion items about tensions, contradictions, or ambivalent values. Do not invent contradictions that are not supported by the answers.
 - Each title must be hooky, specific, and emotionally recognizable as an accordion title.
 - Titles should feel like a sharp diagnosis of the user's pattern, not a neutral category label.
-- Prefer titles such as "결정을 늦추는 의심의 습관", "합의를 원하지만 기준은 넘기지 않는 사람", or "안정을 원하면서 판을 다시 짜려는 마음".
-- Avoid bland titles like "균형의 힘", "대화의 중요성", "나만의 기준".
+- Prefer titles like "결정을 늦추는 의심의 습관", "합의를 원하지만 기준은 넘기지 않는 사람", or "안정을 원하면서 판을 다시 짜려는 마음".
+- Avoid bland titles like "균형의 힘", "대화의 중요성", or "나만의 기준".
 - Each summary should be a detailed analysis, usually around 6 to 8 sentences when there is enough evidence.
 - Do not pad the writing to reach a sentence count. If there is not enough evidence, write a shorter but sharper analysis.
 - Avoid generic AI-like coaching phrases, decorative metaphors, and polished filler.
@@ -123,7 +109,6 @@ Rules:
 - Avoid repeating the same idea across items.
 - Mention the nearest philosopher naturally once if helpful.
 - accuracy: integer from 0 to 100. It means how consistently the user's answers align with the nearest philosopher and composition.
-- Do not include markdown, code fences, or extra commentary.
 
 Nearest philosopher: ${input.nearestPhilosopher}
 
@@ -133,6 +118,54 @@ ${input.philosopherComposition.map((item) => `- ${item}`).join('\n')}
 User follow-up answers:
 ${input.answers.map((answer, index) => `${index + 1}. ${answer}`).join('\n')}
 `.trim();
+  }
+
+  private buildTextFormat() {
+    const insightSchema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['title', 'summary'],
+      properties: {
+        title: {
+          type: 'string',
+          minLength: 1,
+        },
+        summary: {
+          type: 'string',
+          minLength: 1,
+        },
+      },
+    };
+
+    return {
+      type: 'json_schema' as const,
+      name: 'analysis_contradiction_result',
+      strict: true,
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['overallSummaries', 'contradictions', 'accuracy'],
+        properties: {
+          overallSummaries: {
+            type: 'array',
+            minItems: 3,
+            maxItems: 5,
+            items: insightSchema,
+          },
+          contradictions: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 5,
+            items: insightSchema,
+          },
+          accuracy: {
+            type: 'integer',
+            minimum: 0,
+            maximum: 100,
+          },
+        },
+      },
+    };
   }
 
   private parseResult(outputText: string): AnalysisAiResult {

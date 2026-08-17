@@ -1,4 +1,11 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnalysisService } from 'src/analysis/application/analysis.service';
 import { CurrentUserId } from 'src/auth/infrastructure/security/current-user.decorator';
@@ -29,6 +36,7 @@ export class AnalisysController {
 
   @ApiOperation({ summary: '모순점 분석 요청' })
   @Post('/contradictions')
+  @HttpCode(HttpStatus.OK)
   analyzeContradiction(
     @CurrentUserId() userId: string,
   ): Promise<ContradictionResponse> {

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserSummary } from 'src/user/domain/model/user-summary.entity';
+import {
+  UserSummary,
+  UserSummaryInsight,
+} from 'src/user/domain/model/user-summary.entity';
 import { UserSummaryRepository } from 'src/user/domain/repository/user-summary.repository';
 import { Repository } from 'typeorm';
 
@@ -15,7 +18,29 @@ export class UserSummaryRepositoryImpl implements UserSummaryRepository {
     return this.ormRepository.findOne({ where: { userId } });
   }
 
-  async save(userSummary: UserSummary): Promise<UserSummary> {
-    return this.ormRepository.save(userSummary);
+  async upsertAnalysis(
+    userId: string,
+    nearestPhilosopherId: string,
+    overallSummaries: UserSummaryInsight[],
+    contradictions: UserSummaryInsight[],
+    accuracy: number,
+  ): Promise<UserSummary> {
+    await this.ormRepository.upsert(
+      {
+        userId,
+        nearestPhilosopherId,
+        overallSummaries,
+        contradictions,
+        accuracy,
+      },
+      ['userId'],
+    );
+
+    const userSummary = await this.findByUserId(userId);
+    if (!userSummary) {
+      throw new Error('Failed to load upserted user summary');
+    }
+
+    return userSummary;
   }
 }
