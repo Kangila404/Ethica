@@ -9,6 +9,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { UserAnswerModule } from 'src/user-answer/user-answer.module';
 import { QuestionModule } from 'src/question/question.module';
+import { PhilosopherModule } from 'src/philosopher/philosopher.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { QuestionModule } from 'src/question/question.module';
     UserModule,
     UserAnswerModule,
     QuestionModule,
+    PhilosopherModule,
   ],
   controllers: [OnboardingController],
   providers: [

@@ -38,6 +38,10 @@ export class DailySchedulerService {
   }
 
   private isNotifyTime(user: User): boolean {
+    if (!user.timezone || !user.dailyQuestionTime) {
+      return false;
+    }
+
     const nowHm = new Date().toLocaleTimeString('en-GB', {
       timeZone: user.timezone,
       hour: '2-digit',

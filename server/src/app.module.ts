@@ -15,6 +15,7 @@ import { CategoryModule } from './category/category.module';
 import { PhilosopherModule } from './philosopher/philosopher.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DailyModule } from './daily/daily.module';
+import { AnalysisModule } from './analysis/analysis.module';
 
 @Module({
   imports: [
@@ -56,6 +57,8 @@ import { DailyModule } from './daily/daily.module';
     PhilosopherModule,
     // 6. DailyModule
     DailyModule,
+    // 7. AnalysisModule
+    AnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

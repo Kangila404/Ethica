@@ -4,4 +4,5 @@ export const ANSWER_REPOSITORY = Symbol('ANSWER_REPOSITORY');
 
 export interface AnswerRepository {
   findById(id: string): Promise<Answer | null>;
+  findByIds(ids: string[]): Promise<Answer[]>;
 }

@@ -11,7 +11,7 @@ export class UserAnswer extends BaseEntity {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'bigint' })
   userId!: string;
 
   @Column({ type: 'bigint' })

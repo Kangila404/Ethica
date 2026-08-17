@@ -6,4 +6,6 @@ export const USER_FOLLOWUP_ANSWER_REPOSITORY = Symbol(
 
 export interface UserFollowupAnswerRepository {
   save(entity: UserFollowupAnswer): Promise<UserFollowupAnswer>;
+
+  findAllByUserId(userId: string): Promise<UserFollowupAnswer[]>;
 }
