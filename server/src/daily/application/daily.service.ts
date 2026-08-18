@@ -32,6 +32,11 @@ import { FOLLOWUP_ANSWER_REPOSITORY } from 'src/question/domain/repository/follo
 import type { UserFollowupAnswerRepository } from 'src/user-answer/domain/repository/user-followup-answer.repository';
 import { USER_FOLLOWUP_ANSWER_REPOSITORY } from 'src/user-answer/domain/repository/user-followup-answer.repository';
 import { UserFollowupAnswer } from 'src/user-answer/domain/model/user-followup-answer.entity';
+import {
+  USER_PHILOSOPHER_COUNT_REPOSITORY,
+  type UserPhilosopherCountRepository,
+} from 'src/philosopher/domain/repository/user-philosopher-count.repository';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class DailyService {
@@ -50,6 +55,8 @@ export class DailyService {
     private readonly followupAnswerRepository: FollowupAnswerRepository,
     @Inject(USER_FOLLOWUP_ANSWER_REPOSITORY)
     private readonly userFollowupAnswerRepository: UserFollowupAnswerRepository,
+    @Inject(USER_PHILOSOPHER_COUNT_REPOSITORY)
+    private readonly userPhilosopherCountRepository: UserPhilosopherCountRepository,
   ) {}
 
   async getDaily(userId: string): Promise<DailyQuestionResponse> {
@@ -126,6 +133,7 @@ export class DailyService {
     return SubmitStageTwoResponse.from(followupAnswer);
   }
 
+  @Transactional()
   async submitStageOne(
     userId: string,
     request: SubmitStageOneRequest,
@@ -162,6 +170,10 @@ export class DailyService {
     );
 
     await this.userAnswerRepository.save(userAnswer);
+    await this.userPhilosopherCountRepository.increase(
+      user.id,
+      answer.philosopherId,
+    );
 
     dailyQuestion.complete();
     await this.userDailyQuestionRepository.save(dailyQuestion);

@@ -28,4 +28,11 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
       order: { id: 'ASC' },
     });
   }
+
+  async findAllByUserId(userId: string): Promise<UserAnswer[]> {
+    return this.ormRepository.find({
+      where: { userId },
+      order: { id: 'ASC' },
+    });
+  }
 }

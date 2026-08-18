@@ -8,4 +8,6 @@ export interface UserAnswerRepository {
   countByUserId(userId: string, isOnboarding: boolean): Promise<number>;
 
   findByUserId(userId: string, isOnboarding: boolean): Promise<UserAnswer[]>;
+
+  findAllByUserId(userId: string): Promise<UserAnswer[]>;
 }

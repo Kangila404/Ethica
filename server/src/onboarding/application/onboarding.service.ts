@@ -25,6 +25,11 @@ import type { QuestionRepository } from 'src/question/domain/repository/question
 import { UserAnswer } from 'src/user-answer/domain/model/user-answer.entity';
 import { UserFollowupAnswer } from 'src/user-answer/domain/model/user-followup-answer.entity';
 import { QuestionUsage } from 'src/question/domain/enum/question-usage.enum';
+import {
+  USER_PHILOSOPHER_COUNT_REPOSITORY,
+  type UserPhilosopherCountRepository,
+} from 'src/philosopher/domain/repository/user-philosopher-count.repository';
+import { Transactional } from 'typeorm-transactional';
 @Injectable()
 export class OnboardingService {
   constructor(
@@ -39,6 +44,9 @@ export class OnboardingService {
 
     @Inject(QUESTION_REPOSITORY)
     private readonly questionRepository: QuestionRepository,
+
+    @Inject(USER_PHILOSOPHER_COUNT_REPOSITORY)
+    private readonly userPhilosopherCountRepository: UserPhilosopherCountRepository,
   ) {}
 
   async registerDailyTime(
@@ -87,6 +95,7 @@ export class OnboardingService {
     return OnboardingQuestionsResponse.of(questions);
   }
 
+  @Transactional()
   async submitAnswer(
     userId: string,
     request: OnboardingAnswerRequest,
@@ -112,7 +121,8 @@ export class OnboardingService {
       throw new BadRequestException('선택한 관심 분야의 문제가 아닙니다.');
     }
 
-    if (!question.answers.some((a) => a.id === request.answerId)) {
+    const answer = question.answers.find((a) => a.id === request.answerId);
+    if (!answer) {
       throw new BadRequestException('해당 문제의 선택지가 아닙니다.');
     }
 
@@ -135,6 +145,11 @@ export class OnboardingService {
     await this.userAnswerRepository.save(
       UserAnswer.onboarding(user.id, request.answerId),
     );
+    await this.userPhilosopherCountRepository.increase(
+      user.id,
+      answer.philosopherId,
+    );
+
     if (request.followupAnswerId) {
       await this.userFollowupAnswerRepository.save(
         UserFollowupAnswer.onboarding(user.id, request.followupAnswerId),

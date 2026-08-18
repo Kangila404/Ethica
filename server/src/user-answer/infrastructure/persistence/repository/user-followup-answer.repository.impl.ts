@@ -14,4 +14,11 @@ export class UserFollowupAnswerRepositoryImpl implements UserFollowupAnswerRepos
   async save(entity: UserFollowupAnswer): Promise<UserFollowupAnswer> {
     return this.ormRepository.save(entity);
   }
+
+  async findAllByUserId(userId: string): Promise<UserFollowupAnswer[]> {
+    return this.ormRepository.find({
+      where: { userId },
+      order: { id: 'ASC' },
+    });
+  }
 }

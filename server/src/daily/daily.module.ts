@@ -10,11 +10,13 @@ import { UserDailyQuestionRepositoryImpl } from './infrastructure/persistence/re
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserDailyQuestion } from './domain/model/user_daily_question.entity';
 import { UserAnswerModule } from 'src/user-answer/user-answer.module';
+import { PhilosopherModule } from 'src/philosopher/philosopher.module';
 @Module({
   imports: [
     QuestionModule,
     UserModule,
     UserAnswerModule,
+    PhilosopherModule,
     TypeOrmModule.forFeature([UserDailyQuestion]),
   ],
   controllers: [DailyController],
