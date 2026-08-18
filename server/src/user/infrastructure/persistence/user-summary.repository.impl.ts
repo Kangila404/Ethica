@@ -24,7 +24,7 @@ export class UserSummaryRepositoryImpl implements UserSummaryRepository {
     overallSummaries: UserSummaryInsight[],
     contradictions: UserSummaryInsight[],
     accuracy: number,
-  ): Promise<UserSummary> {
+  ): Promise<void> {
     await this.ormRepository.upsert(
       {
         userId,
@@ -35,12 +35,5 @@ export class UserSummaryRepositoryImpl implements UserSummaryRepository {
       },
       ['userId'],
     );
-
-    const userSummary = await this.findByUserId(userId);
-    if (!userSummary) {
-      throw new Error('Failed to load upserted user summary');
-    }
-
-    return userSummary;
   }
 }

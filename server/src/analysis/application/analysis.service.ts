@@ -102,12 +102,12 @@ export class AnalysisService {
     const aiResult = await this.analysisAiClient.analyze({
       answers: followupAnswerBodies,
       nearestPhilosopher: nearest.name,
-      philosopherComposition: composition.map(
-        (item) => `${item.philosopher.name}: ${item.percent}%`,
-      ),
+      philosopherComposition: composition
+        .map((item) => `${item.philosopher.name}: ${item.percent}%`)
+        .slice(0, 3),
     });
 
-    const saved = await this.userSummaryRepository.upsertAnalysis(
+    await this.userSummaryRepository.upsertAnalysis(
       user.id,
       nearest.id,
       aiResult.overallSummaries,
@@ -115,7 +115,12 @@ export class AnalysisService {
       aiResult.accuracy,
     );
 
-    return ContradictionResponse.from(saved, nearest);
+    return ContradictionResponse.of(
+      nearest,
+      aiResult.overallSummaries,
+      aiResult.contradictions,
+      aiResult.accuracy,
+    );
   }
 
   private async getPhilosopherComposition(
@@ -175,7 +180,7 @@ export class AnalysisService {
       followupAnswers.map((answer) => [answer.id, answer]),
     );
 
-    return userFollowupAnswers.map((userFollowupAnswer) => {
+    return userFollowupAnswers.slice(-6).map((userFollowupAnswer) => {
       const followupAnswer = followupAnswerById.get(
         userFollowupAnswer.followupAnswerId,
       );

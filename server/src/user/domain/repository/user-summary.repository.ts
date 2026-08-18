@@ -11,5 +11,5 @@ export interface UserSummaryRepository {
     overallSummaries: UserSummaryInsight[],
     contradictions: UserSummaryInsight[],
     accuracy: number,
-  ): Promise<UserSummary>;
+  ): Promise<void>;
 }

@@ -17,7 +17,8 @@ export class OpenAiAnalysisAiClient implements AnalysisAiClient {
     this.client = new OpenAI({
       apiKey: this.configService.getOrThrow<string>('OPENAI_API_KEY'),
     });
-    this.model = this.configService.get<string>('OPENAI_MODEL') ?? 'gpt-5';
+    this.model =
+      this.configService.get<string>('OPENAI_MODEL') ?? 'gpt-4o-mini';
   }
 
   async analyze(input: {
@@ -36,13 +37,19 @@ export class OpenAiAnalysisAiClient implements AnalysisAiClient {
     philosopherComposition: string[];
   }) {
     try {
-      return await this.client.responses.create({
-        model: this.model,
-        input: this.buildPrompt(input),
-        text: {
-          format: this.buildTextFormat(),
+      return await this.client.responses.create(
+        {
+          model: this.model,
+          input: this.buildPrompt(input),
+          text: {
+            format: this.buildTextFormat(),
+          },
         },
-      });
+        {
+          timeout: 10_000,
+          maxRetries: 0,
+        },
+      );
     } catch (error: unknown) {
       this.logger.error('OpenAI analysis request failed', {
         model: this.model,
@@ -88,21 +95,22 @@ export class OpenAiAnalysisAiClient implements AnalysisAiClient {
     philosopherComposition: string[];
   }): string {
     return `
-You are Ethica's warm philosophical reflection guide.
+You are Ethica's philosophical reflection editor.
 You analyze a user's selected follow-up answers and turn them into accordion-ready user-facing insights.
 
 Writing rules:
-- Write Korean in friendly, natural "요" style.
-- Do not list facts mechanically. Interpret what those answers mean for the user's inner priorities.
-- overallSummaries: 3 to 5 accordion items about the user's overall patterns.
-- contradictions: 2 to 5 accordion items about tensions, contradictions, or ambivalent values. Do not invent contradictions that are not supported by the answers.
-- Each title must be hooky, specific, and emotionally recognizable as an accordion title.
-- Titles should feel like a sharp diagnosis of the user's pattern, not a neutral category label.
-- Prefer titles like "결정을 늦추는 의심의 습관", "합의를 원하지만 기준은 넘기지 않는 사람", or "안정을 원하면서 판을 다시 짜려는 마음".
-- Avoid bland titles like "균형의 힘", "대화의 중요성", or "나만의 기준".
-- Each summary should be a detailed analysis, usually around 6 to 8 sentences when there is enough evidence.
-- Do not pad the writing to reach a sentence count. If there is not enough evidence, write a shorter but sharper analysis.
+- Write in Korean using natural polite speech.
+- Keep the tone close to a human-written service analysis, not an AI assistant response.
+- Do not list facts mechanically. Interpret what the answer pattern says about the user's priorities, habits, and blind spots.
+- overallSummaries: exactly 3 accordion items about the user's overall patterns.
+- contradictions: exactly 2 accordion items about tensions, contradictions, or ambivalent values.
+- Do not invent contradictions that are not supported by the answers.
+- Each title must be a hooky Korean phrase, usually 4 to 8 words.
+- Avoid one-word or generic titles. Titles should sound like compact editorial labels, such as "verification-driven strategist" or "realist who designs agreement", but written naturally in Korean.
+- Each summary should usually be 4 to 6 sentences when there is enough evidence.
+- Do not pad the writing to reach a sentence count. If evidence is thin, write a shorter but sharper analysis.
 - Avoid generic AI-like coaching phrases, decorative metaphors, and polished filler.
+- Prefer plain, specific analysis over comforting or motivational language.
 - Do not repeat the same point in different words just to make the answer longer.
 - Ground each item in the user's actual answer patterns, then explain what that pattern implies.
 - Prefer concrete interpretation over advice. Include advice only when it directly follows from the tension being analyzed.
@@ -149,13 +157,13 @@ ${input.answers.map((answer, index) => `${index + 1}. ${answer}`).join('\n')}
           overallSummaries: {
             type: 'array',
             minItems: 3,
-            maxItems: 5,
+            maxItems: 3,
             items: insightSchema,
           },
           contradictions: {
             type: 'array',
             minItems: 2,
-            maxItems: 5,
+            maxItems: 2,
             items: insightSchema,
           },
           accuracy: {
