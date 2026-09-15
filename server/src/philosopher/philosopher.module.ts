@@ -18,11 +18,16 @@ import { POST_SEGMENT_REPOSITORY } from './domain/repository/post-segment.reposi
 import { PostSegmentRepositoryImpl } from './infrastructure/persistence/repository/post-segment.repository.impl';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Philosopher, UserPhilosopherCount, Post, PostSegment]), UserModule],
-  controllers:[
-    PhilosopherController,
-    CourceController
+  imports: [
+    TypeOrmModule.forFeature([
+      Philosopher,
+      UserPhilosopherCount,
+      Post,
+      PostSegment,
+    ]),
+    UserModule,
   ],
+  controllers: [PhilosopherController, CourceController],
   providers: [
     PhilosopherService,
     {
@@ -35,11 +40,11 @@ import { PostSegmentRepositoryImpl } from './infrastructure/persistence/reposito
     },
     {
       provide: POST_REPOSITORY,
-      useClass: PostRepositoryImpl
+      useClass: PostRepositoryImpl,
     },
     {
       provide: POST_SEGMENT_REPOSITORY,
-      useClass: PostSegmentRepositoryImpl
+      useClass: PostSegmentRepositoryImpl,
     },
   ],
   exports: [PHILOSOPHER_REPOSITORY, USER_PHILOSOPHER_COUNT_REPOSITORY],

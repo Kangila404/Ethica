@@ -40,7 +40,10 @@ class PhilosopherInfo {
   postCount!: number;
   imageKey!: string | null;
 
-  public static of(philosopher: Philosopher, postCount: number): PhilosopherInfo {
+  public static of(
+    philosopher: Philosopher,
+    postCount: number,
+  ): PhilosopherInfo {
     const dto = new PhilosopherInfo();
     dto.id = philosopher.id;
     dto.name = philosopher.name;
