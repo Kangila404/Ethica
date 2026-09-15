@@ -12,5 +12,18 @@
     "dependencies": {
         "@nestjs/schedule": "^6.1.3",
         "firebase-admin": "^14.2.0"
-    }
+    },
+    "description": "철학 학습 앱",
+    "devDependencies": {},
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Kangila404/Ethica.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Kangila404/Ethica/issues"
+    },
+    "homepage": "https://github.com/Kangila404/Ethica#readme"
 }

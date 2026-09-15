@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BaseEntity,
+  OneToMany,
+} from 'typeorm';
+import { Post } from './post.entity';
 
 @Entity('philosopher')
 export class Philosopher extends BaseEntity {
@@ -22,4 +29,7 @@ export class Philosopher extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   imageKey!: string | null;
+
+  @OneToMany(() => Post, (post) => post.philosopher)
+  posts!: Post[];
 }
