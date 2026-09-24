@@ -5,6 +5,8 @@ export const QUESTION_REPOSITORY = Symbol('QUESTION_REPOSITORY');
 export interface QuestionRepository {
   findById(id: string): Promise<Question | null>;
 
+  findByIds(ids: string[]): Promise<Question[]>;
+
   findOnboardingByCategory(
     categoryId: string,
     limit: number,

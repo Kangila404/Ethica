@@ -10,4 +10,6 @@ export interface UserAnswerRepository {
   findByUserId(userId: string, isOnboarding: boolean): Promise<UserAnswer[]>;
 
   findAllByUserId(userId: string): Promise<UserAnswer[]>;
+
+  findByIdAndUserId(userAnswerId:string, userId:string): Promise<UserAnswer | null>;
 }

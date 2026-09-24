@@ -25,7 +25,7 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
   ): Promise<UserAnswer[]> {
     return this.ormRepository.find({
       where: { userId, isOnboarding },
-      order: { id: 'ASC' },
+      order: { answeredAt: 'DESC' },
     });
   }
 
@@ -34,5 +34,12 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
       where: { userId },
       order: { id: 'ASC' },
     });
+  }
+
+
+  async findByIdAndUserId(id:string, userId:string): Promise<UserAnswer | null>{
+    return this.ormRepository.findOne({
+      where:{id, userId}
+    })
   }
 }

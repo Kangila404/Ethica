@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QuestionUsage } from 'src/question/domain/enum/question-usage.enum';
 import { Question } from 'src/question/domain/model/question.entity';
 import { QuestionRepository } from 'src/question/domain/repository/question.repository';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class QuestionRepositoryImpl implements QuestionRepository {
@@ -14,6 +14,10 @@ export class QuestionRepositoryImpl implements QuestionRepository {
 
   async findById(id: string): Promise<Question | null> {
     return this.ormRepository.findOne({ where: { id } });
+  }
+
+  async findByIds(ids: string[]): Promise<Question[]> {
+    return this.ormRepository.find({ where: { id: In(ids) } });
   }
 
   async findOnboardingByCategory(
