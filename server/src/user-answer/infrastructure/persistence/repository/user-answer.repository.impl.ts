@@ -25,7 +25,7 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
   ): Promise<UserAnswer[]> {
     return this.ormRepository.find({
       where: { userId, isOnboarding },
-      order: { id: 'ASC' },
+      order: { answeredAt: 'DESC' },
     });
   }
 

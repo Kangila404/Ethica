@@ -7,6 +7,14 @@ import { USER_ANSWER_REPOSITORY, type UserAnswerRepository } from "../domain/rep
 import { QUESTION_REPOSITORY, type QuestionRepository } from "src/question/domain/repository/question.repository";
 import { ANSWER_REPOSITORY, type AnswerRepository } from "src/question/domain/repository/answer.repository";
 import { UserStatus } from "src/user/domain/enum/user-status.enum";
+import {
+    FOLLOWUP_ANSWER_REPOSITORY,
+    type FollowupAnswerRepository,
+} from "src/question/domain/repository/followup-answer.repository";
+import {
+    USER_FOLLOWUP_ANSWER_REPOSITORY,
+    type UserFollowupAnswerRepository,
+} from "../domain/repository/user-followup-answer.repository";
 
 @Injectable()
 export class ArchiveService {
@@ -19,22 +27,37 @@ export class ArchiveService {
         @Inject(ANSWER_REPOSITORY)
         private readonly answerRepository:AnswerRepository,
         @Inject(QUESTION_REPOSITORY)
-        private readonly questionRepository:QuestionRepository
+        private readonly questionRepository:QuestionRepository,
+        @Inject(FOLLOWUP_ANSWER_REPOSITORY)
+        private readonly followupAnswerRepository: FollowupAnswerRepository,
+        @Inject(USER_FOLLOWUP_ANSWER_REPOSITORY)
+        private readonly userFollowupAnswerRepository: UserFollowupAnswerRepository,
     ){}
 
     async getUserAnswers(userId:string):Promise<ArchiveListResponse>{
         const user = await this.findUserByUserId(userId);
         this.validateUserStatus(user);
         const userAnswers = await this.userAnswerRepository.findByUserId(user.id, false);
+       
+        const answerIds = userAnswers.map((userAnswer) => userAnswer.answerId);
+
+        const answers = await this.answerRepository.findByIds(answerIds);
         
-        const items = await Promise.all(
-            userAnswers.map(async (userAnswer) => {
-                const answer = await  this.answerRepository.findById(userAnswer.answerId);
+        const questionIds = [...new Set(answers.map((answer) => answer.questionId))];
+        const questions = await this.questionRepository.findByIds(questionIds);
+
+        const answersById = new Map(answers.map((answer) => [answer.id, answer]));
+        const questionsById = new Map(
+            questions.map((question) => [question.id, question]),
+        );
+
+        const items = userAnswers.map((userAnswer) => {
+                const answer = answersById.get(userAnswer.answerId);
                 if(!answer){
                     throw new NotFoundException('선택지를 찾을 수 없습니다.');
                 }
 
-                const question = await this.questionRepository.findById(answer.questionId);
+                const question = questionsById.get(answer.questionId);
                 if(!question){
                     throw new NotFoundException('질문을 찾을 수 없습니다.');
                 }
@@ -44,8 +67,7 @@ export class ArchiveService {
                     serviceDate : userAnswer.answeredAt.toLocaleDateString('en-CA',{timeZone: 'Asia/Seoul'}),
                     questionPreview : question.stage1Body,
                 };
-            })
-        )
+            });
 
         return ArchiveListResponse.of(items);
         
@@ -75,7 +97,25 @@ export class ArchiveService {
             throw new NotFoundException('질문을 찾을 수 없습니다.');
         }
 
-        return ArchiveDetailResponse.of(userAnswer, question, answer);
+        const userFollowupAnswers =
+            await this.userFollowupAnswerRepository.findAllByUserId(user.id);
+        const followupAnswerIds = userFollowupAnswers
+            .filter((userFollowupAnswer) => !userFollowupAnswer.isOnboarding)
+            .map((userFollowupAnswer) => userFollowupAnswer.followupAnswerId);
+
+        const followupAnswers = followupAnswerIds.length
+            ? await this.followupAnswerRepository.findByIds(followupAnswerIds)
+            : [];
+        const followupAnswer = followupAnswers.find(
+            (candidate) => candidate.questionId === question.id,
+        ) ?? null;
+
+        return ArchiveDetailResponse.of(
+            userAnswer,
+            question,
+            answer,
+            followupAnswer,
+        );
     }
 
 

@@ -1,4 +1,5 @@
 import { Answer } from 'src/question/domain/model/answer.entity';
+import { FollowupAnswer } from 'src/question/domain/model/followup-answer.entity';
 import { Question } from 'src/question/domain/model/question.entity';
 import { UserAnswer } from 'src/user-answer/domain/model/user-answer.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -12,6 +13,17 @@ export class ArchiveFollowupResponse {
 
   @ApiProperty({ example: '관계에 대한 책임을 우선한 선택입니다.' })
   explanation!: string;
+
+  static of(
+    question: Question,
+    followupAnswer: FollowupAnswer,
+  ): ArchiveFollowupResponse {
+    const response = new ArchiveFollowupResponse();
+    response.questionBody = question.followupBody ?? '';
+    response.myAnswer = followupAnswer.body;
+    response.explanation = followupAnswer.explanation ?? '';
+    return response;
+  }
 }
 
 export class ArchiveDetailResponse {
@@ -42,6 +54,7 @@ export class ArchiveDetailResponse {
     userAnswer: UserAnswer,
     question: Question,
     answer: Answer,
+    followupAnswer: FollowupAnswer | null,
   ): ArchiveDetailResponse {
     const response = new ArchiveDetailResponse();
 
@@ -52,7 +65,9 @@ export class ArchiveDetailResponse {
     response.questionBody = question.stage1Body;
     response.myAnswer = answer.body;
     response.explanation = answer.explanation;
-    response.followup = null;
+    response.followup = followupAnswer
+      ? ArchiveFollowupResponse.of(question, followupAnswer)
+      : null;
 
     return response;
   }
