@@ -26,8 +26,8 @@ export class PhilosopherController {
   @ApiOperation({ summary: '철학자 포스트 목록 조회' })
   getPosts(
     @Param('id') id: string,
-    @CurrentUserId() userId: string
-): Promise<PostsResponse> {
+    @CurrentUserId() userId: string,
+  ): Promise<PostsResponse> {
     return this.philosopherService.getPhilosopher(id, userId);
   }
 
@@ -35,8 +35,8 @@ export class PhilosopherController {
   @ApiOperation({ summary: '철학자 포스트 상세 조회' })
   getPost(
     @Param('id') id: string,
-    @CurrentUserId() userId: string
-): Promise<PostResponse> {
+    @CurrentUserId() userId: string,
+  ): Promise<PostResponse> {
     return this.philosopherService.getPost(id, userId);
   }
 }

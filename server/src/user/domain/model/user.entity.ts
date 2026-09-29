@@ -85,7 +85,7 @@ export class User extends BaseEntity {
     this.notificationEnabled = notificationEnabled;
   }
 
-  // 6. Local 회원가입
+  // 6. 소셜 최초 로그인 사용자 생성
   static create(name: string): User {
     const user = new User();
     user.name = name;

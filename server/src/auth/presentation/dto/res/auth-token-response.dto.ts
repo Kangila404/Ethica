@@ -14,6 +14,7 @@ export class AuthTokenResponse {
       userId: '11111111-1111-1111-1111-111111111111',
       name: '유저',
       onboardingStatus: 'incomplete',
+      role: 'user',
     },
     description: '유저 정보',
   })
@@ -21,6 +22,7 @@ export class AuthTokenResponse {
     userId: string;
     name: string;
     onboardingStatus: OnboardingStatus;
+    role: User['userRole'];
   };
 
   static of(
@@ -35,6 +37,7 @@ export class AuthTokenResponse {
       userId: user.userId,
       name: user.name,
       onboardingStatus: user.onboardingStatus,
+      role: user.userRole,
     };
     return res;
   }

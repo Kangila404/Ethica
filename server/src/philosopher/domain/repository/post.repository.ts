@@ -7,5 +7,5 @@ export interface PostRepository {
 
   findByPhilosopherId(philosopherId: string): Promise<Post[]>;
 
-  countByPhilosopherId(philosopherId:string): Promise<number>;
+  countByPhilosopherId(philosopherId: string): Promise<number>;
 }

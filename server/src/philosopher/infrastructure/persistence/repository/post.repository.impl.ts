@@ -26,9 +26,9 @@ export class PostRepositoryImpl implements PostRepository {
     });
   }
 
-  async countByPhilosopherId(philosopherId:string): Promise<number>{
+  async countByPhilosopherId(philosopherId: string): Promise<number> {
     return await this.ormRepository.count({
-      where:{philosopherId},
+      where: { philosopherId },
     });
   }
 }

@@ -1,11 +1,14 @@
+import { AuthChallenge } from './domain/model/auth-challenge.entity';
+import { AUTH_CHALLENGE_REPOSITORY } from './domain/repository/auth-challenge.repository';
+import { AuthChallengeRepositoryImpl } from './infrastructure/persistence/repository/auth-challenge.repository.impl';
+import { SOCIAL_TOKEN_VERIFIER } from './domain/client/social-token-verifier';
+import { OidcTokenVerifier } from './infrastructure/social/oidc-token-verifier';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthIdentity } from './domain/model/auth-identity.entity';
 import { AuthController } from './presentation/controller/auth.controller';
 import { AUTH_REPOSITORY } from './domain/repository/auth.repository';
 import { AuthRepositoryImpl } from './infrastructure/persistence/repository/auth.repository.impl';
-import { PASSWORD_ENCODER } from './domain/encoder/password-encoder';
-import { BcryptPasswordEncoder } from './infrastructure/persistence/encoder/bcrypt-password-encoder';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './application/auth.service';
 import { UserModule } from 'src/user/user.module';
@@ -18,14 +21,14 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AuthIdentity, RefreshToken]),
+    TypeOrmModule.forFeature([AuthIdentity, RefreshToken, AuthChallenge]),
     PassportModule,
     UserModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET'),
+        secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '30m' },
       }),
     }),
@@ -34,7 +37,11 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
   providers: [
     AuthService,
     { provide: AUTH_REPOSITORY, useClass: AuthRepositoryImpl },
-    { provide: PASSWORD_ENCODER, useClass: BcryptPasswordEncoder },
+    { provide: SOCIAL_TOKEN_VERIFIER, useClass: OidcTokenVerifier },
+    {
+      provide: AUTH_CHALLENGE_REPOSITORY,
+      useClass: AuthChallengeRepositoryImpl,
+    },
     { provide: REFRESHTOKEN_REPOSITORY, useClass: RefreshTokenRepositoryImpl },
     JwtStrategy,
   ],

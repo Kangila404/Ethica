@@ -11,5 +11,8 @@ export interface UserAnswerRepository {
 
   findAllByUserId(userId: string): Promise<UserAnswer[]>;
 
-  findByIdAndUserId(userAnswerId:string, userId:string): Promise<UserAnswer | null>;
+  findByIdAndUserId(
+    userAnswerId: string,
+    userId: string,
+  ): Promise<UserAnswer | null>;
 }
