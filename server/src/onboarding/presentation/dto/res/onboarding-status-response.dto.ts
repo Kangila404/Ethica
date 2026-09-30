@@ -16,6 +16,12 @@ export class OnboardingStatusResponse {
   @ApiProperty({ example: '13', description: '다음 문제 번호' })
   nextQuestionIndex!: number;
 
+  @ApiProperty({ enum: ['incomplete', 'complete'] }) onboardingStatus!: string;
+  @ApiProperty({ nullable: true, type: String }) nextQuestionId!: string | null;
+  @ApiProperty() canViewResult!: boolean;
+  @ApiProperty() resultRequested!: boolean;
+  @ApiProperty({ nullable: true, type: String }) draftAnswerId!: string | null;
+  @ApiProperty({ enum: [1, 2] }) nextStage!: number;
   static of(user: User, answeredCount: number): OnboardingStatusResponse {
     const dto = new OnboardingStatusResponse();
     dto.interestCategoryId = user.interestCategoryId;

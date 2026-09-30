@@ -47,6 +47,8 @@ export class OnboardingQuestionsResponse {
   @ApiProperty({ type: [QuestionItem] })
   items!: QuestionItem[];
 
+  @ApiProperty() nextQuestionIndex!: number;
+  @ApiProperty({ nullable: true, type: String }) nextQuestionId!: string | null;
   static of(questions: Question[]): OnboardingQuestionsResponse {
     const dto = new OnboardingQuestionsResponse();
     dto.items = questions.map((q) => ({

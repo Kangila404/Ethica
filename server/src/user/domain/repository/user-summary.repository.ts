@@ -3,13 +3,26 @@ import { UserSummary, UserSummaryInsight } from '../model/user-summary.entity';
 export const USER_SUMMARY_REPOSITORY = Symbol('USER_SUMMARY_REPOSITORY');
 
 export interface UserSummaryRepository {
-  findByUserId(userId: string): Promise<UserSummary | null>;
-
-  upsertAnalysis(
+  ensureSnapshot(
     userId: string,
-    nearestPhilosopherId: string,
-    overallSummaries: UserSummaryInsight[],
-    contradictions: UserSummaryInsight[],
+    nearestId: string,
+    fingerprint: string,
     accuracy: number,
-  ): Promise<void>;
+  ): Promise<UserSummary>;
+  claim(
+    userId: string,
+    fingerprint: string,
+    token: string,
+    now: Date,
+  ): Promise<boolean>;
+  finish(
+    userId: string,
+    fingerprint: string,
+    token: string,
+    result: {
+      overallSummaries: UserSummaryInsight[];
+      contradictions: UserSummaryInsight[];
+    } | null,
+  ): Promise<boolean>;
+  findByUserId(userId: string): Promise<UserSummary | null>;
 }

@@ -1,3 +1,5 @@
+import { APP_FILTER } from '@nestjs/core';
+import { ApiExceptionFilter } from './common/filter/api-exception.filter';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -32,7 +34,9 @@ import { UserAnswerModule } from './user-answer/user-answer.module';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize:
+          config.get<string>('NODE_ENV') !== 'production' &&
+          config.get<string>('DB_SYNCHRONIZE') !== 'false',
       }),
 
       // transactional 옵션
@@ -64,6 +68,9 @@ import { UserAnswerModule } from './user-answer/user-answer.module';
     UserAnswerModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: ApiExceptionFilter },
+  ],
 })
 export class AppModule {}

@@ -1,3 +1,5 @@
+import { ANALYSIS_SOURCE_REPOSITORY } from './domain/repository/analysis-source.repository';
+import { AnalysisSourceRepositoryImpl } from './infrastructure/analysis-source.repository.impl';
 import { Module } from '@nestjs/common';
 import { AnalysisService } from './application/analysis.service';
 import { UserModule } from 'src/user/user.module';
@@ -22,10 +24,14 @@ import { QuestionModule } from 'src/question/question.module';
   providers: [
     AnalysisService,
     {
+      provide: ANALYSIS_SOURCE_REPOSITORY,
+      useClass: AnalysisSourceRepositoryImpl,
+    },
+    {
       provide: ANALYSIS_AI_CLIENT,
       useClass: OpenAiAnalysisAiClient,
     },
   ],
-  exports: [],
+  exports: [AnalysisService],
 })
 export class AnalysisModule {}

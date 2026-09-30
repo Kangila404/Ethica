@@ -9,6 +9,7 @@ export class OnboardingAnswerResponse {
   @ApiProperty({ example: 5 })
   totalCount!: number;
 
+  @ApiProperty() canViewResult!: boolean;
   static of(answeredCount: number): OnboardingAnswerResponse {
     const dto = new OnboardingAnswerResponse();
     dto.answeredCount = answeredCount;

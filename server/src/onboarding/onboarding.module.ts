@@ -1,3 +1,8 @@
+import { CategoryModule } from 'src/category/category.module';
+import { AnalysisModule } from 'src/analysis/analysis.module';
+import { OnboardingSession } from './domain/model/onboarding-session.entity';
+import { ONBOARDING_SESSION_REPOSITORY } from './domain/repository/onboarding-session.repository';
+import { OnboardingSessionRepositoryImpl } from './infrastructure/onboarding-session.repository.impl';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/domain/model/user.entity';
@@ -13,8 +18,10 @@ import { PhilosopherModule } from 'src/philosopher/philosopher.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, OnboardingSession]),
     AuthModule,
+    CategoryModule,
+    AnalysisModule,
     UserModule,
     UserAnswerModule,
     QuestionModule,
@@ -23,6 +30,10 @@ import { PhilosopherModule } from 'src/philosopher/philosopher.module';
   controllers: [OnboardingController],
   providers: [
     OnboardingService,
+    {
+      provide: ONBOARDING_SESSION_REPOSITORY,
+      useClass: OnboardingSessionRepositoryImpl,
+    },
     { provide: USER_REPOSITORY, useClass: UserRepositoryImpl },
   ],
 })
