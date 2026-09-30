@@ -24,19 +24,28 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     categoryId: string,
     limit: number,
   ): Promise<Question[]> {
-    return this.ormRepository
+    // Select root IDs before loading choices: pagination across answer joins
+    // can otherwise consume the limit with multiple rows of the same question.
+    const selected = await this.ormRepository
       .createQueryBuilder('q')
       .innerJoin('q.categories', 'qc', 'qc.categoryId = :categoryId', {
         categoryId,
       })
-      .leftJoinAndSelect('q.answers', 'a')
-      .leftJoinAndSelect('q.followupAnswers', 'f')
       .where('q.usage = :usage', { usage: QuestionUsage.ONBOARDING })
       .andWhere('q.isActive = true')
       .orderBy('q.id', 'ASC')
-      .addOrderBy('a.id', 'ASC')
       .take(limit)
       .getMany();
+    if (!selected.length) return [];
+    return this.ormRepository.find({
+      where: { id: In(selected.map((q) => q.id)) },
+      relations: { answers: true, followupAnswers: true, categories: true },
+      order: {
+        id: 'ASC',
+        answers: { id: 'ASC' },
+        followupAnswers: { id: 'ASC' },
+      },
+    });
   }
 
   async findByIdWithAnswers(questionId: string): Promise<Question | null> {
