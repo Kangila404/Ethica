@@ -1,3 +1,5 @@
+import { Transactional } from 'typeorm-transactional';
+import { dailyBoundary, dailyDate } from 'src/common/daily-clock';
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { USER_REPOSITORY } from '../domain/repository/user.repository';
 import type { UserRepository } from '../domain/repository/user.repository';
@@ -17,10 +19,11 @@ export class UserService {
   ) {}
 
   async getMe(userId: string): Promise<UserResponse> {
-    const user = await this.getUserOrThrow(userId);
+    const user = await this.getUserOrThrow(userId, false);
     return UserResponse.from(user);
   }
 
+  @Transactional()
   async updateNickname(
     userId: string,
     request: NicknameUpdateRequest,
@@ -31,16 +34,34 @@ export class UserService {
     return new MessageResponse('success');
   }
 
+  @Transactional()
   async updateDailyTime(
     userId: string,
     request: DailyTimeRequest,
   ): Promise<MessageResponse> {
-    const user = await this.getUserOrThrow(userId);
-    user.updateDailyTime(request.dailyQuestionTime, request.timezone);
+    const user = await this.userRepository.findByUserId(userId, true);
+    if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
+    const now = new Date();
+    user.pendingDailyQuestionTime = request.dailyQuestionTime;
+    user.pendingTimezone = request.timezone;
+    user.dailyScheduleEffectiveAt = dailyBoundary(
+      now,
+      request.dailyQuestionTime,
+      request.timezone,
+      true,
+    );
+    if (
+      user.nextDailyAt &&
+      dailyDate(user.nextDailyAt, user.timezone || 'Asia/Seoul') >
+        dailyDate(now, user.timezone || 'Asia/Seoul')
+    ) {
+      user.nextDailyAt = user.dailyScheduleEffectiveAt;
+    }
     await this.userRepository.save(user);
     return new MessageResponse('success');
   }
 
+  @Transactional()
   async deleteUser(userId: string): Promise<MessageResponse> {
     const user = await this.getUserOrThrow(userId);
     user.withdraw();
@@ -49,6 +70,7 @@ export class UserService {
     return new MessageResponse('success');
   }
 
+  @Transactional()
   async updateNotification(
     userId: string,
     request: NotificationRequest,
@@ -59,6 +81,7 @@ export class UserService {
     return NotificationResponse.from(user);
   }
 
+  @Transactional()
   async updateFcmToken(userId: string, fcmToken: string): Promise<void> {
     const user = await this.getUserOrThrow(userId);
     user.fcmToken = fcmToken;
@@ -66,8 +89,8 @@ export class UserService {
   }
 
   // 메서드
-  private async getUserOrThrow(userId: string): Promise<User> {
-    const user = await this.userRepository.findByUserId(userId);
+  private async getUserOrThrow(userId: string, lock = true): Promise<User> {
+    const user = await this.userRepository.findByUserId(userId, lock);
     if (!user) {
       throw new NotFoundException('유저를 찾을 수 없습니다.');
     }

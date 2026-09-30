@@ -116,7 +116,10 @@ export class AuthService {
     );
     let user: User;
     if (identity) {
-      const existing = await this.userRepository.findById(identity.userId);
+      const existing = await this.userRepository.findById(
+        identity.userId,
+        true,
+      );
       if (!existing || existing.userStatus !== UserStatus.ACTIVE) {
         throw new UnauthorizedException({
           code: 'AUTH_ACCOUNT_UNAVAILABLE',

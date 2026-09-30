@@ -5,6 +5,7 @@ export const USER_DAILY_QUESTION_REPOSITORY = Symbol(
 );
 
 export interface UserDailyQuestionRepository {
+  findLatest(userId: string): Promise<UserDailyQuestion | null>;
   findByUserIdAndServiceDate(
     userId: string,
     serviceDate: string,

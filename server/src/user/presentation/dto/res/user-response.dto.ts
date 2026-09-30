@@ -17,6 +17,11 @@ export class UserResponse {
   @ApiProperty({ example: 'Asia/Seoul' })
   timezone!: string;
 
+  nextDailyAt!: Date | null;
+  dailyScheduleEffectiveAt!: Date | null;
+  pendingDailyQuestionTime!: string | null;
+  pendingTimezone!: string | null;
+
   @ApiProperty({ example: true })
   notificationEnabled!: boolean;
 
@@ -28,6 +33,10 @@ export class UserResponse {
     dto.onboardingStatus = user.onboardingStatus;
     dto.dailyQuestionTime = user.dailyQuestionTime;
     dto.timezone = user.timezone;
+    dto.nextDailyAt = user.nextDailyAt;
+    dto.dailyScheduleEffectiveAt = user.dailyScheduleEffectiveAt;
+    dto.pendingDailyQuestionTime = user.pendingDailyQuestionTime;
+    dto.pendingTimezone = user.pendingTimezone;
     dto.notificationEnabled = user.notificationEnabled;
     return dto;
   }

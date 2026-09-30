@@ -9,6 +9,13 @@ export class UserDailyQuestionRepositoryImpl implements UserDailyQuestionReposit
     private readonly ormRepository: Repository<UserDailyQuestion>,
   ) {}
 
+  async findLatest(userId: string): Promise<UserDailyQuestion | null> {
+    return this.ormRepository.findOne({
+      where: { userId },
+      order: { id: 'DESC' },
+    });
+  }
+
   async findByUserIdAndServiceDate(
     userId: string,
     serviceDate: string,
@@ -21,7 +28,9 @@ export class UserDailyQuestionRepositoryImpl implements UserDailyQuestionReposit
       where: { userId },
       select: { questionId: true },
     });
-    return rows.map((row) => row.questionId);
+    return rows
+      .map((row) => row.questionId)
+      .filter((id): id is string => id !== null);
   }
 
   async save(userDailyQuestion: UserDailyQuestion): Promise<UserDailyQuestion> {

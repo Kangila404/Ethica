@@ -71,6 +71,12 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       qb.andWhere('q.id NOT IN (:...excludeIds)', { excludeIds });
     }
 
+    qb.andWhere(
+      '(SELECT COUNT(*) FROM answer a WHERE a.questionId = q.id) = 2',
+    );
+    qb.andWhere(
+      "(q.type = 'single' OR (q.followupBody IS NOT NULL AND (SELECT COUNT(*) FROM followup_answer f WHERE f.questionId = q.id) = 2))",
+    );
     return qb.orderBy('RAND()').limit(1).getOne();
   }
 }

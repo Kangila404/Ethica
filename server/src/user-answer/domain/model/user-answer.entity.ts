@@ -20,6 +20,9 @@ export class UserAnswer extends BaseEntity {
   @Column({ type: 'boolean' })
   isOnboarding!: boolean;
 
+  @Column({ type: 'date', nullable: true })
+  serviceDate!: string | null;
+
   @CreateDateColumn()
   answeredAt!: Date;
 

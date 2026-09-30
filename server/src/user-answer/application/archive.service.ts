@@ -53,11 +53,11 @@ export class ArchiveService {
   async getUserAnswers(userId: string): Promise<ArchiveListResponse> {
     const user = await this.findUserByUserId(userId);
     this.validateUserStatus(user);
-    const userAnswers = await this.userAnswerRepository.findByUserId(
+    const userAnswers = await this.userAnswerRepository.findAllByUserId(
       user.id,
-      false,
     );
 
+    userAnswers.reverse();
     const answerIds = userAnswers.map((userAnswer) => userAnswer.answerId);
 
     const answers = await this.answerRepository.findByIds(answerIds);
@@ -85,9 +85,11 @@ export class ArchiveService {
 
       return {
         userAnswerId: userAnswer.id,
-        serviceDate: userAnswer.answeredAt.toLocaleDateString('en-CA', {
-          timeZone: 'Asia/Seoul',
-        }),
+        serviceDate:
+          userAnswer.serviceDate ??
+          userAnswer.answeredAt.toLocaleDateString('en-CA', {
+            timeZone: 'Asia/Seoul',
+          }),
         questionPreview: question.stage1Body,
       };
     });
@@ -111,10 +113,6 @@ export class ArchiveService {
       throw new NotFoundException('답변 기록을 찾을 수 없습니다.');
     }
 
-    if (userAnswer.isOnboarding) {
-      throw new NotFoundException('답변 기록을 찾을 수 없습니다.');
-    }
-
     const answer = await this.answerRepository.findById(userAnswer.answerId);
     if (!answer) {
       throw new NotFoundException('선택지를 찾을 수 없습니다.');
@@ -128,7 +126,7 @@ export class ArchiveService {
     const userFollowupAnswers =
       await this.userFollowupAnswerRepository.findAllByUserId(user.id);
     const followupAnswerIds = userFollowupAnswers
-      .filter((userFollowupAnswer) => !userFollowupAnswer.isOnboarding)
+      .filter((item) => item.isOnboarding === userAnswer.isOnboarding)
       .map((userFollowupAnswer) => userFollowupAnswer.followupAnswerId);
 
     const followupAnswers = followupAnswerIds.length
