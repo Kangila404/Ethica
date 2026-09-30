@@ -30,7 +30,10 @@ export class ArchiveDetailResponse {
   @ApiProperty({ example: '5012', description: '사용자 답변 ID' })
   userAnswerId!: string;
 
-  @ApiProperty({ example: '2026-06-23', description: '답변한 날짜 (Asia/Seoul)' })
+  @ApiProperty({
+    example: '2026-06-23',
+    description: '답변한 날짜 (Asia/Seoul)',
+  })
   serviceDate!: string;
 
   @ApiProperty({ example: '친구의 거짓말을 알게 되었다. 진실을 말해야 할까?' })

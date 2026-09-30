@@ -1,5 +1,12 @@
 node_modules
 .env
+.env.*
+!.env.example
+
+# Private working documents are backed up separately.
+/AGENTS.md
+/docs/
+/ios/README.md
 .idea/
 dist
 .DS_Store

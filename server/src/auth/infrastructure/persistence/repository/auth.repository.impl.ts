@@ -1,3 +1,4 @@
+import { AuthType } from '../../../domain/enums/auth-Type.enum';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthIdentity } from 'src/auth/domain/model/auth-identity.entity';
@@ -11,8 +12,11 @@ export class AuthRepositoryImpl implements AuthRepository {
     private readonly ormRepository: Repository<AuthIdentity>,
   ) {}
 
-  findByEmail(email: string): Promise<AuthIdentity | null> {
-    return this.ormRepository.findOneBy({ email });
+  findByProvider(
+    authType: AuthType,
+    providerUid: string,
+  ): Promise<AuthIdentity | null> {
+    return this.ormRepository.findOneBy({ authType, providerUid });
   }
 
   async save(identity: AuthIdentity): Promise<void> {

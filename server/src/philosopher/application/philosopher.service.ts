@@ -1,4 +1,9 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PhilosophersResponse } from '../presentation/dto/philosophers-response.dto';
 import { PostsResponse } from '../presentation/dto/posts-response.dto';
 import { PostResponse } from '../presentation/dto/post-response.dto';
@@ -52,11 +57,13 @@ export class PhilosopherService {
       counts.map((item) => [item.philosopherId, item.count]),
     );
     const all = await Promise.all(
-  philosophers.map(async (philosopher) => ({
-    philosopher,
-    postCount: await this.postRepository.countByPhilosopherId(philosopher.id),
-  })),
-);
+      philosophers.map(async (philosopher) => ({
+        philosopher,
+        postCount: await this.postRepository.countByPhilosopherId(
+          philosopher.id,
+        ),
+      })),
+    );
     const nearest =
       totalCount === 0
         ? []
@@ -79,10 +86,7 @@ export class PhilosopherService {
     return PhilosophersResponse.of(nearest, all);
   }
 
-  async getPhilosopher(
-    id: string,
-    userId:string
-): Promise<PostsResponse> {
+  async getPhilosopher(id: string, userId: string): Promise<PostsResponse> {
     const user = await this.getUserOrThrow(userId);
     this.validateUserStatus(user);
     const philosopher = await this.philosopherRepository.findById(id);
@@ -95,7 +99,7 @@ export class PhilosopherService {
     return PostsResponse.of(philosopher, posts);
   }
 
-  async getPost(id: string, userId:string): Promise<PostResponse> {
+  async getPost(id: string, userId: string): Promise<PostResponse> {
     const user = await this.getUserOrThrow(userId);
     this.validateUserStatus(user);
     const post = await this.postRepository.findById(id);
@@ -130,9 +134,9 @@ export class PhilosopherService {
   }
 
   // 3. 유저 상태 검증
-  private validateUserStatus(user:User):void{
-    if(user.userStatus === UserStatus.SUSPENDED){
-        throw new ForbiddenException('정지된 유저입니다.');
+  private validateUserStatus(user: User): void {
+    if (user.userStatus === UserStatus.SUSPENDED) {
+      throw new ForbiddenException('정지된 유저입니다.');
     }
   }
 }

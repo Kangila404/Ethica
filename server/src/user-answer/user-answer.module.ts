@@ -15,7 +15,7 @@ import { ArchiveService } from './application/archive.service';
   imports: [
     TypeOrmModule.forFeature([UserAnswer, UserFollowupAnswer]),
     UserModule,
-    QuestionModule
+    QuestionModule,
   ],
   controllers: [ArchiveController],
   providers: [

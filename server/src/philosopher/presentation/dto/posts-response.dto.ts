@@ -21,7 +21,7 @@ export class PostsResponse {
     dto.coreThought = philosopher.coreThought;
     dto.lifeRoots = philosopher.lifeRoots;
     dto.imageKey = philosopher.imageKey;
-    
+
     dto.posts = posts.map((post) => ({
       id: post.id,
       title: post.title,

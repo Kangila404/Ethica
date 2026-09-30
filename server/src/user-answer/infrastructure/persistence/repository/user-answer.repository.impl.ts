@@ -36,10 +36,12 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
     });
   }
 
-
-  async findByIdAndUserId(id:string, userId:string): Promise<UserAnswer | null>{
+  async findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<UserAnswer | null> {
     return this.ormRepository.findOne({
-      where:{id, userId}
-    })
+      where: { id, userId },
+    });
   }
 }
