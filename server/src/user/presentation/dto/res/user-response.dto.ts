@@ -7,6 +7,7 @@ export class UserResponse {
   userId!: string;
 
   name!: string;
+  userRole!: string;
 
   @ApiProperty({ enum: OnboardingStatus })
   onboardingStatus!: OnboardingStatus;
@@ -30,6 +31,7 @@ export class UserResponse {
 
     dto.userId = user.userId;
     dto.name = user.name;
+    dto.userRole = user.userRole;
     dto.onboardingStatus = user.onboardingStatus;
     dto.dailyQuestionTime = user.dailyQuestionTime;
     dto.timezone = user.timezone;

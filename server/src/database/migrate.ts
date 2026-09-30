@@ -1,3 +1,4 @@
+import { AdminSupportAccount1790733600000 } from './migrations/1790733600000-AdminSupportAccount';
 import 'reflect-metadata';
 import { DailyCycles1790730000000 } from './migrations/1790730000000-DailyCycles';
 import { DataSource } from 'typeorm';
@@ -18,7 +19,11 @@ const db = new DataSource({
   database: process.env.DB_DATABASE,
   synchronize: false,
   logging: false,
-  migrations: [OnboardingAnalysis1790726400000, DailyCycles1790730000000],
+  migrations: [
+    OnboardingAnalysis1790726400000,
+    DailyCycles1790730000000,
+    AdminSupportAccount1790733600000,
+  ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });
 async function migrate(): Promise<void> {

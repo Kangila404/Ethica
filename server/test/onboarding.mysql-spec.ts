@@ -1,3 +1,25 @@
+import { randomUUID } from 'node:crypto';
+import { UserRole } from '../src/user/domain/enum/user-role.enum';
+import { UserStatus } from '../src/user/domain/enum/user-status.enum';
+import { AuthType } from '../src/auth/domain/enums/auth-Type.enum';
+import { AuthIdentity } from '../src/auth/domain/model/auth-identity.entity';
+import { AuthChallenge } from '../src/auth/domain/model/auth-challenge.entity';
+import { RefreshToken } from '../src/auth/domain/model/refresh-token.entity';
+import { SOCIAL_TOKEN_VERIFIER } from '../src/auth/domain/client/social-token-verifier';
+import { REVOCATION_CLIENT } from '../src/account/domain/revocation-client';
+import {
+  ACCOUNT_STORE,
+  type AccountStore,
+} from '../src/account/domain/account-store';
+import {
+  CREDENTIAL_CIPHER,
+  type CredentialCipher,
+} from '../src/account/domain/credential-cipher';
+import { AccountSchedulerService } from '../src/account/application/account-scheduler.service';
+import { RevocationJob } from '../src/account/domain/model/revocation-job.entity';
+import { Inquiry } from '../src/support/domain/model/inquiry.entity';
+import { Notice } from '../src/support/domain/model/notice.entity';
+import { AdminSupportAccount1790733600000 } from '../src/database/migrations/1790733600000-AdminSupportAccount';
 import {
   USER_PHILOSOPHER_COUNT_REPOSITORY,
   type UserPhilosopherCountRepository,
@@ -41,12 +63,14 @@ import { USER_FOLLOWUP_ANSWER_REPOSITORY } from '../src/user-answer/domain/repos
 import { UserFollowupAnswerRepositoryImpl } from '../src/user-answer/infrastructure/persistence/repository/user-followup-answer.repository.impl';
 
 // Run only against a newly created disposable MySQL database. No real AI or push calls.
-describe('Onboarding and analysis with MySQL', () => {
+describe('Server workflows with MySQL', () => {
   let app: INestApplication;
   let db: DataSource;
   let category: Category;
   let questions: Question[];
   let jwt: JwtService;
+  const socialVerifier = { verify: jest.fn(), assertConfigured: jest.fn() };
+  const revoker = { prepare: jest.fn(), revoke: jest.fn() };
   const ai = { analyze: jest.fn() };
   beforeAll(async () => {
     const database = process.env.ETHICA_TEST_DB;
@@ -61,6 +85,7 @@ describe('Onboarding and analysis with MySQL', () => {
       DB_USERNAME: 'ethica',
       DB_PASSWORD: 'ethica',
       DB_SYNCHRONIZE: 'false',
+      SOCIAL_TOKEN_ENCRYPTION_KEY: 'a'.repeat(64),
       JWT_SECRET: 'integration-only-secret-not-a-real-credential',
     });
     initializeTransactionalContext();
@@ -139,11 +164,27 @@ describe('Onboarding and analysis with MySQL', () => {
       const dailyMigration = new DailyCycles1790730000000();
       await dailyMigration.up(runner);
       await dailyMigration.up(runner);
+      for (const table of [
+        'inquiry',
+        'notice',
+        'term',
+        'social_revocation_job',
+      ])
+        await runner.dropTable(table);
+      const operationsMigration = new AdminSupportAccount1790733600000();
+      await operationsMigration.up(runner);
+      await operationsMigration.up(runner);
       await runner.release();
     } finally {
       await baseline.destroy();
     }
     const module = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(AccountSchedulerService)
+      .useValue({})
+      .overrideProvider(SOCIAL_TOKEN_VERIFIER)
+      .useValue(socialVerifier)
+      .overrideProvider(REVOCATION_CLIENT)
+      .useValue(revoker)
       .overrideProvider(ANALYSIS_AI_CLIENT)
       .useValue(ai)
       .overrideProvider(NotificationService)
@@ -724,5 +765,406 @@ describe('Onboarding and analysis with MySQL', () => {
       questionId: q.id,
       followupAnswerId: q.followupAnswers[0].id,
     }).expect(403);
+  });
+  async function adminUser() {
+    const result = await newUser();
+    await db
+      .getRepository(User)
+      .update(result.user.id, { userRole: UserRole.ADMIN });
+    return result;
+  }
+  function put(path: string, token: string, body: object) {
+    return request(app.getHttpServer() as Server)
+      .put('/api/' + path)
+      .set('Authorization', 'Bearer ' + token)
+      .send(body);
+  }
+  it('checks current DB admin rights even for an existing JWT and rejects privilege injection', async () => {
+    const { user, token } = await newUser();
+    await post('admin/categories', token, {
+      name: '권한',
+      sortOrder: 1,
+    }).expect(403);
+    await db.getRepository(User).update(user.id, { userRole: UserRole.ADMIN });
+    await post('admin/categories', token, {
+      name: '권한',
+      sortOrder: 1,
+    }).expect(201);
+    await post('admin/categories', token, {
+      name: '권한',
+      sortOrder: 1,
+      userRole: 'admin',
+    }).expect(400);
+    await db.getRepository(User).update(user.id, { userRole: UserRole.USER });
+    await post('admin/categories', token, {
+      name: '권한',
+      sortOrder: 1,
+    }).expect(403);
+  });
+  it('creates and edits content while preserving chosen IDs and transferring philosopher counts', async () => {
+    const admin = await adminUser();
+    const category = payload(
+      await post('admin/categories', admin.token, {
+        name: '운영',
+        sortOrder: 2,
+      }).expect(201),
+    );
+    const makePh = (name: string) => ({
+      name,
+      era: '현대',
+      school: '학파',
+      coreThought: '생각',
+      lifeRoots: '생애',
+      imageKey: null,
+    });
+    const ph1 = payload(
+      await post('admin/philosophers', admin.token, makePh('첫 사상가')).expect(
+        201,
+      ),
+    );
+    const ph2 = payload(
+      await post(
+        'admin/philosophers',
+        admin.token,
+        makePh('다음 사상가'),
+      ).expect(201),
+    );
+    const input = {
+      usage: 'daily',
+      type: 'single',
+      title: '운영 문제',
+      stage1Body: '수정 전',
+      isActive: true,
+      categoryIds: [category.id],
+      answers: [
+        { body: 'A', philosopherId: ph1.id, explanation: '해설 A' },
+        { body: 'B', philosopherId: ph2.id, explanation: '해설 B' },
+      ],
+      followupAnswers: [],
+    };
+    const response = await post('admin/questions', admin.token, input).expect(
+      201,
+    );
+    const q = response.body as Question;
+    const { user, token } = await dailyUser();
+    await db.getRepository(UserDailyQuestion).save({
+      userId: user.id,
+      questionId: q.id,
+      serviceDate: '2026-09-30',
+      openedAt: new Date(),
+    });
+    await db
+      .getRepository(User)
+      .update(user.id, { nextDailyAt: new Date(Date.now() + 3600000) });
+    await post('daily/answers/stage1', token, {
+      questionId: q.id,
+      answerId: q.answers[0].id,
+    }).expect(201);
+    const edited = {
+      ...input,
+      stage1Body: '수정 후',
+      answers: input.answers.map((a, i) => ({
+        ...a,
+        id: q.answers[i].id,
+        philosopherId: ph2.id,
+      })),
+    };
+    await put('admin/questions/' + q.id, admin.token, edited).expect(200);
+    const counts = await db
+      .getRepository(UserPhilosopherCount)
+      .findBy({ userId: user.id });
+    expect(counts.map((c) => [c.philosopherId, c.count])).toEqual([
+      [ph2.id, 1],
+    ]);
+    const saved = await db
+      .getRepository(UserAnswer)
+      .findOneByOrFail({ userId: user.id });
+    expect(saved.answerId).toBe(q.answers[0].id);
+    const archive = await request(app.getHttpServer() as Server)
+      .get('/api/archive/' + saved.id)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(archive.body).toMatchObject({ questionBody: '수정 후' });
+    await put('admin/questions/' + q.id, admin.token, {
+      ...edited,
+      answers: input.answers,
+    }).expect(409);
+    await request(app.getHttpServer() as Server)
+      .delete('/api/admin/philosophers/' + ph2.id)
+      .set('Authorization', 'Bearer ' + admin.token)
+      .expect(409);
+    const postResult = payload(
+      await post('admin/posts', admin.token, {
+        philosopherId: ph1.id,
+        title: '코스',
+        imageKey: null,
+      }).expect(201),
+    );
+    const segment = payload(
+      await post('admin/segments', admin.token, {
+        postId: postResult.id,
+        segmentType: 'text',
+        body: '카드',
+        sortOrder: 0,
+      }).expect(201),
+    );
+    await put('admin/segments/' + segment.id, admin.token, {
+      postId: postResult.id,
+      segmentType: 'image',
+      imageKey: null,
+      sortOrder: 0,
+    }).expect(400);
+    await request(app.getHttpServer() as Server)
+      .delete('/api/admin/questions/' + q.id)
+      .set('Authorization', 'Bearer ' + admin.token)
+      .expect(200);
+    expect(
+      (await db.getRepository(Question).findOneByOrFail({ id: q.id })).isActive,
+    ).toBe(false);
+    expect(
+      await db.getRepository(UserAnswer).countBy({ userId: user.id }),
+    ).toBe(1);
+  });
+  it('isolates inquiries, supports admin answers, and only publishes selected notices and real terms', async () => {
+    const owner = await newUser(),
+      other = await newUser(),
+      admin = await adminUser();
+    const inquiry = payload(
+      await post('inquiries', owner.token, {
+        title: '도움',
+        content: '질문',
+      }).expect(201),
+    );
+    await request(app.getHttpServer() as Server)
+      .get('/api/inquiries/' + inquiry.id)
+      .set('Authorization', 'Bearer ' + other.token)
+      .expect(404);
+    await request(app.getHttpServer() as Server)
+      .patch('/api/admin/inquiries/' + inquiry.id + '/answer')
+      .set('Authorization', 'Bearer ' + admin.token)
+      .send({ answerContent: '답변' })
+      .expect(200);
+    const answered = await request(app.getHttpServer() as Server)
+      .get('/api/inquiries/' + inquiry.id)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .expect(200);
+    expect(answered.body).toMatchObject({
+      status: 'answered',
+      answerContent: '답변',
+    });
+    expect(answered.body).not.toHaveProperty('userId');
+    const notice = payload(
+      await post('admin/notices', admin.token, {
+        title: '공지',
+        content: '내용',
+        isPublished: false,
+      }).expect(201),
+    );
+    await request(app.getHttpServer() as Server)
+      .get('/api/notices/' + notice.id)
+      .expect(404);
+    await put('admin/notices/' + notice.id, admin.token, {
+      title: '공지',
+      content: '공개',
+      isPublished: true,
+    }).expect(200);
+    await request(app.getHttpServer() as Server)
+      .get('/api/notices/' + notice.id)
+      .expect(200);
+    await request(app.getHttpServer() as Server)
+      .get('/api/terms')
+      .expect(404);
+    await put('admin/terms', admin.token, {
+      type: 'service',
+      title: '테스트 약관',
+      content: '테스트 전용',
+      version: 'test-1',
+    }).expect(200);
+    expect(
+      (
+        await request(app.getHttpServer() as Server)
+          .get('/api/terms')
+          .expect(200)
+      ).body,
+    ).toMatchObject({ version: 'test-1' });
+  });
+  it('requires matching reauthentication, revokes sessions immediately and stores only encrypted retry credentials', async () => {
+    const { user, token } = await newUser();
+    await db
+      .getRepository(AuthIdentity)
+      .save(
+        AuthIdentity.createSocial(
+          user.id,
+          AuthType.GOOGLE,
+          'withdraw-owner',
+          null,
+        ),
+      );
+    const challenge = await db.getRepository(AuthChallenge).save({
+      id: randomUUID(),
+      provider: AuthType.GOOGLE,
+      nonce: 'withdraw-nonce',
+      expiresAt: new Date(Date.now() + 300000),
+    });
+    await db
+      .getRepository(RefreshToken)
+      .save(
+        RefreshToken.issue(
+          user.id,
+          'f'.repeat(64),
+          new Date(Date.now() + 3600000),
+        ),
+      );
+    const input = {
+      provider: 'google',
+      challengeId: challenge.id,
+      idToken: 'fresh-id-token',
+      credential: 'private-access-token',
+    };
+    const withdraw = () =>
+      request(app.getHttpServer() as Server)
+        .delete('/api/users/me')
+        .set('Authorization', 'Bearer ' + token)
+        .send(input);
+    socialVerifier.verify.mockResolvedValueOnce({
+      provider: AuthType.GOOGLE,
+      subject: 'someone-else',
+      email: null,
+      name: null,
+    });
+    await withdraw().expect(401);
+    expect(
+      (await db.getRepository(User).findOneByOrFail({ id: user.id })).deletedAt,
+    ).toBeNull();
+    socialVerifier.verify.mockResolvedValue({
+      provider: AuthType.GOOGLE,
+      subject: 'withdraw-owner',
+      email: null,
+      name: null,
+    });
+    revoker.prepare.mockResolvedValue({
+      provider: AuthType.GOOGLE,
+      token: 'private-access-token',
+    });
+    await withdraw().expect(200);
+    await request(app.getHttpServer() as Server)
+      .get('/api/users/me')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(401);
+    expect(
+      await db.getRepository(RefreshToken).countBy({ userId: user.id }),
+    ).toBe(0);
+    const row = await db
+      .getRepository(RevocationJob)
+      .createQueryBuilder('job')
+      .addSelect('job.encryptedCredential')
+      .where('job.userId = :id', { id: user.id })
+      .getOneOrFail();
+    expect(row.encryptedCredential).not.toContain('private-access-token');
+    const vault = app.get<CredentialCipher>(CREDENTIAL_CIPHER);
+    expect(vault.decrypt(row.encryptedCredential!)).toContain(
+      'private-access-token',
+    );
+    const store = app.get<AccountStore>(ACCOUNT_STORE);
+    const claims = await Promise.all([
+      store.claim(new Date()),
+      store.claim(new Date()),
+    ]);
+    expect(claims.filter(Boolean)).toHaveLength(1);
+    const first = claims.find((c) => c !== null)!;
+    await store.finish(first.id, first.leaseToken!, false, new Date());
+    await db
+      .getRepository(RevocationJob)
+      .update(first.id, { nextAttemptAt: new Date(Date.now() - 1000) });
+    const retry = (await store.claim(new Date()))!;
+    await store.finish(first.id, first.leaseToken!, true, new Date());
+    expect(
+      (await db.getRepository(RevocationJob).findOneByOrFail({ id: first.id }))
+        .status,
+    ).toBe('processing');
+    await store.finish(retry.id, retry.leaseToken!, true, new Date());
+    const done = await db
+      .getRepository(RevocationJob)
+      .createQueryBuilder('job')
+      .addSelect('job.encryptedCredential')
+      .where('job.id = :id', { id: first.id })
+      .getOneOrFail();
+    expect(done.status).toBe('done');
+    expect(done.encryptedCredential).toBeNull();
+    const admin = await adminUser();
+    const visible = await request(app.getHttpServer() as Server)
+      .get('/api/admin/revocations')
+      .set('Authorization', 'Bearer ' + admin.token)
+      .expect(200);
+    expect(JSON.stringify(visible.body)).not.toContain('encryptedCredential');
+  });
+  it('purges only accounts deleted at least two years ago and removes all private records atomically', async () => {
+    const old = await newUser(),
+      recent = await newUser();
+    await db.getRepository(User).update(old.user.id, {
+      deletedAt: new Date('2024-01-01T00:00:00Z'),
+      userStatus: UserStatus.SUSPENDED,
+    });
+    await db.getRepository(User).update(recent.user.id, {
+      deletedAt: new Date('2026-01-01T00:00:00Z'),
+      userStatus: UserStatus.SUSPENDED,
+    });
+    await db
+      .getRepository(UserAnswer)
+      .save(UserAnswer.onboarding(old.user.id, questions[0].answers[0].id));
+    await db.getRepository(UserPhilosopherCount).save({
+      userId: old.user.id,
+      philosopherId: questions[0].answers[0].philosopherId,
+      count: 1,
+    });
+    await db
+      .getRepository(AuthIdentity)
+      .save(
+        AuthIdentity.createSocial(
+          old.user.id,
+          AuthType.GOOGLE,
+          'purge-only',
+          null,
+        ),
+      );
+    await db
+      .getRepository(Inquiry)
+      .save({ userId: old.user.id, title: '보관', content: '삭제 대상' });
+    const adminNotice = await db.getRepository(Notice).save({
+      authorId: old.user.id,
+      title: '유지',
+      content: '공개 콘텐츠',
+      isPublished: true,
+    });
+    expect(
+      await app
+        .get<AccountStore>(ACCOUNT_STORE)
+        .purge(new Date('2024-09-30T00:00:00Z')),
+    ).toBe(1);
+    expect(
+      await db
+        .getRepository(User)
+        .findOne({ where: { id: old.user.id }, withDeleted: true }),
+    ).toBeNull();
+    expect(
+      await db
+        .getRepository(User)
+        .findOne({ where: { id: recent.user.id }, withDeleted: true }),
+    ).not.toBeNull();
+    expect(
+      await db.getRepository(UserAnswer).countBy({ userId: old.user.id }),
+    ).toBe(0);
+    expect(
+      await db
+        .getRepository(UserPhilosopherCount)
+        .countBy({ userId: old.user.id }),
+    ).toBe(0);
+    expect(
+      await db.getRepository(Inquiry).countBy({ userId: old.user.id }),
+    ).toBe(0);
+    expect(
+      (await db.getRepository(Notice).findOneByOrFail({ id: adminNotice.id }))
+        .authorId,
+    ).toBeNull();
   });
 });

@@ -12,8 +12,11 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     private readonly ormRepository: Repository<Question>,
   ) {}
 
-  async findById(id: string): Promise<Question | null> {
-    return this.ormRepository.findOne({ where: { id } });
+  async findById(id: string, lock = false): Promise<Question | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
   }
 
   async findByIds(ids: string[]): Promise<Question[]> {
@@ -48,9 +51,13 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     });
   }
 
-  async findByIdWithAnswers(questionId: string): Promise<Question | null> {
+  async findByIdWithAnswers(
+    questionId: string,
+    lock = false,
+  ): Promise<Question | null> {
     return this.ormRepository.findOne({
       where: { id: questionId },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
       relations: {
         answers: true,
         followupAnswers: true,

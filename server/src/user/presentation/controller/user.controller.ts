@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { UserService } from '../../application/user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserResponse } from '../dto/res/user-response.dto';
@@ -38,12 +31,6 @@ export class UserController {
     @Body() request: NicknameUpdateRequest,
   ): Promise<MessageResponse> {
     return this.userService.updateNickname(userId, request);
-  }
-
-  @Delete('/me')
-  @ApiOperation({ summary: '유저 soft delete' })
-  deleteUser(@CurrentUserId() userId: string): Promise<MessageResponse> {
-    return this.userService.deleteUser(userId);
   }
 
   @Patch('/me/daily-time')

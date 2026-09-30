@@ -203,7 +203,7 @@ export class AuthService {
   // ======================= 메서드 ======================= //
   // 1. (UUID) userId -> User 조회
   private async getUserOrThrow(userId: string): Promise<User> {
-    const user = await this.userRepository.findByUserId(userId);
+    const user = await this.userRepository.findByUserId(userId, true);
     if (!user) {
       throw new NotFoundException('유저를 찾을 수 없습니다.');
     }

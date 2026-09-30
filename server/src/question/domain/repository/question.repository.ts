@@ -3,7 +3,7 @@ import { Question } from '../model/question.entity';
 export const QUESTION_REPOSITORY = Symbol('QUESTION_REPOSITORY');
 
 export interface QuestionRepository {
-  findById(id: string): Promise<Question | null>;
+  findById(id: string, lock?: boolean): Promise<Question | null>;
 
   findByIds(ids: string[]): Promise<Question[]>;
 
@@ -12,7 +12,10 @@ export interface QuestionRepository {
     limit: number,
   ): Promise<Question[]>;
 
-  findByIdWithAnswers(questionId: string): Promise<Question | null>;
+  findByIdWithAnswers(
+    questionId: string,
+    lock?: boolean,
+  ): Promise<Question | null>;
 
   findRandomDailyExcluding(excludeIds: string[]): Promise<Question | null>;
 }

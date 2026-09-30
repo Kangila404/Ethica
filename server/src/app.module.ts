@@ -1,3 +1,6 @@
+import { AccountModule } from './account/account.module';
+import { SupportModule } from './support/support.module';
+import { AdminModule } from './admin/admin.module';
 import { APP_FILTER } from '@nestjs/core';
 import { ApiExceptionFilter } from './common/filter/api-exception.filter';
 import { Module } from '@nestjs/common';
@@ -22,6 +25,9 @@ import { UserAnswerModule } from './user-answer/user-answer.module';
 
 @Module({
   imports: [
+    AccountModule,
+    AdminModule,
+    SupportModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({

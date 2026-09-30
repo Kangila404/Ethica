@@ -191,6 +191,7 @@ export class OnboardingService {
       });
     const question = await this.questions.findByIdWithAnswers(
       request.questionId,
+      true,
     );
     if (
       !question ||
@@ -225,6 +226,7 @@ export class OnboardingService {
       });
     const question = await this.questions.findByIdWithAnswers(
       request.questionId,
+      true,
     );
     if (!question)
       throw new ConflictException('배정된 문제를 찾을 수 없습니다.');

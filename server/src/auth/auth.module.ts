@@ -45,6 +45,6 @@ import { JwtStrategy } from './infrastructure/security/jwt.strategy';
     { provide: REFRESHTOKEN_REPOSITORY, useClass: RefreshTokenRepositoryImpl },
     JwtStrategy,
   ],
-  exports: [PassportModule],
+  exports: [PassportModule, SOCIAL_TOKEN_VERIFIER, AUTH_CHALLENGE_REPOSITORY],
 })
 export class AuthModule {}

@@ -11,8 +11,11 @@ export class FollowupAnswerRepositoryImpl implements FollowupAnswerRepository {
     private readonly ormRepository: Repository<FollowupAnswer>,
   ) {}
 
-  async findById(id: string): Promise<FollowupAnswer | null> {
-    return this.ormRepository.findOne({ where: { id: id } });
+  async findById(id: string, lock = false): Promise<FollowupAnswer | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
   }
 
   async findByIds(ids: string[]): Promise<FollowupAnswer[]> {
