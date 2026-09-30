@@ -4,6 +4,7 @@ import { BaseEntity } from 'src/common/Base.entity';
 export type UserSummaryInsight = {
   title: string;
   summary: string;
+  userAnswerIds: string[];
 };
 
 @Entity('user_summary')
@@ -26,6 +27,18 @@ export class UserSummary extends BaseEntity {
 
   @Column({ type: 'int' })
   accuracy!: number;
+
+  @Column({ type: 'varchar', length: 16, default: 'pending' })
+  status!: 'pending' | 'processing' | 'ready' | 'failed';
+
+  @Column({ type: 'char', length: 64, nullable: true })
+  sourceFingerprint!: string | null;
+
+  @Column({ type: 'char', length: 36, nullable: true })
+  generationToken!: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  generationStartedAt!: Date | null;
 
   static create(
     userId: string,

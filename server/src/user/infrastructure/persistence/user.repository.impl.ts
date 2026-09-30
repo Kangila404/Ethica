@@ -12,8 +12,11 @@ export class UserRepositoryImpl implements UserRepository {
     private readonly ormRepository: Repository<User>,
   ) {}
 
-  async findByUserId(userId: string): Promise<User | null> {
-    return await this.ormRepository.findOne({ where: { userId } });
+  async findByUserId(userId: string, lock = false): Promise<User | null> {
+    return await this.ormRepository.findOne({
+      where: { userId },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
   }
 
   async findById(id: string): Promise<User | null> {
