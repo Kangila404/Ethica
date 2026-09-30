@@ -32,7 +32,7 @@ export class ArchiveDetailResponse {
 
   @ApiProperty({
     example: '2026-06-23',
-    description: '답변한 날짜 (Asia/Seoul)',
+    description: '일일 출제 현지 날짜. 기존/온보딩 기록은 KST 답변 날짜',
   })
   serviceDate!: string;
 
@@ -62,9 +62,11 @@ export class ArchiveDetailResponse {
     const response = new ArchiveDetailResponse();
 
     response.userAnswerId = userAnswer.id;
-    response.serviceDate = userAnswer.answeredAt.toLocaleDateString('en-CA', {
-      timeZone: 'Asia/Seoul',
-    });
+    response.serviceDate =
+      userAnswer.serviceDate ??
+      userAnswer.answeredAt.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Seoul',
+      });
     response.questionBody = question.stage1Body;
     response.myAnswer = answer.body;
     response.explanation = answer.explanation;

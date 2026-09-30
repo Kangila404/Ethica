@@ -1,3 +1,4 @@
+import { instantTransformer } from 'src/common/instant.transformer';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -5,6 +6,7 @@ import {
   Generated,
   DeleteDateColumn,
 } from 'typeorm';
+import { nextDailyBoundary } from 'src/common/daily-clock';
 import { BaseEntity } from '../../../common/Base.entity';
 import { UserRole } from '../enum/user-role.enum';
 import { UserStatus } from '../enum/user-status.enum';
@@ -50,6 +52,18 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 50, nullable: true })
   timezone!: string;
 
+  @Column({ type: 'time', nullable: true })
+  pendingDailyQuestionTime!: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  pendingTimezone!: string | null;
+
+  @Column({ type: 'bigint', nullable: true, transformer: instantTransformer })
+  dailyScheduleEffectiveAt!: Date | null;
+
+  @Column({ type: 'bigint', nullable: true, transformer: instantTransformer })
+  nextDailyAt!: Date | null;
+
   @Column({ type: 'datetime', nullable: true })
   lastLoginAt!: Date | null;
 
@@ -66,6 +80,11 @@ export class User extends BaseEntity {
   changeDailyTime(dailyQuestionTime: string, timezone: string): void {
     this.dailyQuestionTime = dailyQuestionTime;
     this.timezone = timezone;
+    this.nextDailyAt = nextDailyBoundary(
+      new Date(),
+      dailyQuestionTime,
+      timezone,
+    );
   }
 
   // 3. 위젯 시간 업데이트

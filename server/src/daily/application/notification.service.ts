@@ -32,16 +32,19 @@ export class NotificationService implements OnModuleInit {
     }
   }
 
-  async sendDailyQuestionAlert(user: User): Promise<void> {
-    if (!user.fcmToken) return;
-    if (getApps().length === 0) return;
+  async sendDailyQuestionAlert(user: User, cycleId: string): Promise<boolean> {
+    if (!user.fcmToken || !user.notificationEnabled) return false;
+    if (getApps().length === 0) return false;
 
     await getMessaging().send({
       token: user.fcmToken,
+      data: { type: 'daily_question', cycleId, deepLink: 'ethica://daily' },
+      apns: { headers: { 'apns-collapse-id': `daily-${cycleId}` } },
       notification: {
         title: '오늘의 질문',
-        body: '새 딜레마가 도착했어요,',
+        body: '새 딜레마가 도착했어요.',
       },
     });
+    return true;
   }
 }

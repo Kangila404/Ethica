@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -20,13 +21,10 @@ import { SubmitStageOneRequest } from '../presentation/dto/req/submit-stage-One-
 import { SubmitStageOneResponse } from '../presentation/dto/res/submit-stage-one-response.dto';
 import { USER_ANSWER_REPOSITORY } from 'src/user-answer/domain/repository/user-answer.repository';
 import type { UserAnswerRepository } from 'src/user-answer/domain/repository/user-answer.repository';
-import { Question } from 'src/question/domain/model/question.entity';
-import { Answer } from 'src/question/domain/model/answer.entity';
 import { DailyQuestionStatus } from '../domain/enums/daily-question-status.enum';
 import { UserAnswer } from 'src/user-answer/domain/model/user-answer.entity';
 import { SubmitStageTwoRequest } from '../presentation/dto/req/submit-stage-Two-request.dto';
 import { SubmitStageTwoResponse } from '../presentation/dto/res/submit-stage-two-response.dto';
-import { FollowupAnswer } from 'src/question/domain/model/followup-answer.entity';
 import type { FollowupAnswerRepository } from 'src/question/domain/repository/followup-answer.repository';
 import { FOLLOWUP_ANSWER_REPOSITORY } from 'src/question/domain/repository/followup-answer.repository';
 import type { UserFollowupAnswerRepository } from 'src/user-answer/domain/repository/user-followup-answer.repository';
@@ -36,6 +34,14 @@ import {
   USER_PHILOSOPHER_COUNT_REPOSITORY,
   type UserPhilosopherCountRepository,
 } from 'src/philosopher/domain/repository/user-philosopher-count.repository';
+import { randomUUID } from 'node:crypto';
+import {
+  dailyBoundary,
+  dailyDate,
+  nextDailyBoundary,
+} from 'src/common/daily-clock';
+import { QuestionType } from 'src/question/domain/enum/question-type.enum';
+import { OnboardingStatus } from 'src/user/domain/enum/OnboardingStatus.enum';
 import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
@@ -59,78 +65,58 @@ export class DailyService {
     private readonly userPhilosopherCountRepository: UserPhilosopherCountRepository,
   ) {}
 
-  async getDaily(userId: string): Promise<DailyQuestionResponse> {
-    const user = await this.findUserByUserIdOrThrow(userId);
-    this.validationUserStatus(user.userStatus);
-
-    const today = this.getTodayString();
-    const userDailyQuestion =
-      await this.userDailyQuestionRepository.findByUserIdAndServiceDate(
-        user.id,
-        today,
-      );
-    if (!userDailyQuestion) {
-      throw new NotFoundException('오늘의 질문을 찾을 수 없습니다.');
-    }
-
+  @Transactional()
+  async getDaily(userId: string) {
+    const user = await this.lockUser(userId);
+    const cycle = await this.ensureCycle(user);
+    if (!cycle)
+      return { userDailyQuestion: 'waiting', nextDailyAt: user.nextDailyAt };
+    if (!cycle.questionId)
+      return {
+        userDailyQuestion: 'preparing',
+        message: '새 질문을 준비 중이에요',
+        nextDailyAt: user.nextDailyAt,
+        serviceDate: cycle.serviceDate,
+      };
     const question = await this.questionRepository.findByIdWithAnswers(
-      userDailyQuestion.questionId,
+      cycle.questionId,
     );
-    if (!question) {
-      throw new NotFoundException('질문 원본을 찾을 수 없습니다.');
-    }
-
-    return DailyQuestionResponse.of(question, userDailyQuestion.status);
+    if (!question) throw new NotFoundException('질문 원본을 찾을 수 없습니다.');
+    const selected = question.answers.find(
+      (answer) => answer.id === cycle.answerId,
+    );
+    const selectedFollowup = question.followupAnswers.find(
+      (answer) => answer.id === cycle.followupAnswerId,
+    );
+    return {
+      ...DailyQuestionResponse.of(question, cycle.status),
+      questionId: question.id,
+      type: question.type,
+      cycleId: cycle.id,
+      serviceDate: cycle.serviceDate,
+      nextDailyAt: user.nextDailyAt,
+      selectedAnswer: selected
+        ? {
+            id: selected.id,
+            explanation: selected.explanation,
+            philosopherId: selected.philosopherId,
+          }
+        : null,
+      selectedFollowupAnswer: selectedFollowup
+        ? { id: selectedFollowup.id, explanation: selectedFollowup.explanation }
+        : null,
+      selectedAnswerId: cycle.answerId,
+      selectedFollowupAnswerId: cycle.followupAnswerId,
+      followupAnswers:
+        cycle.status === DailyQuestionStatus.COMPLETED
+          ? question.followupAnswers.map(({ id, body }) => ({ id, body }))
+          : [],
+    };
   }
 
+  @Transactional()
   async assignForToday(userId: string): Promise<void> {
-    const user = await this.findUserByUserIdOrThrow(userId);
-    const today = this.getTodayString();
-
-    // 1. 멱등 가드
-    const existing =
-      await this.userDailyQuestionRepository.findByUserIdAndServiceDate(
-        user.id,
-        today,
-      );
-    if (existing) return;
-
-    // 2. 안 받은 daily 문제 하나
-    const servedIds =
-      await this.userDailyQuestionRepository.findServicedQuestionIds(user.id);
-    const question =
-      await this.questionRepository.findRandomDailyExcluding(servedIds);
-    if (!question) return; // 낼 문제 없음 → 스킵
-
-    // 3. 저장
-    const udq = new UserDailyQuestion();
-    udq.userId = user.id;
-    udq.questionId = question.id;
-    udq.serviceDate = today;
-
-    try {
-      await this.userDailyQuestionRepository.save(udq);
-    } catch (e: unknown) {
-      if (this.isDuplicateEntryError(e)) return;
-      throw e;
-    }
-  }
-
-  async submitStageTwo(
-    userId: string,
-    request: SubmitStageTwoRequest,
-  ): Promise<SubmitStageTwoResponse> {
-    const user = await this.findUserByUserIdOrThrow(userId);
-    this.validationUserStatus(user.userStatus);
-    const followupAnswer = await this.findFollowupAnswerByIdOrThrow(
-      request.followupAnswerId,
-    );
-    const userFollowupAnswer = UserFollowupAnswer.createUserFollowupAnswer(
-      user.id,
-      followupAnswer.id,
-    );
-    await this.userFollowupAnswerRepository.save(userFollowupAnswer);
-    return SubmitStageTwoResponse.from(followupAnswer);
+    await this.ensureCycle(await this.lockUser(userId));
   }
 
   @Transactional()
@@ -138,108 +124,194 @@ export class DailyService {
     userId: string,
     request: SubmitStageOneRequest,
   ): Promise<SubmitStageOneResponse> {
-    const user = await this.findUserByUserIdOrThrow(userId);
-    const today = this.getTodayString();
-    // 오늘의 문제
-    const dailyQuestion =
-      await this.userDailyQuestionRepository.findByUserIdAndServiceDate(
-        user.id,
-        today,
-      );
-    // 제출된 문제
-    if (dailyQuestion?.questionId !== request.questionId) {
-      throw new ForbiddenException('제출한 문제와 오늘의 문제가 다릅니다.');
+    const user = await this.lockUser(userId);
+    const cycle = await this.ensureCycle(user);
+    if (!cycle || cycle.questionId !== request.questionId) {
+      throw new ForbiddenException('현재 출제된 문제가 아닙니다.');
     }
-
-    // 이미 푼 문제인지 확인
-    this.validationSubmittedAnswer(dailyQuestion.status);
-
-    const question = await this.findQuestionByIdOrThrow(
-      dailyQuestion.questionId,
-    );
-    const answer = await this.findAnswerByIdOrThrow(request.answerId);
-
-    if (answer.questionId !== question.id) {
+    const question = await this.questionRepository.findById(request.questionId);
+    if (!question) throw new NotFoundException('문제를 찾을 수 없습니다.');
+    const answer = await this.answerRepository.findById(request.answerId);
+    if (!answer || answer.questionId !== cycle.questionId)
       throw new ForbiddenException('해당 문제의 선택지가 아닙니다.');
+    if (
+      cycle.status === DailyQuestionStatus.COMPLETED &&
+      cycle.answerId === request.answerId
+    ) {
+      return SubmitStageOneResponse.from(
+        question.type === QuestionType.TWO_STAGE,
+        answer.explanation,
+        answer.philosopherId,
+      );
     }
-
-    // 유저 대답 생성
-    const userAnswer = UserAnswer.createUserStageOneAnswer(
-      user.id,
-      request.answerId,
-    );
-
-    await this.userAnswerRepository.save(userAnswer);
+    if (cycle.status !== DailyQuestionStatus.PENDING)
+      throw new ConflictException('이미 답변한 문제입니다.');
+    const result = UserAnswer.createUserStageOneAnswer(user.id, answer.id);
+    result.serviceDate = cycle.serviceDate;
+    await this.userAnswerRepository.save(result);
     await this.userPhilosopherCountRepository.increase(
       user.id,
       answer.philosopherId,
     );
-
-    dailyQuestion.complete();
-    await this.userDailyQuestionRepository.save(dailyQuestion);
-
-    return SubmitStageOneResponse.from();
+    cycle.complete();
+    cycle.answerId = answer.id;
+    await this.userDailyQuestionRepository.save(cycle);
+    return SubmitStageOneResponse.from(
+      question.type === QuestionType.TWO_STAGE,
+      answer.explanation,
+      answer.philosopherId,
+    );
   }
 
-  // ============ 메서드 ============ //
-  async findUserByUserIdOrThrow(userId: string): Promise<User> {
-    const user = await this.userRepository.findByUserId(userId);
-    if (!user) {
-      throw new NotFoundException('유저를 찾을 수 없습니다.');
+  @Transactional()
+  async submitStageTwo(
+    userId: string,
+    request: SubmitStageTwoRequest,
+  ): Promise<SubmitStageTwoResponse> {
+    const user = await this.lockUser(userId);
+    const cycle = await this.ensureCycle(user);
+    if (
+      !cycle ||
+      cycle.questionId !== request.questionId ||
+      cycle.status !== DailyQuestionStatus.COMPLETED
+    ) {
+      throw new ForbiddenException(
+        '현재 문제의 1단 답변을 먼저 제출해야 합니다.',
+      );
+    }
+    const question = await this.questionRepository.findById(request.questionId);
+    const answer = await this.followupAnswerRepository.findById(
+      request.followupAnswerId,
+    );
+    if (
+      question?.type !== QuestionType.TWO_STAGE ||
+      !answer ||
+      answer.questionId !== cycle.questionId
+    ) {
+      throw new ForbiddenException('해당 문제의 후속 선택지가 아닙니다.');
+    }
+    if (cycle.followupAnswerId) {
+      if (cycle.followupAnswerId !== answer.id)
+        throw new ConflictException('이미 답변한 후속 질문입니다.');
+      return SubmitStageTwoResponse.from(answer);
+    }
+    await this.userFollowupAnswerRepository.save(
+      UserFollowupAnswer.createUserFollowupAnswer(user.id, answer.id),
+    );
+    cycle.followupAnswerId = answer.id;
+    await this.userDailyQuestionRepository.save(cycle);
+    return SubmitStageTwoResponse.from(answer);
+  }
+
+  /** Called under the user row lock, including scheduler and HTTP paths. */
+  private async ensureCycle(user: User): Promise<UserDailyQuestion | null> {
+    const now = new Date();
+    let latest = await this.userDailyQuestionRepository.findLatest(user.id);
+    if (user.dailyScheduleEffectiveAt && user.dailyScheduleEffectiveAt <= now) {
+      user.dailyQuestionTime = user.pendingDailyQuestionTime!;
+      user.timezone = user.pendingTimezone!;
+      user.nextDailyAt = user.dailyScheduleEffectiveAt;
+      user.dailyScheduleEffectiveAt = null;
+      user.pendingDailyQuestionTime = null;
+      user.pendingTimezone = null;
+    }
+    const time = user.dailyQuestionTime || '08:00';
+    const zone = user.timezone || 'Asia/Seoul';
+    if (user.nextDailyAt && user.nextDailyAt > now) return latest;
+    if (
+      !user.nextDailyAt &&
+      latest &&
+      latest.serviceDate >= dailyDate(now, zone)
+    ) {
+      user.nextDailyAt =
+        user.dailyScheduleEffectiveAt ?? dailyBoundary(now, time, zone, true);
+      await this.userRepository.save(user);
+      return latest;
+    }
+    if (latest?.status === DailyQuestionStatus.PENDING) {
+      latest.status = DailyQuestionStatus.EXPIRED;
+      await this.userDailyQuestionRepository.save(latest);
+    }
+    const served =
+      await this.userDailyQuestionRepository.findServicedQuestionIds(user.id);
+    const question =
+      await this.questionRepository.findRandomDailyExcluding(served);
+    latest = new UserDailyQuestion();
+    latest.userId = user.id;
+    latest.questionId = question?.id ?? null;
+    latest.openedAt = dailyBoundary(now, time, zone);
+    latest.serviceDate = dailyDate(latest.openedAt, zone);
+    latest.status = question
+      ? DailyQuestionStatus.PENDING
+      : DailyQuestionStatus.PREPARING;
+    latest.notificationStatus =
+      question && user.notificationEnabled && user.fcmToken
+        ? 'pending'
+        : 'skipped';
+    await this.userDailyQuestionRepository.save(latest);
+    user.nextDailyAt =
+      user.dailyScheduleEffectiveAt ?? nextDailyBoundary(now, time, zone);
+    await this.userRepository.save(user);
+    return latest;
+  }
+
+  @Transactional()
+  async claimNotification(userId: string) {
+    const user = await this.lockUser(userId);
+    const cycle = await this.ensureCycle(user);
+    if (
+      !cycle ||
+      cycle.status !== DailyQuestionStatus.PENDING ||
+      ['sent', 'skipped'].includes(cycle.notificationStatus) ||
+      cycle.notificationAttempts >= 3
+    )
+      return null;
+    if (!user.notificationEnabled || !user.fcmToken) {
+      cycle.notificationStatus = 'skipped';
+      await this.userDailyQuestionRepository.save(cycle);
+      return null;
+    }
+    if (
+      cycle.notificationAttemptAt &&
+      Date.now() - cycle.notificationAttemptAt.getTime() < 120_000
+    )
+      return null;
+    cycle.notificationStatus = 'sending';
+    cycle.notificationToken = randomUUID();
+    cycle.notificationAttemptAt = new Date();
+    cycle.notificationAttempts += 1;
+    await this.userDailyQuestionRepository.save(cycle);
+    return { user, cycleId: cycle.id, token: cycle.notificationToken };
+  }
+
+  @Transactional()
+  async finishNotification(
+    userId: string,
+    cycleId: string,
+    token: string,
+    outcome: 'sent' | 'pending' | 'skipped',
+  ) {
+    const user = await this.userRepository.findByUserId(userId, true);
+    if (!user) return;
+    const cycle = await this.userDailyQuestionRepository.findLatest(user.id);
+    if (!cycle || cycle.id !== cycleId || cycle.notificationToken !== token)
+      return;
+    cycle.notificationStatus = outcome;
+    cycle.notificationToken = null;
+    await this.userDailyQuestionRepository.save(cycle);
+  }
+
+  private async lockUser(userId: string): Promise<User> {
+    const user = await this.userRepository.findByUserId(userId, true);
+    if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
+    if (
+      user.userStatus !== UserStatus.ACTIVE ||
+      user.onboardingStatus !== OnboardingStatus.COMPLETE
+    ) {
+      throw new ForbiddenException(
+        '온보딩을 완료한 활성 계정만 이용할 수 있습니다.',
+      );
     }
     return user;
-  }
-
-  async findQuestionByIdOrThrow(questionId: string): Promise<Question> {
-    const question = await this.questionRepository.findById(questionId);
-    if (!question) {
-      throw new NotFoundException('문제를 찾을 수 없습니다.');
-    }
-    return question;
-  }
-
-  async findAnswerByIdOrThrow(answerId: string): Promise<Answer> {
-    const answer = await this.answerRepository.findById(answerId);
-    if (!answer) {
-      throw new NotFoundException('선택지를 찾을 수 없습니다.');
-    }
-    return answer;
-  }
-
-  async findFollowupAnswerByIdOrThrow(
-    followupAnswerId: string,
-  ): Promise<FollowupAnswer> {
-    const followupAnswer =
-      await this.followupAnswerRepository.findById(followupAnswerId);
-    if (!followupAnswer) {
-      throw new NotFoundException('2중 질문을 찾을 수 없습니다.');
-    }
-    return followupAnswer;
-  }
-
-  private getTodayString(): string {
-    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-  }
-
-  // 검증 메서드
-  validationUserStatus(userStatus: UserStatus): void {
-    if (userStatus !== UserStatus.ACTIVE) {
-      throw new ForbiddenException('정지된 계정입니다.');
-    }
-  }
-
-  validationSubmittedAnswer(dailyQuestionStatus: DailyQuestionStatus): void {
-    if (dailyQuestionStatus !== DailyQuestionStatus.PENDING) {
-      throw new ForbiddenException('이미 푼 문제입니다.');
-    }
-  }
-
-  private isDuplicateEntryError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: unknown }).code === 'ER_DUP_ENTRY'
-    );
   }
 }

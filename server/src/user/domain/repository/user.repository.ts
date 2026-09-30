@@ -7,7 +7,7 @@ export interface UserRepository {
   findByUserId(userId: string, lock?: boolean): Promise<User | null>;
 
   // 내부 통신용 id
-  findById(id: string): Promise<User | null>;
+  findById(id: string, lock?: boolean): Promise<User | null>;
 
   save(user: User): Promise<void>;
 

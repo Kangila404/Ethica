@@ -7,10 +7,19 @@ export class SubmitStageOneResponse {
   @ApiProperty({ example: false })
   requiresApp!: boolean;
 
-  static from(): SubmitStageOneResponse {
+  explanation!: string;
+  philosopherId!: string;
+
+  static from(
+    requiresApp = false,
+    explanation = '',
+    philosopherId = '',
+  ): SubmitStageOneResponse {
     const res = new SubmitStageOneResponse();
     res.aggregated = true;
-    res.requiresApp = false;
+    res.requiresApp = requiresApp;
+    res.explanation = explanation;
+    res.philosopherId = philosopherId;
     return res;
   }
 }

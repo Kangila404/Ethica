@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsTimeZone, Matches } from 'class-validator';
 
 export class DailyTimeRequest {
   @ApiProperty({ example: '08:00', description: '일일 문제 시각 (HH:mm)' })
@@ -9,6 +9,6 @@ export class DailyTimeRequest {
   dailyQuestionTime!: string;
 
   @ApiProperty({ example: 'Asia/Seoul', description: '타임존 (IANA)' })
-  @IsString()
+  @IsTimeZone()
   timezone!: string;
 }
