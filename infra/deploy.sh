@@ -12,10 +12,10 @@ flock -n 9 || { echo 'Another Ethica deployment is running' >&2; exit 1; }
 # A separate interpolation file works with NAS sudo rules allowing only Docker.
 printf 'SERVER_IMAGE=%s\n' "$image" > .deploy-image.env
 compose() {
-  sudo -n docker compose --env-file .env --env-file .deploy-image.env -f docker-compose.prod.yml "$@"
+  sudo -n docker --config "$PWD/.docker" compose --env-file .env --env-file .deploy-image.env -f docker-compose.prod.yml "$@"
 }
 compose config --quiet
-if [[ "${ETHICA_SKIP_PULL:-0}" != 1 ]]; then compose pull; fi
+compose pull
 compose up -d --wait --wait-timeout 180 mysql
 # No API process or scheduler may write while schema migrations are running.
 compose stop server backup

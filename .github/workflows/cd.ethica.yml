@@ -61,11 +61,14 @@ jobs:
           NAS_APP_DIR: ${{ secrets.NAS_APP_DIR }}
           NAS_SSH_KEY: ${{ secrets.NAS_SSH_KEY }}
           NAS_KNOWN_HOSTS: ${{ secrets.NAS_KNOWN_HOSTS }}
+          REGISTRY_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ethica-server@${{ steps.image.outputs.digest }}
         run: |
           set -Eeuo pipefail
           [[ "$NAS_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+$ ]]
           [[ "$NAS_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$REGISTRY_USER" =~ ^[a-z0-9][a-z0-9_-]+$ ]]
           [[ "$NAS_APP_DIR" =~ ^/mnt/[a-zA-Z0-9_./-]+/ethica$ ]]
           [[ "$NAS_APP_DIR" != *..* ]]
           test -n "$NAS_SSH_KEY"
@@ -79,4 +82,5 @@ jobs:
           ssh "${opts[@]}" "$target" "test -s '$NAS_APP_DIR/.env' && test -s '$NAS_APP_DIR/server.env' && mkdir -p '$NAS_APP_DIR/infra'"
           scp "${opts[@]}" docker-compose.prod.yml "$target:$NAS_APP_DIR/docker-compose.prod.yml"
           scp "${opts[@]}" infra/deploy.sh infra/backup.sh "$target:$NAS_APP_DIR/infra/"
+          printf '%s' "$REGISTRY_TOKEN" | ssh "${opts[@]}" "$target" "umask 077; mkdir -p '$NAS_APP_DIR/.docker' && docker --config '$NAS_APP_DIR/.docker' login --username '$REGISTRY_USER' --password-stdin"
           ssh "${opts[@]}" "$target" "bash '$NAS_APP_DIR/infra/deploy.sh' '$IMAGE'"
