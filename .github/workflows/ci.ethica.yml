@@ -2,6 +2,7 @@ name: ci.ethica.yml
 
 # 트리거
 on:
+  workflow_call:
   pull_request:
     branches:
       - 'main'
@@ -18,7 +19,7 @@ jobs:
       - name: 2. Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: 3. Install Dependencies
@@ -32,3 +33,14 @@ jobs:
 
       - name: 6. Build
         run: npm run build --workspace=server
+
+  deployment-smoke:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f server/Dockerfile -t ethica-server:verify .
+      - name: Verify clean database and production runtime
+        run: bash infra/smoke.sh ethica-server:verify

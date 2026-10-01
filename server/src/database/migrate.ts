@@ -1,3 +1,4 @@
+import { Baseline1790720000000 } from './migrations/1790720000000-Baseline';
 import { EditorialMedia1790920800000 } from './migrations/1790920800000-EditorialMedia';
 import { ContentReview1790816400000 } from './migrations/1790816400000-ContentReview';
 import { ProfileAvatar1790902800000 } from './migrations/1790902800000-ProfileAvatar';
@@ -25,6 +26,7 @@ const db = new DataSource({
   synchronize: false,
   logging: false,
   migrations: [
+    Baseline1790720000000,
     OnboardingAnalysis1790726400000,
     DailyCycles1790730000000,
     AdminSupportAccount1790733600000,
@@ -43,7 +45,7 @@ async function migrate(): Promise<void> {
     console.log(`Applied ${applied.length} migration(s)`);
   } catch {
     console.error(
-      'Migration failed. Check DB connectivity and the required develop baseline schema.',
+      'Migration failed. Check DB connectivity, baseline integrity and bundled content files.',
     );
     process.exitCode = 1;
   } finally {

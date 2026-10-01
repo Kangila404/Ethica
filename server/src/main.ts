@@ -8,6 +8,7 @@ initializeTransactionalContext();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
 
   // ==================== swagger config ==================== //
   const config = new DocumentBuilder()

@@ -30,12 +30,10 @@ describe('persistent media', () => {
       .overrideGuard(JwtAuthGuard)
       .useValue({
         canActivate(context: ExecutionContext) {
-          const req = context
-            .switchToHttp()
-            .getRequest<{
-              headers: Record<string, string>;
-              user?: { role: string };
-            }>();
+          const req = context.switchToHttp().getRequest<{
+            headers: Record<string, string>;
+            user?: { role: string };
+          }>();
           const role = req.headers['x-fixture-role'];
           if (!role) throw new UnauthorizedException();
           req.user = { role };

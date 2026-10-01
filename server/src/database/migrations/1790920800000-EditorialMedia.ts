@@ -38,18 +38,18 @@ export class EditorialMedia1790920800000 implements MigrationInterface {
     }
     // Refuse conflicts instead of adopting or overwriting administrator-owned content.
     for (const question of dailyV1) {
-      const rows: unknown[] = await runner.query(
+      const rows = (await runner.query(
         'SELECT id FROM question WHERE `usage` = ? AND title = ? LIMIT 1',
         ['daily', question.title],
-      );
+      )) as unknown[];
       if (rows.length)
         throw new Error(`Daily draft title already exists: ${question.title}`);
     }
     for (const post of postsV1) {
-      const rows: unknown[] = await runner.query(
+      const rows = (await runner.query(
         'SELECT id FROM post WHERE philosopher_id = ? AND title = ? LIMIT 1',
         [thinkers.get(post.philosopher), post.title],
-      );
+      )) as unknown[];
       if (rows.length)
         throw new Error(`Post draft title already exists: ${post.title}`);
     }
@@ -120,10 +120,10 @@ export class EditorialMedia1790920800000 implements MigrationInterface {
     // Backfill only empty images. Preserve existing question/answer IDs, text and status.
     const originals = onboardingV1.flatMap((category) => category.questions);
     for (const [index, question] of originals.entries()) {
-      const rows: Array<{ id: string }> = await runner.query(
+      const rows = (await runner.query(
         'SELECT CAST(id AS CHAR) AS id FROM question WHERE `usage` = ? AND title = ? LIMIT 2',
         ['onboarding', question.title],
-      );
+      )) as Array<{ id: string }>;
       if (rows.length !== 1)
         throw new Error(
           `Missing or ambiguous onboarding question: ${question.title}`,
@@ -139,10 +139,10 @@ export class EditorialMedia1790920800000 implements MigrationInterface {
     table: 'category' | 'philosopher',
     name: string,
   ): Promise<string> {
-    const rows: Array<{ id: string }> = await runner.query(
+    const rows = (await runner.query(
       `SELECT CAST(id AS CHAR) AS id FROM \`${table}\` WHERE name = ? LIMIT 2`,
       [name],
-    );
+    )) as Array<{ id: string }>;
     if (rows.length !== 1)
       throw new Error(`Missing or ambiguous ${table}: ${name}`);
     return rows[0].id;

@@ -333,8 +333,12 @@ describe('Server workflows with MySQL', () => {
       expect(await db.getRepository(Answer).count()).toBe(before.answers);
 
       expect(await migrationDb.runMigrations()).toHaveLength(1);
-      await new ContentReview1790816400000().up(migrationDb.createQueryRunner());
-      await new ContentReview1790816400000().up(migrationDb.createQueryRunner());
+      await new ContentReview1790816400000().up(
+        migrationDb.createQueryRunner(),
+      );
+      await new ContentReview1790816400000().up(
+        migrationDb.createQueryRunner(),
+      );
       expect(await migrationDb.runMigrations()).toHaveLength(0);
       expect(await db.getRepository(Question).count()).toBe(
         before.questions + 15,
@@ -452,23 +456,70 @@ describe('Server workflows with MySQL', () => {
     const owner = await newUser();
     const other = await newUser();
     const http = app.getHttpServer() as Server;
-    await request(http).patch('/api/users/me/avatar').send({ avatarId: 'moon' }).expect(401);
-    await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token)
-      .send({ avatarId: 'moon', userId: other.user.userId }).expect(200);
-    const own = await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token).expect(200);
-    expect(own.body.avatarId).toBe('moon');
-    const untouched = await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + other.token).expect(200);
-    expect(untouched.body.avatarId).toBeNull();
+    await request(http)
+      .patch('/api/users/me/avatar')
+      .send({ avatarId: 'moon' })
+      .expect(401);
+    await request(http)
+      .patch('/api/users/me/avatar')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ avatarId: 'moon', userId: other.user.userId })
+      .expect(200);
+    const own = await request(http)
+      .get('/api/users/me')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .expect(200);
+    expect((own.body as { avatarId: string | null }).avatarId).toBe('moon');
+    const untouched = await request(http)
+      .get('/api/users/me')
+      .set('Authorization', 'Bearer ' + other.token)
+      .expect(200);
+    expect((untouched.body as { avatarId: string | null }).avatarId).toBeNull();
     for (const body of [{}, { avatarId: 'not-an-avatar' }]) {
-      await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token).send(body).expect(400);
+      await request(http)
+        .patch('/api/users/me/avatar')
+        .set('Authorization', 'Bearer ' + owner.token)
+        .send(body)
+        .expect(400);
     }
-    await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token).send({ avatarId: null }).expect(200);
-    expect((await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token)).body.avatarId).toBeNull();
-    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token)
-      .send({ name: '가'.repeat(50) }).expect(200);
-    expect((await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token)).body.name).toHaveLength(50);
-    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token).send({ name: '   ' }).expect(400);
-    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token).send({ name: '가'.repeat(51) }).expect(400);
+    await request(http)
+      .patch('/api/users/me/avatar')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ avatarId: null })
+      .expect(200);
+    expect(
+      (
+        (
+          await request(http)
+            .get('/api/users/me')
+            .set('Authorization', 'Bearer ' + owner.token)
+        ).body as { avatarId: string | null }
+      ).avatarId,
+    ).toBeNull();
+    await request(http)
+      .patch('/api/users/me')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ name: '가'.repeat(50) })
+      .expect(200);
+    expect(
+      (
+        (
+          await request(http)
+            .get('/api/users/me')
+            .set('Authorization', 'Bearer ' + owner.token)
+        ).body as { name: string }
+      ).name,
+    ).toHaveLength(50);
+    await request(http)
+      .patch('/api/users/me')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ name: '   ' })
+      .expect(400);
+    await request(http)
+      .patch('/api/users/me')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ name: '가'.repeat(51) })
+      .expect(400);
   });
   it('runs the full HTTP flow, serializes simultaneous submissions, and persists summary retries', async () => {
     const { user, token } = await newUser();
@@ -672,37 +723,105 @@ describe('Server workflows with MySQL', () => {
   });
   it('persists quota across snapshots, failures and workers; cached reads are free and midnight resets it', async () => {
     const { user, token } = await newUser();
-    await post('onboarding/question', token, { categoryId: category.id }).expect(201);
-    for (const q of questions) await post('onboarding/answers', token, answer(q)).expect(201);
+    await post('onboarding/question', token, {
+      categoryId: category.id,
+    }).expect(201);
+    for (const q of questions)
+      await post('onboarding/answers', token, answer(q)).expect(201);
     await post('onboarding/result', token).expect(201);
     const repo = app.get<UserSummaryRepository>(USER_SUMMARY_REPOSITORY);
     const now = new Date('2026-10-01T14:59:00Z');
-    let snapshot = await repo.ensureSnapshot(user.id, questions[0].answers[0].philosopherId!, 'a'.repeat(64), 16);
-    const claims = await Promise.all(Array.from({ length: 8 }, (_, i) => repo.claim(user.id, snapshot.sourceFingerprint!, `token-${i}`, now)));
+    let snapshot = await repo.ensureSnapshot(
+      user.id,
+      questions[0].answers[0].philosopherId,
+      'a'.repeat(64),
+      16,
+    );
+    const claims = await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        repo.claim(user.id, snapshot.sourceFingerprint!, `token-${i}`, now),
+      ),
+    );
     expect(claims.filter(Boolean)).toHaveLength(1);
     snapshot = (await repo.findByUserId(user.id))!;
     expect(snapshot.generationAttempts).toBe(1);
-    await repo.finish(user.id, snapshot.sourceFingerprint!, snapshot.generationToken!, null);
+    await repo.finish(
+      user.id,
+      snapshot.sourceFingerprint!,
+      snapshot.generationToken!,
+      null,
+    );
     for (let i = 2; i <= 3; i++) {
-      snapshot = await repo.ensureSnapshot(user.id, snapshot.nearestPhilosopherId, String(i).repeat(64), 16);
-      expect(await repo.claim(user.id, snapshot.sourceFingerprint!, `next-${i}`, now)).toBe(true);
-      await repo.finish(user.id, snapshot.sourceFingerprint!, `next-${i}`, null);
+      snapshot = await repo.ensureSnapshot(
+        user.id,
+        snapshot.nearestPhilosopherId,
+        String(i).repeat(64),
+        16,
+      );
+      expect(
+        await repo.claim(
+          user.id,
+          snapshot.sourceFingerprint!,
+          `next-${i}`,
+          now,
+        ),
+      ).toBe(true);
+      await repo.finish(
+        user.id,
+        snapshot.sourceFingerprint!,
+        `next-${i}`,
+        null,
+      );
     }
-    await expect(repo.claim(user.id, snapshot.sourceFingerprint!, 'fourth', now)).rejects.toMatchObject({ status: 429 });
+    await expect(
+      repo.claim(user.id, snapshot.sourceFingerprint!, 'fourth', now),
+    ).rejects.toMatchObject({ status: 429 });
     expect((await repo.findByUserId(user.id))?.generationAttempts).toBe(3);
-    await db.getRepository(UserSummary).update({ userId: user.id }, { status: 'ready' });
-    expect(await repo.claim(user.id, snapshot.sourceFingerprint!, 'cached', now)).toBe(false);
-    snapshot = await repo.ensureSnapshot(user.id, snapshot.nearestPhilosopherId, 'b'.repeat(64), 16);
-    await expect(repo.claim(user.id, snapshot.sourceFingerprint!, 'blocked', now)).rejects.toMatchObject({ status: 429 });
-    expect(await repo.claim(user.id, snapshot.sourceFingerprint!, 'tomorrow', new Date('2026-10-01T15:00:00Z'))).toBe(true);
-    expect(await repo.findByUserId(user.id)).toMatchObject({ generationDate: '2026-10-02', generationAttempts: 1 });
+    await db
+      .getRepository(UserSummary)
+      .update({ userId: user.id }, { status: 'ready' });
+    expect(
+      await repo.claim(user.id, snapshot.sourceFingerprint!, 'cached', now),
+    ).toBe(false);
+    snapshot = await repo.ensureSnapshot(
+      user.id,
+      snapshot.nearestPhilosopherId,
+      'b'.repeat(64),
+      16,
+    );
+    await expect(
+      repo.claim(user.id, snapshot.sourceFingerprint!, 'blocked', now),
+    ).rejects.toMatchObject({ status: 429 });
+    expect(
+      await repo.claim(
+        user.id,
+        snapshot.sourceFingerprint!,
+        'tomorrow',
+        new Date('2026-10-01T15:00:00Z'),
+      ),
+    ).toBe(true);
+    expect(await repo.findByUserId(user.id)).toMatchObject({
+      generationDate: '2026-10-02',
+      generationAttempts: 1,
+    });
     // HTTP denial cannot reach the external AI client, even after a fresh snapshot.
     const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
-    await db.getRepository(UserSummary).update({ userId: user.id }, { status: 'failed', generationDate: today, generationAttempts: 3 });
+    await db
+      .getRepository(UserSummary)
+      .update(
+        { userId: user.id },
+        { status: 'failed', generationDate: today, generationAttempts: 3 },
+      );
     const calls = ai.analyze.mock.calls.length;
     await post('analysis/contradictions', token).expect(429);
-    const state = await request(app.getHttpServer() as Server).get('/api/analysis/contradictions').set('Authorization', 'Bearer ' + token).expect(200);
-    expect(state.body).toMatchObject({ canRetry: false, quota: { limit: 3, remaining: 0 } });
+    const state = await request(app.getHttpServer() as Server)
+      .get('/api/analysis/contradictions')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    expect(state.body).toMatchObject({
+      canRetry: false,
+      quota: { limit: 3, remaining: 0 },
+    });
     expect(ai.analyze.mock.calls.length).toBe(calls);
   });
   async function dailyUser() {
@@ -1175,34 +1294,89 @@ describe('Server workflows with MySQL', () => {
   it('reviews whole posts atomically and hides draft/held content from public learning', async () => {
     const admin = await adminUser();
     const viewer = await newUser();
-    const thinker = await db.getRepository(Philosopher).save({ name: '검수 철학자', era: '현대', school: '학파', coreThought: '생각', lifeRoots: '생애' });
-    const input = { philosopherId: thinker.id, title: '검수 게시글', segments: [{ segmentType: 'text', body: '첫 카드' }, { segmentType: 'text', body: '두 번째 카드' }] };
-    const draft = payload(await post('admin/posts', admin.token, input).expect(201));
+    const thinker = await db.getRepository(Philosopher).save({
+      name: '검수 철학자',
+      era: '현대',
+      school: '학파',
+      coreThought: '생각',
+      lifeRoots: '생애',
+    });
+    const input = {
+      philosopherId: thinker.id,
+      title: '검수 게시글',
+      segments: [
+        { segmentType: 'text', body: '첫 카드' },
+        { segmentType: 'text', body: '두 번째 카드' },
+      ],
+    };
+    const draft = payload(
+      await post('admin/posts', admin.token, input).expect(201),
+    );
     expect(draft.status).toBe('draft');
-    const read = (path: string, token = viewer.token) => request(app.getHttpServer() as Server).get('/api/' + path).set('Authorization', 'Bearer ' + token);
+    const read = (path: string, token = viewer.token) =>
+      request(app.getHttpServer() as Server)
+        .get('/api/' + path)
+        .set('Authorization', 'Bearer ' + token);
     await read('philosophers/post/' + draft.id).expect(404);
-    const listed = await read('admin/posts?status=draft&search=' + encodeURIComponent('검수'), admin.token).expect(200);
-    expect(listed.body.map((p: { id: string }) => p.id)).toContain(draft.id);
-    const details = (await read('admin/posts/' + draft.id, admin.token).expect(200)).body as { segments: PostSegment[] };
-    const cards = (details.segments as PostSegment[]).map(c => ({ id: c.id, segmentType: c.segmentType, body: c.body }));
-    const published = { ...input, status: 'published', segments: [...cards].reverse() };
+    const listed = await read(
+      'admin/posts?status=draft&search=' + encodeURIComponent('검수'),
+      admin.token,
+    ).expect(200);
+    expect((listed.body as Array<{ id: string }>).map((p) => p.id)).toContain(
+      draft.id,
+    );
+    const details = (
+      await read('admin/posts/' + draft.id, admin.token).expect(200)
+    ).body as { segments: PostSegment[] };
+    const cards = details.segments.map((c) => ({
+      id: c.id,
+      segmentType: c.segmentType,
+      body: c.body,
+    }));
+    const published = {
+      ...input,
+      status: 'published',
+      segments: [...cards].reverse(),
+    };
     await put('admin/posts/' + draft.id, admin.token, published).expect(200);
-    const visible = (await read('philosophers/post/' + draft.id).expect(200)).body as { segments: { body: string }[] };
-    expect((visible.segments as { body: string }[]).map(c => c.body)).toEqual(['두 번째 카드', '첫 카드']);
-    await put('admin/posts/' + draft.id, admin.token, { ...published, segments: [{ ...cards[0], id: '999999999' }] }).expect(400);
-    const before = await db.getRepository(LearningPost).findOneByOrFail({ id: draft.id });
+    const visible = (await read('philosophers/post/' + draft.id).expect(200))
+      .body as { segments: { body: string }[] };
+    expect((visible.segments as { body: string }[]).map((c) => c.body)).toEqual(
+      ['두 번째 카드', '첫 카드'],
+    );
+    await put('admin/posts/' + draft.id, admin.token, {
+      ...published,
+      segments: [{ ...cards[0], id: '999999999' }],
+    }).expect(400);
+    const before = await db
+      .getRepository(LearningPost)
+      .findOneByOrFail({ id: draft.id });
     // Exercise a real DB failure inside the transaction; transaction-bound repositories
     // are not the same object as db.getRepository() outside the request.
     await db.query(`ALTER TABLE post_segment ADD CONSTRAINT ethica_test_card_failure
       CHECK (body <> 'must roll back card')`);
     try {
       await put('admin/posts/' + draft.id, admin.token, {
-        ...published, title: 'must roll back', segments: [{ ...cards[0], body: 'must roll back card' }],
+        ...published,
+        title: 'must roll back',
+        segments: [{ ...cards[0], body: 'must roll back card' }],
       }).expect(500);
-    } finally { await db.query('ALTER TABLE post_segment DROP CHECK ethica_test_card_failure'); }
-    expect((await db.getRepository(LearningPost).findOneByOrFail({ id: draft.id })).title).toBe(before.title);
-    expect(await db.getRepository(PostSegment).countBy({ postId: draft.id })).toBe(2);
-    await put('admin/posts/' + draft.id, admin.token, { ...published, status: 'held' }).expect(200);
+    } finally {
+      await db.query(
+        'ALTER TABLE post_segment DROP CHECK ethica_test_card_failure',
+      );
+    }
+    expect(
+      (await db.getRepository(LearningPost).findOneByOrFail({ id: draft.id }))
+        .title,
+    ).toBe(before.title);
+    expect(
+      await db.getRepository(PostSegment).countBy({ postId: draft.id }),
+    ).toBe(2);
+    await put('admin/posts/' + draft.id, admin.token, {
+      ...published,
+      status: 'held',
+    }).expect(200);
     await read('philosophers/post/' + draft.id).expect(404);
   });
   it('isolates inquiries, supports admin answers, and only publishes selected notices and real terms', async () => {
