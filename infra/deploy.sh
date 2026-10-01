@@ -22,6 +22,12 @@ compose stop server backup
 compose run --rm --no-deps backup once
 compose run --rm --no-deps migrate
 compose up -d --no-deps --wait --wait-timeout 180 server backup
+if grep -q '^SERVER_IMAGE=' .env; then
+  sed "s|^SERVER_IMAGE=.*|SERVER_IMAGE=$image|" .env > .env.next
+else
+  { cat .env; printf '\nSERVER_IMAGE=%s\n' "$image"; } > .env.next
+fi
+mv .env.next .env
 printf 'SERVER_IMAGE=%s\n' "$image" > release.env.tmp
 mv release.env.tmp release.env
 echo 'Ethica deployment healthy; image recorded in release.env'
