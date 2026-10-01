@@ -77,7 +77,7 @@ jobs:
           mkdir -p "$HOME/.ssh"
           printf '%s\n' "$NAS_SSH_KEY" > "$HOME/.ssh/ethica-nas"
           printf '%s\n' "$NAS_KNOWN_HOSTS" > "$HOME/.ssh/ethica-known-hosts"
-          opts=(-i "$HOME/.ssh/ethica-nas" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/ethica-known-hosts")
+          opts=(-i "$HOME/.ssh/ethica-nas" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=15 -o ConnectionAttempts=1 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/ethica-known-hosts")
           target="${NAS_USER}@${NAS_HOST}"
           ssh "${opts[@]}" "$target" "test -s '$NAS_APP_DIR/.env' && test -s '$NAS_APP_DIR/server.env' && mkdir -p '$NAS_APP_DIR/infra'"
           scp "${opts[@]}" docker-compose.prod.yml "$target:$NAS_APP_DIR/docker-compose.prod.yml"

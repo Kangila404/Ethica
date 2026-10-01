@@ -9,6 +9,18 @@ test -s server.env
 exec 9>.deploy.lock
 flock -n 9 || { echo 'Another Ethica deployment is running' >&2; exit 1; }
 
+# Leave headroom for TrueNAS and the other projects on this shared host.
+check_memory() {
+  local available_kib
+  available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+  [[ "$available_kib" =~ ^[0-9]+$ ]] && (( available_kib >= $1 * 1024 )) || {
+    echo "Insufficient available RAM (need $1 MiB); deployment stopped" >&2
+    exit 1
+  }
+  echo "Available RAM: $((available_kib / 1024)) MiB"
+}
+check_memory 1024
+
 # A separate interpolation file works with NAS sudo rules allowing only Docker.
 printf 'SERVER_IMAGE=%s\n' "$image" > .deploy-image.env
 compose() {
@@ -16,11 +28,14 @@ compose() {
 }
 compose config --quiet
 compose pull
+check_memory 1024
 compose up -d --wait --wait-timeout 180 mysql
 # No API process or scheduler may write while schema migrations are running.
 compose stop server backup
+check_memory 768
 compose run --rm --no-deps backup once
 compose run --rm --no-deps migrate
+check_memory 768
 compose up -d --no-deps --wait --wait-timeout 180 server backup
 if grep -q '^SERVER_IMAGE=' .env; then
   sed "s|^SERVER_IMAGE=.*|SERVER_IMAGE=$image|" .env > .env.next

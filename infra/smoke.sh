@@ -13,6 +13,7 @@ cleanup() {
 trap cleanup EXIT
 docker network create "$network" >/dev/null
 docker run -d --name "$db" --network "$network" --network-alias mysql \
+  --memory=640m --memory-swap=640m \
   -e MYSQL_ROOT_PASSWORD=verification-only -e MYSQL_DATABASE=ethica_verify_deploy \
   mysql:8.0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci >/dev/null
 ready=0
@@ -22,8 +23,8 @@ for ((i=0; i<90; i++)); do
 done
 [[ "$ready" == 1 ]] || { echo 'Verification MySQL did not start' >&2; exit 1; }
 env_args=(-e NODE_ENV=production -e DB_SYNCHRONIZE=false -e DB_HOST=mysql -e DB_PORT=3306 -e DB_USERNAME=root -e DB_PASSWORD=verification-only -e DB_DATABASE=ethica_verify_deploy -e JWT_SECRET=verification-only -e SOCIAL_TOKEN_ENCRYPTION_KEY=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
-docker run --rm --network "$network" "${env_args[@]}" "$image" node dist/database/migrate.js
-result="$(docker run --rm --network "$network" "${env_args[@]}" "$image" node dist/database/migrate.js)"
+docker run --rm --memory=256m --memory-swap=256m -e NODE_OPTIONS=--max-old-space-size=160 --network "$network" "${env_args[@]}" "$image" node dist/database/migrate.js
+result="$(docker run --rm --memory=256m --memory-swap=256m -e NODE_OPTIONS=--max-old-space-size=160 --network "$network" "${env_args[@]}" "$image" node dist/database/migrate.js)"
 [[ "$result" == *'Applied 0 migration(s)'* ]]
 docker run --rm --network "$network" "${env_args[@]}" "$image" node -e '
 const assert=require("node:assert/strict");
@@ -34,7 +35,7 @@ assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="draft")?.count),
 const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["draft"]);assert.equal(Number(posts.count),5);
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 }finally{await db.end();}})().catch(e=>{console.error(e);process.exit(1)});'
-docker run -d --name "$api" --network "$network" "${env_args[@]}" --read-only --tmpfs /tmp "$image" >/dev/null
+docker run -d --name "$api" --memory=384m --memory-swap=384m -e NODE_OPTIONS=--max-old-space-size=160 --network "$network" "${env_args[@]}" --read-only --tmpfs /tmp:size=32m,mode=1777 "$image" >/dev/null
 ready=0
 for ((i=0; i<60; i++)); do
   if [[ "$(docker inspect --format '{{.State.Health.Status}}' "$api")" == healthy ]]; then ready=1; break; fi

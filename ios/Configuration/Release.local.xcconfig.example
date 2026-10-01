@@ -1,0 +1,7 @@
+// Copy to Release.local.xcconfig on the Mac used for signing (Git-ignored).
+// These are iOS client settings, never server credentials or private keys.
+ETHICA_API_BASE_URL = https:/$()/ethica.kro.kr/api/
+GOOGLE_IOS_CLIENT_ID = YOUR_IOS_CLIENT_ID.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.YOUR_IOS_CLIENT_ID
+KAKAO_NATIVE_APP_KEY = YOUR_NATIVE_APP_KEY
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
