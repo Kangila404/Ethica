@@ -38,7 +38,7 @@ describe('Archive question images', () => {
         {
           findByIds: jest.fn().mockResolvedValue([answer]),
           findById: jest.fn().mockResolvedValue(answer),
-        } as unknown as Deps[2],
+        },
         {
           findByIds: jest.fn().mockResolvedValue([question]),
           findById: jest.fn().mockResolvedValue(question),
@@ -50,7 +50,9 @@ describe('Archive question images', () => {
       );
       const list = await service.getUserAnswers('user');
       const detail = await service.getUserAnswer('user', 'record');
-      expect(JSON.parse(JSON.stringify(list)).items[0]).toMatchObject({
+      expect(
+        (JSON.parse(JSON.stringify(list)) as { items: unknown[] }).items[0],
+      ).toMatchObject({
         userAnswerId: 'record',
         imageKey,
       });

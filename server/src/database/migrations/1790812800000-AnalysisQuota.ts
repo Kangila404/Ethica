@@ -13,7 +13,9 @@ export class AnalysisQuota1790812800000 implements MigrationInterface {
         await runner.addColumn('user_summary', column);
     }
   }
-  async down(): Promise<void> {
-    throw new Error('Keep quota records to prevent resetting daily usage.');
+  down(): Promise<void> {
+    return Promise.reject(
+      new Error('Keep quota records to prevent resetting daily usage.'),
+    );
   }
 }

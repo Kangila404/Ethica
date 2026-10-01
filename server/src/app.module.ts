@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { AccountModule } from './account/account.module';
 import { MediaModule } from './media/media.module';
 import { SupportModule } from './support/support.module';
@@ -75,7 +76,7 @@ import { UserAnswerModule } from './user-answer/user-answer.module';
     // 8. Archive / UserAnswerModule
     UserAnswerModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     { provide: APP_FILTER, useClass: ApiExceptionFilter },

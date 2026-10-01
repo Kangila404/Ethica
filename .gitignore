@@ -21,3 +21,5 @@ dist
 /ios/**/xcuserdata/
 *.p8
 /server/media-uploads/
+/.local/
+/server.env
