@@ -1,4 +1,4 @@
-ETHICA_API_BASE_URL = https:/$()/unconfigured.invalid/api/
+ETHICA_API_BASE_URL = https:/$()/ethica.kro.kr/api/
 ETHICA_MEDIA_BASE_URL =
 GOOGLE_IOS_CLIENT_ID =
 GOOGLE_REVERSED_CLIENT_ID = ethica-google-unconfigured
