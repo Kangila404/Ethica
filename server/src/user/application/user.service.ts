@@ -10,6 +10,7 @@ import { User } from '../domain/model/user.entity';
 import { DailyTimeRequest } from '../presentation/dto/req/dailyTime-request.dto';
 import { NotificationResponse } from '../presentation/dto/res/notification-response.dto';
 import { NotificationRequest } from '../presentation/dto/req/notification-request.dto';
+import { AvatarUpdateRequest } from '../presentation/dto/req/avatar-update-request.dto';
 
 @Injectable()
 export class UserService {
@@ -24,12 +25,23 @@ export class UserService {
   }
 
   @Transactional()
+  async updateAvatar(
+    userId: string,
+    request: AvatarUpdateRequest,
+  ): Promise<UserResponse> {
+    const user = await this.getUserOrThrow(userId);
+    user.avatarId = request.avatarId;
+    await this.userRepository.save(user);
+    return UserResponse.from(user);
+  }
+
+  @Transactional()
   async updateNickname(
     userId: string,
     request: NicknameUpdateRequest,
   ): Promise<MessageResponse> {
     const user = await this.getUserOrThrow(userId);
-    user.changeName(request.name);
+    user.changeName(request.name.trim());
     await this.userRepository.save(user);
     return new MessageResponse('success');
   }

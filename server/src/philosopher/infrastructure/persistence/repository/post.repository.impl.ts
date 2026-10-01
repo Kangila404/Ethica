@@ -1,3 +1,4 @@
+import { ContentStatus } from 'src/common/content-status';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from 'src/philosopher/domain/model/post.entity';
@@ -13,13 +14,13 @@ export class PostRepositoryImpl implements PostRepository {
 
   async findById(id: string): Promise<Post | null> {
     return await this.ormRepository.findOne({
-      where: { id },
+      where: { id, status: ContentStatus.PUBLISHED },
     });
   }
 
   async findByPhilosopherId(philosopherId: string): Promise<Post[]> {
     return await this.ormRepository.find({
-      where: { philosopherId },
+      where: { philosopherId, status: ContentStatus.PUBLISHED },
       order: {
         id: 'ASC',
       },
@@ -28,7 +29,7 @@ export class PostRepositoryImpl implements PostRepository {
 
   async countByPhilosopherId(philosopherId: string): Promise<number> {
     return await this.ormRepository.count({
-      where: { philosopherId },
+      where: { philosopherId, status: ContentStatus.PUBLISHED },
     });
   }
 }

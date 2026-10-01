@@ -1,3 +1,5 @@
+import { TodayAnalysisService } from '../../application/today-analysis.service';
+import { TodayAnalysisResponse } from '../dto/res/today-analysis-response.dto';
 import {
   Controller,
   Get,
@@ -23,7 +25,17 @@ import { ContradictionResponse } from '../dto/res/contradiction-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('/api/analysis')
 export class AnalisysController {
-  constructor(private readonly analysisService: AnalysisService) {}
+  constructor(
+    private readonly analysisService: AnalysisService,
+    private readonly todayAnalysis: TodayAnalysisService,
+  ) {}
+
+  @Get('/today')
+  @ApiOperation({ summary: '오늘 선택에 따른 누적 성향 변화' })
+  @ApiOkResponse({ type: TodayAnalysisResponse })
+  getToday(@CurrentUserId() userId: string): Promise<TodayAnalysisResponse> {
+    return this.todayAnalysis.getToday(userId);
+  }
 
   @ApiOperation({ summary: '분석 결과 조회' })
   @Get('/summary')

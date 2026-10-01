@@ -1,3 +1,4 @@
+import { ContentStatus } from 'src/common/content-status';
 import {
   BaseEntity,
   Column,
@@ -13,6 +14,9 @@ import { QuestionCategory } from './question-category.entity';
 
 @Entity('question')
 export class Question extends BaseEntity {
+  @Column({ type: 'enum', enum: ContentStatus, default: ContentStatus.DRAFT })
+  status!: ContentStatus;
+
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 
@@ -34,7 +38,7 @@ export class Question extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   imageKey!: string | null;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: false })
   isActive!: boolean;
 
   // 애그리거트

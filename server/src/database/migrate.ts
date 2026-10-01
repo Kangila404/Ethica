@@ -1,8 +1,13 @@
+import { EditorialMedia1790920800000 } from './migrations/1790920800000-EditorialMedia';
+import { ContentReview1790816400000 } from './migrations/1790816400000-ContentReview';
+import { ProfileAvatar1790902800000 } from './migrations/1790902800000-ProfileAvatar';
+import { AnalysisQuota1790812800000 } from './migrations/1790812800000-AnalysisQuota';
 import { AdminSupportAccount1790733600000 } from './migrations/1790733600000-AdminSupportAccount';
 import 'reflect-metadata';
 import { DailyCycles1790730000000 } from './migrations/1790730000000-DailyCycles';
 import { DataSource } from 'typeorm';
 import { OnboardingAnalysis1790726400000 } from './migrations/1790726400000-OnboardingAnalysis';
+import { OnboardingContent1790740800000 } from './migrations/1790740800000-OnboardingContent';
 
 try {
   process.loadEnvFile('.env');
@@ -23,6 +28,11 @@ const db = new DataSource({
     OnboardingAnalysis1790726400000,
     DailyCycles1790730000000,
     AdminSupportAccount1790733600000,
+    OnboardingContent1790740800000,
+    AnalysisQuota1790812800000,
+    ContentReview1790816400000,
+    ProfileAvatar1790902800000,
+    EditorialMedia1790920800000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

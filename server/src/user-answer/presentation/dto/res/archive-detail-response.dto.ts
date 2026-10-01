@@ -27,6 +27,13 @@ export class ArchiveFollowupResponse {
 }
 
 export class ArchiveDetailResponse {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: '질문 이미지 키 또는 HTTPS URL',
+  })
+  imageKey!: string | null;
+
   @ApiProperty({ example: '5012', description: '사용자 답변 ID' })
   userAnswerId!: string;
 
@@ -68,6 +75,7 @@ export class ArchiveDetailResponse {
         timeZone: 'Asia/Seoul',
       });
     response.questionBody = question.stage1Body;
+    response.imageKey = question.imageKey ?? null;
     response.myAnswer = answer.body;
     response.explanation = answer.explanation;
     response.followup = followupAnswer

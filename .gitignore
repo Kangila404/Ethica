@@ -12,3 +12,12 @@ dist
 .DS_Store
 *.log
 /API 명세서.md
+
+# Local iOS configuration and generated build data.
+/ios/Configuration/Local.xcconfig
+/ios/Configuration/Release.local.xcconfig
+/ios/Ethica/Resources/GoogleService-Info.plist
+/ios/.build/
+/ios/**/xcuserdata/
+*.p8
+/server/media-uploads/

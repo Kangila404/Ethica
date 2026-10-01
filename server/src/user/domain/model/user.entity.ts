@@ -21,8 +21,11 @@ export class User extends BaseEntity {
   @Generated('uuid')
   userId!: string;
 
-  @Column({ type: 'varchar', length: 10 })
+  @Column({ type: 'varchar', length: 50 })
   name!: string;
+
+  @Column({ type: 'varchar', length: 24, nullable: true })
+  avatarId!: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   userRole!: UserRole;

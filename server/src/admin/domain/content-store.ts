@@ -1,3 +1,5 @@
+import { ContentStatus } from 'src/common/content-status';
+import { QuestionUsage } from 'src/question/domain/enum/question-usage.enum';
 import { Category } from 'src/category/domain/model/category.entity';
 import { Philosopher } from 'src/philosopher/domain/model/philosopher.entity';
 import { Post } from 'src/philosopher/domain/model/post.entity';
@@ -9,8 +11,10 @@ export type ContentKind = 'categories' | 'philosophers' | 'posts' | 'segments';
 export type Content = Category | Philosopher | Post | PostSegment;
 export type QuestionWrite = Pick<
   Question,
-  'usage' | 'type' | 'title' | 'stage1Body' | 'isActive'
+  'usage' | 'type' | 'title' | 'stage1Body'
 > & {
+  status?: ContentStatus;
+  isActive?: boolean;
   imageKey?: string | null;
   followupBody?: string | null;
   categoryIds: string[];
@@ -21,9 +25,19 @@ export type QuestionWrite = Pick<
     id?: string;
   })[];
 };
+export type ContentFilters = {
+  status?: ContentStatus;
+  search?: string;
+  usage?: QuestionUsage;
+  categoryId?: string;
+};
 export const CONTENT_STORE = Symbol('CONTENT_STORE');
 export interface ContentStore {
-  list(kind: ContentKind, after?: string): Promise<Content[]>;
+  list(
+    kind: ContentKind,
+    after?: string,
+    filters?: ContentFilters,
+  ): Promise<Content[]>;
   get(kind: ContentKind, id: string): Promise<Content>;
   save(
     kind: ContentKind,
@@ -31,7 +45,7 @@ export interface ContentStore {
     id?: string,
   ): Promise<Content>;
   remove(kind: ContentKind, id: string): Promise<void>;
-  questions(after?: string): Promise<Question[]>;
+  questions(after?: string, filters?: ContentFilters): Promise<Question[]>;
   question(id: string): Promise<Question>;
   saveQuestion(input: QuestionWrite, id?: string): Promise<Question>;
   deactivateQuestion(id: string): Promise<void>;

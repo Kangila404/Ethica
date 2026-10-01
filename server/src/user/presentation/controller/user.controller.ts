@@ -10,6 +10,7 @@ import { NotificationResponse } from '../dto/res/notification-response.dto';
 import { CurrentUserId } from 'src/auth/infrastructure/security/current-user.decorator';
 import { UpdateFcmTokenRequest } from '../dto/req/update-fcm-token-request.dto';
 import { JwtAuthGuard } from 'src/auth/infrastructure/security/jwt-auth.guard';
+import { AvatarUpdateRequest } from '../dto/req/avatar-update-request.dto';
 
 @ApiTags('USER API')
 @ApiBearerAuth()
@@ -31,6 +32,15 @@ export class UserController {
     @Body() request: NicknameUpdateRequest,
   ): Promise<MessageResponse> {
     return this.userService.updateNickname(userId, request);
+  }
+
+  @Patch('/me/avatar')
+  @ApiOperation({ summary: '내장 프로필 이미지 변경 (null은 기본 이미지)' })
+  updateAvatar(
+    @CurrentUserId() userId: string,
+    @Body() request: AvatarUpdateRequest,
+  ): Promise<UserResponse> {
+    return this.userService.updateAvatar(userId, request);
   }
 
   @Patch('/me/daily-time')

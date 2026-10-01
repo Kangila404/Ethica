@@ -18,6 +18,7 @@ import { AdminGuard } from './admin.guard';
 import { AdminService } from '../application/admin.service';
 import {
   CategoryInput,
+  ContentPageQuery,
   PhilosopherInput,
   PostInput,
   SegmentInput,
@@ -82,8 +83,8 @@ export class AdminController {
   ) {
     return this.service.remove('philosophers', id);
   }
-  @Get('posts') listPostInput(@Query() page: PageQuery) {
-    return this.service.list('posts', page.after);
+  @Get('posts') listPostInput(@Query() page: ContentPageQuery) {
+    return this.service.list('posts', page.after, page);
   }
   @Get('posts/:id') getPostInput(@Param('id', IdPipe) id: string) {
     return this.service.get('posts', id);
@@ -118,8 +119,8 @@ export class AdminController {
   @Delete('segments/:id') deleteSegmentInput(@Param('id', IdPipe) id: string) {
     return this.service.remove('segments', id);
   }
-  @Get('questions') questions(@Query() page: PageQuery) {
-    return this.service.questions(page.after);
+  @Get('questions') questions(@Query() page: ContentPageQuery) {
+    return this.service.questions(page.after, page);
   }
   @Get('questions/:id') question(@Param('id', IdPipe) id: string) {
     return this.service.question(id);

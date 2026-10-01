@@ -107,10 +107,13 @@ export class DailyService {
         : null,
       selectedAnswerId: cycle.answerId,
       selectedFollowupAnswerId: cycle.followupAnswerId,
-      followupAnswers:
-        cycle.status === DailyQuestionStatus.COMPLETED
-          ? question.followupAnswers.map(({ id, body }) => ({ id, body }))
-          : [],
+      requiresFollowup:
+        question.type === QuestionType.TWO_STAGE &&
+        cycle.status === DailyQuestionStatus.PENDING &&
+        !!cycle.answerId,
+      followupAnswers: cycle.answerId
+        ? question.followupAnswers.map(({ id, body }) => ({ id, body }))
+        : [],
     };
   }
 
@@ -137,32 +140,37 @@ export class DailyService {
     const answer = await this.answerRepository.findById(request.answerId, true);
     if (!answer || answer.questionId !== cycle.questionId)
       throw new ForbiddenException('해당 문제의 선택지가 아닙니다.');
-    if (
-      cycle.status === DailyQuestionStatus.COMPLETED &&
-      cycle.answerId === request.answerId
-    ) {
+    if (cycle.answerId) {
+      if (cycle.answerId !== answer.id)
+        throw new ConflictException('이미 선택한 답변은 변경할 수 없습니다.');
       return SubmitStageOneResponse.from(
-        question.type === QuestionType.TWO_STAGE,
+        question.type === QuestionType.TWO_STAGE &&
+          cycle.status === DailyQuestionStatus.PENDING,
         answer.explanation,
         answer.philosopherId,
+        cycle.status === DailyQuestionStatus.COMPLETED,
       );
     }
     if (cycle.status !== DailyQuestionStatus.PENDING)
       throw new ConflictException('이미 답변한 문제입니다.');
-    const result = UserAnswer.createUserStageOneAnswer(user.id, answer.id);
-    result.serviceDate = cycle.serviceDate;
-    await this.userAnswerRepository.save(result);
-    await this.userPhilosopherCountRepository.increase(
-      user.id,
-      answer.philosopherId,
-    );
-    cycle.complete();
     cycle.answerId = answer.id;
+    if (question.type !== QuestionType.TWO_STAGE) {
+      const result = UserAnswer.createUserStageOneAnswer(user.id, answer.id);
+      result.serviceDate = cycle.serviceDate;
+      await this.userAnswerRepository.save(result);
+      await this.userPhilosopherCountRepository.increase(
+        user.id,
+        answer.philosopherId,
+      );
+      cycle.complete();
+    }
+    // For two-stage questions, answerId is a draft until the followup is submitted.
     await this.userDailyQuestionRepository.save(cycle);
     return SubmitStageOneResponse.from(
       question.type === QuestionType.TWO_STAGE,
       answer.explanation,
       answer.philosopherId,
+      question.type !== QuestionType.TWO_STAGE,
     );
   }
 
@@ -176,7 +184,10 @@ export class DailyService {
     if (
       !cycle ||
       cycle.questionId !== request.questionId ||
-      cycle.status !== DailyQuestionStatus.COMPLETED
+      !cycle.answerId ||
+      ![DailyQuestionStatus.PENDING, DailyQuestionStatus.COMPLETED].includes(
+        cycle.status,
+      )
     ) {
       throw new ForbiddenException(
         '현재 문제의 1단 답변을 먼저 제출해야 합니다.',
@@ -202,10 +213,24 @@ export class DailyService {
         throw new ConflictException('이미 답변한 후속 질문입니다.');
       return SubmitStageTwoResponse.from(answer);
     }
+    if (cycle.status === DailyQuestionStatus.PENDING) {
+      const first = await this.answerRepository.findById(cycle.answerId, true);
+      if (!first || first.questionId !== cycle.questionId)
+        throw new ConflictException('저장한 첫 선택을 확인할 수 없습니다.');
+      const result = UserAnswer.createUserStageOneAnswer(user.id, first.id);
+      result.serviceDate = cycle.serviceDate;
+      await this.userAnswerRepository.save(result);
+      await this.userPhilosopherCountRepository.increase(
+        user.id,
+        first.philosopherId,
+      );
+    }
+    // Legacy completed cycles were already counted; never aggregate those twice.
     await this.userFollowupAnswerRepository.save(
       UserFollowupAnswer.createUserFollowupAnswer(user.id, answer.id),
     );
     cycle.followupAnswerId = answer.id;
+    cycle.complete();
     await this.userDailyQuestionRepository.save(cycle);
     return SubmitStageTwoResponse.from(answer);
   }
@@ -288,7 +313,14 @@ export class DailyService {
     cycle.notificationAttemptAt = new Date();
     cycle.notificationAttempts += 1;
     await this.userDailyQuestionRepository.save(cycle);
-    return { user, cycleId: cycle.id, token: cycle.notificationToken };
+    const question = await this.questionRepository.findById(cycle.questionId!);
+    if (!question) throw new NotFoundException('질문 원본을 찾을 수 없습니다.');
+    return {
+      user,
+      cycleId: cycle.id,
+      token: cycle.notificationToken,
+      questionBody: question.stage1Body,
+    };
   }
 
   @Transactional()

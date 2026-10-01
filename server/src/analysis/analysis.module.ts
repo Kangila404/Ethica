@@ -1,3 +1,5 @@
+import { DailyModule } from 'src/daily/daily.module';
+import { TodayAnalysisService } from './application/today-analysis.service';
 import { ANALYSIS_SOURCE_REPOSITORY } from './domain/repository/analysis-source.repository';
 import { AnalysisSourceRepositoryImpl } from './infrastructure/analysis-source.repository.impl';
 import { Module } from '@nestjs/common';
@@ -14,6 +16,7 @@ import { QuestionModule } from 'src/question/question.module';
 
 @Module({
   imports: [
+    DailyModule,
     UserModule,
     PhilosopherModule,
     UserAnswerModule,
@@ -23,6 +26,7 @@ import { QuestionModule } from 'src/question/question.module';
   controllers: [AnalisysController],
   providers: [
     AnalysisService,
+    TodayAnalysisService,
     {
       provide: ANALYSIS_SOURCE_REPOSITORY,
       useClass: AnalysisSourceRepositoryImpl,
