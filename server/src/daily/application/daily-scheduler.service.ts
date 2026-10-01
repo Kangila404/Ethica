@@ -30,6 +30,7 @@ export class DailySchedulerService {
           outcome = (await this.notifications.sendDailyQuestionAlert(
             claim.user,
             claim.cycleId,
+            claim.questionBody,
           ))
             ? 'sent'
             : 'skipped';

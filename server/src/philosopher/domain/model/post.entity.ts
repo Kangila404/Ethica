@@ -1,3 +1,4 @@
+import { ContentStatus } from 'src/common/content-status';
 import {
   BaseEntity,
   Column,
@@ -12,6 +13,9 @@ import { PostSegment } from './post-segment.entity';
 
 @Entity('post')
 export class Post extends BaseEntity {
+  @Column({ type: 'enum', enum: ContentStatus, default: ContentStatus.DRAFT })
+  status!: ContentStatus;
+
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 

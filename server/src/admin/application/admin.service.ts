@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   CONTENT_STORE,
   type ContentStore,
+  type ContentFilters,
   type ContentKind,
   type Content,
   type QuestionWrite,
@@ -9,8 +10,8 @@ import {
 @Injectable()
 export class AdminService {
   constructor(@Inject(CONTENT_STORE) private readonly store: ContentStore) {}
-  list(kind: ContentKind, after?: string) {
-    return this.store.list(kind, after);
+  list(kind: ContentKind, after?: string, filters?: ContentFilters) {
+    return this.store.list(kind, after, filters);
   }
   get(kind: ContentKind, id: string) {
     return this.store.get(kind, id);
@@ -21,8 +22,8 @@ export class AdminService {
   remove(kind: ContentKind, id: string) {
     return this.store.remove(kind, id);
   }
-  questions(after?: string) {
-    return this.store.questions(after);
+  questions(after?: string, filters?: ContentFilters) {
+    return this.store.questions(after, filters);
   }
   question(id: string) {
     return this.store.question(id);

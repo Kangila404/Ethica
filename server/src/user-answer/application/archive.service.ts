@@ -91,6 +91,7 @@ export class ArchiveService {
             timeZone: 'Asia/Seoul',
           }),
         questionPreview: question.stage1Body,
+        imageKey: question.imageKey ?? null,
       };
     });
 

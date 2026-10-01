@@ -40,6 +40,12 @@ export class UserSummary extends BaseEntity {
   @Column({ type: 'datetime', nullable: true })
   generationStartedAt!: Date | null;
 
+  @Column({ type: 'date', nullable: true })
+  generationDate!: string | null;
+
+  @Column({ type: 'int', default: 0 })
+  generationAttempts!: number;
+
   static create(
     userId: string,
     nearestPhilosopherId: string,

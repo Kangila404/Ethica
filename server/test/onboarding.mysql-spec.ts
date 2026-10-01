@@ -1,4 +1,14 @@
+import { ContentReview1790816400000 } from '../src/database/migrations/1790816400000-ContentReview';
+import { ContentStatus } from '../src/common/content-status';
+import { Post as LearningPost } from '../src/philosopher/domain/model/post.entity';
+import { PostSegment } from '../src/philosopher/domain/model/post-segment.entity';
+import { AnalysisQuota1790812800000 } from '../src/database/migrations/1790812800000-AnalysisQuota';
 import { randomUUID } from 'node:crypto';
+import { OnboardingContent1790740800000 } from '../src/database/migrations/1790740800000-OnboardingContent';
+import {
+  onboardingV1,
+  philosophersV1,
+} from '../src/database/migrations/content/onboarding-v1';
 import { UserRole } from '../src/user/domain/enum/user-role.enum';
 import { UserStatus } from '../src/user/domain/enum/user-status.enum';
 import { AuthType } from '../src/auth/domain/enums/auth-Type.enum';
@@ -116,6 +126,10 @@ describe('Server workflows with MySQL', () => {
         'generationStartedAt',
       ])
         await runner.dropColumn('user_summary', column);
+      await runner.dropColumn('user_summary', 'generationDate');
+      await runner.dropColumn('user_summary', 'generationAttempts');
+      await new AnalysisQuota1790812800000().up(runner);
+      await new AnalysisQuota1790812800000().up(runner);
       const migration = new OnboardingAnalysis1790726400000();
       await migration.up(runner);
       await migration.up(runner);
@@ -217,6 +231,7 @@ describe('Server workflows with MySQL', () => {
         stage1Body: '첫 질문',
         followupBody: i === 0 ? '후속 질문' : null,
         isActive: true,
+        status: ContentStatus.PUBLISHED,
       });
       await db
         .getRepository(QuestionCategory)
@@ -256,6 +271,164 @@ describe('Server workflows with MySQL', () => {
   afterAll(async () => {
     if (app) await app.close();
   });
+  it('migrates production onboarding content atomically, preserves edits, and serves all three five-question flows', async () => {
+    const existingThinker = await db.getRepository(Philosopher).save({
+      ...philosophersV1.kant,
+      coreThought: 'Existing editorial text to preserve',
+    });
+    const existingCategory = await db
+      .getRepository(Category)
+      .save({ name: onboardingV1[0].name, sortOrder: 42 });
+    const migrationDb = new DataSource({
+      type: 'mysql',
+      host: '127.0.0.1',
+      port: 3308,
+      username: 'ethica',
+      password: 'ethica',
+      database: process.env.ETHICA_TEST_DB,
+      migrations: [OnboardingContent1790740800000],
+      migrationsTransactionMode: 'none',
+      synchronize: false,
+      logging: false,
+    });
+    await migrationDb.initialize();
+    await migrationDb.createQueryRunner().dropColumn('question', 'status');
+    await migrationDb.createQueryRunner().dropColumn('post', 'status');
+    try {
+      const before = {
+        questions: await db.getRepository(Question).count(),
+        categories: await db.getRepository(Category).count(),
+        philosophers: await db.getRepository(Philosopher).count(),
+        answers: await db.getRepository(Answer).count(),
+      };
+      const runner = migrationDb.createQueryRunner();
+      const originalQuery = runner.query.bind(runner) as (
+        sql: string,
+        parameters?: unknown[],
+        structured?: boolean,
+      ) => Promise<unknown>;
+      jest
+        .spyOn(runner, 'query')
+        .mockImplementation(
+          (sql: string, parameters?: unknown[], structured?: boolean) => {
+            if (sql.startsWith('INSERT INTO answer'))
+              return Promise.reject(
+                new Error('injected content insert failure'),
+              );
+            return originalQuery(sql, parameters, structured);
+          },
+        );
+      const createRunner = jest
+        .spyOn(migrationDb, 'createQueryRunner')
+        .mockReturnValueOnce(runner);
+      await expect(migrationDb.runMigrations()).rejects.toThrow(
+        'injected content insert failure',
+      );
+      createRunner.mockRestore();
+      expect(await db.getRepository(Question).count()).toBe(before.questions);
+      expect(await db.getRepository(Category).count()).toBe(before.categories);
+      expect(await db.getRepository(Philosopher).count()).toBe(
+        before.philosophers,
+      );
+      expect(await db.getRepository(Answer).count()).toBe(before.answers);
+
+      expect(await migrationDb.runMigrations()).toHaveLength(1);
+      await new ContentReview1790816400000().up(migrationDb.createQueryRunner());
+      await new ContentReview1790816400000().up(migrationDb.createQueryRunner());
+      expect(await migrationDb.runMigrations()).toHaveLength(0);
+      expect(await db.getRepository(Question).count()).toBe(
+        before.questions + 15,
+      );
+      expect(await db.getRepository(Answer).count()).toBe(before.answers + 30);
+      expect(
+        (
+          await db
+            .getRepository(Philosopher)
+            .findOneByOrFail({ id: existingThinker.id })
+        ).coreThought,
+      ).toBe('Existing editorial text to preserve');
+      expect(
+        (
+          await db
+            .getRepository(Category)
+            .findOneByOrFail({ id: existingCategory.id })
+        ).sortOrder,
+      ).toBe(42);
+      for (const content of onboardingV1) {
+        const c = await db
+          .getRepository(Category)
+          .findOneByOrFail({ name: content.name });
+        const { user, token } = await newUser();
+        await post('onboarding/question', token, { categoryId: c.id }).expect(
+          201,
+        );
+        const response = await request(app.getHttpServer() as Server)
+          .get('/api/onboarding/questions')
+          .set('Authorization', 'Bearer ' + token)
+          .expect(200);
+        const items = (
+          response.body as {
+            items: Array<{
+              questionId: string;
+              answers: Array<{ answerId: string }>;
+              followup: { answers: Array<{ followupAnswerId: string }> } | null;
+            }>;
+          }
+        ).items;
+        expect(items).toHaveLength(5);
+        expect(items.filter((q) => q.followup)).toHaveLength(1);
+        for (const q of items) {
+          expect(q.answers).toHaveLength(2);
+          if (q.followup) {
+            expect(q.followup.answers).toHaveLength(2);
+            await post('onboarding/answers/draft', token, {
+              questionId: q.questionId,
+              answerId: q.answers[0].answerId,
+            }).expect(201);
+          }
+          await post('onboarding/answers', token, {
+            questionId: q.questionId,
+            answerId: q.answers[0].answerId,
+            ...(q.followup
+              ? { followupAnswerId: q.followup.answers[0].followupAnswerId }
+              : {}),
+          }).expect(201);
+        }
+        const result = await post('onboarding/result', token).expect(201);
+        expect(result.body).toMatchObject({
+          analysis: { answeredCount: 5 },
+          summary: { status: 'pending' },
+        });
+        const counts = await db
+          .getRepository(UserPhilosopherCount)
+          .findBy({ userId: user.id });
+        expect(counts.reduce((total, row) => total + row.count, 0)).toBe(5);
+        expect(
+          await db
+            .getRepository(UserFollowupAnswer)
+            .countBy({ userId: user.id }),
+        ).toBe(1);
+      }
+      const firstQuestion = await db
+        .getRepository(Question)
+        .findOneByOrFail({ title: onboardingV1[0].questions[0].title });
+      await db.getRepository(Question).update(firstQuestion.id, {
+        stage1Body: 'Administrator revised content',
+        isActive: false,
+      });
+      expect(await migrationDb.runMigrations()).toHaveLength(0);
+      expect(
+        await db
+          .getRepository(Question)
+          .findOneByOrFail({ id: firstQuestion.id }),
+      ).toMatchObject({
+        stage1Body: 'Administrator revised content',
+        isActive: false,
+      });
+    } finally {
+      await migrationDb.destroy();
+    }
+  });
   async function newUser() {
     const user = await db.getRepository(User).save(User.create('테스트'));
     return { user, token: jwt.sign({ sub: user.userId, type: 'access' }) };
@@ -275,6 +448,28 @@ describe('Server workflows with MySQL', () => {
         : {}),
     };
   }
+  it('persists bundled avatars per account and validates nickname and avatar writes', async () => {
+    const owner = await newUser();
+    const other = await newUser();
+    const http = app.getHttpServer() as Server;
+    await request(http).patch('/api/users/me/avatar').send({ avatarId: 'moon' }).expect(401);
+    await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token)
+      .send({ avatarId: 'moon', userId: other.user.userId }).expect(200);
+    const own = await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token).expect(200);
+    expect(own.body.avatarId).toBe('moon');
+    const untouched = await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + other.token).expect(200);
+    expect(untouched.body.avatarId).toBeNull();
+    for (const body of [{}, { avatarId: 'not-an-avatar' }]) {
+      await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token).send(body).expect(400);
+    }
+    await request(http).patch('/api/users/me/avatar').set('Authorization', 'Bearer ' + owner.token).send({ avatarId: null }).expect(200);
+    expect((await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token)).body.avatarId).toBeNull();
+    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token)
+      .send({ name: '가'.repeat(50) }).expect(200);
+    expect((await request(http).get('/api/users/me').set('Authorization', 'Bearer ' + owner.token)).body.name).toHaveLength(50);
+    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token).send({ name: '   ' }).expect(400);
+    await request(http).patch('/api/users/me').set('Authorization', 'Bearer ' + owner.token).send({ name: '가'.repeat(51) }).expect(400);
+  });
   it('runs the full HTTP flow, serializes simultaneous submissions, and persists summary retries', async () => {
     const { user, token } = await newUser();
     await request(app.getHttpServer() as Server)
@@ -475,6 +670,41 @@ describe('Server workflows with MySQL', () => {
         .status,
     ).toBe('ready');
   });
+  it('persists quota across snapshots, failures and workers; cached reads are free and midnight resets it', async () => {
+    const { user, token } = await newUser();
+    await post('onboarding/question', token, { categoryId: category.id }).expect(201);
+    for (const q of questions) await post('onboarding/answers', token, answer(q)).expect(201);
+    await post('onboarding/result', token).expect(201);
+    const repo = app.get<UserSummaryRepository>(USER_SUMMARY_REPOSITORY);
+    const now = new Date('2026-10-01T14:59:00Z');
+    let snapshot = await repo.ensureSnapshot(user.id, questions[0].answers[0].philosopherId!, 'a'.repeat(64), 16);
+    const claims = await Promise.all(Array.from({ length: 8 }, (_, i) => repo.claim(user.id, snapshot.sourceFingerprint!, `token-${i}`, now)));
+    expect(claims.filter(Boolean)).toHaveLength(1);
+    snapshot = (await repo.findByUserId(user.id))!;
+    expect(snapshot.generationAttempts).toBe(1);
+    await repo.finish(user.id, snapshot.sourceFingerprint!, snapshot.generationToken!, null);
+    for (let i = 2; i <= 3; i++) {
+      snapshot = await repo.ensureSnapshot(user.id, snapshot.nearestPhilosopherId, String(i).repeat(64), 16);
+      expect(await repo.claim(user.id, snapshot.sourceFingerprint!, `next-${i}`, now)).toBe(true);
+      await repo.finish(user.id, snapshot.sourceFingerprint!, `next-${i}`, null);
+    }
+    await expect(repo.claim(user.id, snapshot.sourceFingerprint!, 'fourth', now)).rejects.toMatchObject({ status: 429 });
+    expect((await repo.findByUserId(user.id))?.generationAttempts).toBe(3);
+    await db.getRepository(UserSummary).update({ userId: user.id }, { status: 'ready' });
+    expect(await repo.claim(user.id, snapshot.sourceFingerprint!, 'cached', now)).toBe(false);
+    snapshot = await repo.ensureSnapshot(user.id, snapshot.nearestPhilosopherId, 'b'.repeat(64), 16);
+    await expect(repo.claim(user.id, snapshot.sourceFingerprint!, 'blocked', now)).rejects.toMatchObject({ status: 429 });
+    expect(await repo.claim(user.id, snapshot.sourceFingerprint!, 'tomorrow', new Date('2026-10-01T15:00:00Z'))).toBe(true);
+    expect(await repo.findByUserId(user.id)).toMatchObject({ generationDate: '2026-10-02', generationAttempts: 1 });
+    // HTTP denial cannot reach the external AI client, even after a fresh snapshot.
+    const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    await db.getRepository(UserSummary).update({ userId: user.id }, { status: 'failed', generationDate: today, generationAttempts: 3 });
+    const calls = ai.analyze.mock.calls.length;
+    await post('analysis/contradictions', token).expect(429);
+    const state = await request(app.getHttpServer() as Server).get('/api/analysis/contradictions').set('Authorization', 'Bearer ' + token).expect(200);
+    expect(state.body).toMatchObject({ canRetry: false, quota: { limit: 3, remaining: 0 } });
+    expect(ai.analyze.mock.calls.length).toBe(calls);
+  });
   async function dailyUser() {
     const { user, token } = await newUser();
     await db.getRepository(User).update(user.id, {
@@ -497,6 +727,7 @@ describe('Server workflows with MySQL', () => {
       stage1Body: '질문',
       followupBody: '후속',
       isActive: true,
+      status: ContentStatus.PUBLISHED,
     });
     await db.getRepository(Answer).save(
       ['A', 'B'].map((body) => ({
@@ -550,9 +781,14 @@ describe('Server workflows with MySQL', () => {
     ]);
     expect(submissions.map((r) => r.status)).toEqual([201, 201]);
     expect(payload(submissions[0]).requiresApp).toBe(true);
+    expect(payload(submissions[0]).aggregated).toBe(false);
+    expect((await today(token)).body).toMatchObject({
+      userDailyQuestion: 'pending',
+      requiresFollowup: true,
+    });
     expect(
       await db.getRepository(UserAnswer).countBy({ userId: user.id }),
-    ).toBe(1);
+    ).toBe(0);
     await post('daily/answers/stage1', token, {
       questionId: q.id,
       answerId: q.answers[1].id,
@@ -714,6 +950,16 @@ describe('Server workflows with MySQL', () => {
       where: { id: current.questionId },
       relations: { answers: true, followupAnswers: true },
     });
+    if (q.type === QuestionType.TWO_STAGE) {
+      await post('daily/answers/stage1', token, answer(q)).expect(201);
+    }
+    const complete = () =>
+      q.type === QuestionType.TWO_STAGE
+        ? post('daily/answers/stage2', token, {
+            questionId: q.id,
+            followupAnswerId: q.followupAnswers[0].id,
+          })
+        : post('daily/answers/stage1', token, answer(q));
     const counts = app.get<UserPhilosopherCountRepository>(
       USER_PHILOSOPHER_COUNT_REPOSITORY,
     );
@@ -721,7 +967,7 @@ describe('Server workflows with MySQL', () => {
       .spyOn(counts, 'increase')
       .mockRejectedValueOnce(new Error('simulated count failure'));
     try {
-      await post('daily/answers/stage1', token, answer(q)).expect(500);
+      await complete().expect(500);
     } finally {
       failure.mockRestore();
     }
@@ -735,7 +981,7 @@ describe('Server workflows with MySQL', () => {
           .findOneByOrFail({ id: current.cycleId })
       ).status,
     ).toBe('pending');
-    await post('daily/answers/stage1', token, answer(q)).expect(201);
+    await complete().expect(201);
   });
   it('returns an explanation without opening the app for a single-stage question', async () => {
     const q = await dailyQuestion(QuestionType.SINGLE);
@@ -835,6 +1081,7 @@ describe('Server workflows with MySQL', () => {
       title: '운영 문제',
       stage1Body: '수정 전',
       isActive: true,
+      status: ContentStatus.PUBLISHED,
       categoryIds: [category.id],
       answers: [
         { body: 'A', philosopherId: ph1.id, explanation: '해설 A' },
@@ -924,6 +1171,39 @@ describe('Server workflows with MySQL', () => {
     expect(
       await db.getRepository(UserAnswer).countBy({ userId: user.id }),
     ).toBe(1);
+  });
+  it('reviews whole posts atomically and hides draft/held content from public learning', async () => {
+    const admin = await adminUser();
+    const viewer = await newUser();
+    const thinker = await db.getRepository(Philosopher).save({ name: '검수 철학자', era: '현대', school: '학파', coreThought: '생각', lifeRoots: '생애' });
+    const input = { philosopherId: thinker.id, title: '검수 게시글', segments: [{ segmentType: 'text', body: '첫 카드' }, { segmentType: 'text', body: '두 번째 카드' }] };
+    const draft = payload(await post('admin/posts', admin.token, input).expect(201));
+    expect(draft.status).toBe('draft');
+    const read = (path: string, token = viewer.token) => request(app.getHttpServer() as Server).get('/api/' + path).set('Authorization', 'Bearer ' + token);
+    await read('philosophers/post/' + draft.id).expect(404);
+    const listed = await read('admin/posts?status=draft&search=' + encodeURIComponent('검수'), admin.token).expect(200);
+    expect(listed.body.map((p: { id: string }) => p.id)).toContain(draft.id);
+    const details = (await read('admin/posts/' + draft.id, admin.token).expect(200)).body as { segments: PostSegment[] };
+    const cards = (details.segments as PostSegment[]).map(c => ({ id: c.id, segmentType: c.segmentType, body: c.body }));
+    const published = { ...input, status: 'published', segments: [...cards].reverse() };
+    await put('admin/posts/' + draft.id, admin.token, published).expect(200);
+    const visible = (await read('philosophers/post/' + draft.id).expect(200)).body as { segments: { body: string }[] };
+    expect((visible.segments as { body: string }[]).map(c => c.body)).toEqual(['두 번째 카드', '첫 카드']);
+    await put('admin/posts/' + draft.id, admin.token, { ...published, segments: [{ ...cards[0], id: '999999999' }] }).expect(400);
+    const before = await db.getRepository(LearningPost).findOneByOrFail({ id: draft.id });
+    // Exercise a real DB failure inside the transaction; transaction-bound repositories
+    // are not the same object as db.getRepository() outside the request.
+    await db.query(`ALTER TABLE post_segment ADD CONSTRAINT ethica_test_card_failure
+      CHECK (body <> 'must roll back card')`);
+    try {
+      await put('admin/posts/' + draft.id, admin.token, {
+        ...published, title: 'must roll back', segments: [{ ...cards[0], body: 'must roll back card' }],
+      }).expect(500);
+    } finally { await db.query('ALTER TABLE post_segment DROP CHECK ethica_test_card_failure'); }
+    expect((await db.getRepository(LearningPost).findOneByOrFail({ id: draft.id })).title).toBe(before.title);
+    expect(await db.getRepository(PostSegment).countBy({ postId: draft.id })).toBe(2);
+    await put('admin/posts/' + draft.id, admin.token, { ...published, status: 'held' }).expect(200);
+    await read('philosophers/post/' + draft.id).expect(404);
   });
   it('isolates inquiries, supports admin answers, and only publishes selected notices and real terms', async () => {
     const owner = await newUser(),

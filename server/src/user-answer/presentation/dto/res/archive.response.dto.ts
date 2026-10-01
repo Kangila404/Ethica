@@ -30,4 +30,11 @@ export class ArchiveItemResponse {
 
   @ApiProperty({ example: '길에 쓰러진 지갑을 발견했다면 어떻게 할까요?' })
   questionPreview!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: '질문 이미지 키 또는 HTTPS URL',
+  })
+  imageKey!: string | null;
 }

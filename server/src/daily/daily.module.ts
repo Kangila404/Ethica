@@ -19,6 +19,7 @@ import { PhilosopherModule } from 'src/philosopher/philosopher.module';
     PhilosopherModule,
     TypeOrmModule.forFeature([UserDailyQuestion]),
   ],
+  exports: [DailyService],
   controllers: [DailyController],
   providers: [
     DailyService,

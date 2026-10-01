@@ -1,3 +1,5 @@
+import { ContentStatus } from 'src/common/content-status';
+import { PageQuery } from 'src/common/page.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -39,7 +41,40 @@ export class PhilosopherInput {
   @MaxLength(255)
   imageKey?: string | null;
 }
+export class PostCardInput {
+  @ApiPropertyOptional() @IsOptional() @Matches(/^[1-9]\d*$/) id?: string;
+  @ApiProperty({ enum: PostSegmentType })
+  @IsEnum(PostSegmentType)
+  segmentType!: PostSegmentType;
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10000)
+  body?: string | null;
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  imageKey?: string | null;
+}
+export class ContentPageQuery extends PageQuery {
+  @IsOptional() @IsEnum(ContentStatus) status?: ContentStatus;
+  @IsOptional() @IsString() @MaxLength(100) search?: string;
+  @IsOptional() @IsEnum(QuestionUsage) usage?: QuestionUsage;
+  @IsOptional() @Matches(/^[1-9]\d*$/) categoryId?: string;
+}
 export class PostInput {
+  @ApiPropertyOptional({ enum: ContentStatus })
+  @IsOptional()
+  @IsEnum(ContentStatus)
+  status?: ContentStatus;
+  @ApiPropertyOptional({ type: [PostCardInput] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @ValidateNested({ each: true })
+  @Type(() => PostCardInput)
+  segments?: PostCardInput[];
   @ApiProperty() @Matches(/^[1-9]\d*$/) philosopherId!: string;
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(255) title!: string;
   @ApiPropertyOptional({ nullable: true })
@@ -78,6 +113,10 @@ export class AnswerInput extends ChoiceInput {
   @ApiProperty() @Matches(/^[1-9]\d*$/) philosopherId!: string;
 }
 export class QuestionInput {
+  @ApiPropertyOptional({ enum: ContentStatus })
+  @IsOptional()
+  @IsEnum(ContentStatus)
+  status?: ContentStatus;
   @ApiProperty({ enum: QuestionUsage })
   @IsEnum(QuestionUsage)
   usage!: QuestionUsage;
@@ -100,7 +139,7 @@ export class QuestionInput {
   @IsString()
   @MaxLength(255)
   imageKey?: string | null;
-  @ApiProperty() @IsBoolean() isActive!: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
   @ApiProperty({ type: [String] })
   @IsArray()
   @ArrayMinSize(1)

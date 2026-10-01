@@ -1,4 +1,5 @@
 import { AccountModule } from './account/account.module';
+import { MediaModule } from './media/media.module';
 import { SupportModule } from './support/support.module';
 import { AdminModule } from './admin/admin.module';
 import { APP_FILTER } from '@nestjs/core';
@@ -25,6 +26,7 @@ import { UserAnswerModule } from './user-answer/user-answer.module';
 
 @Module({
   imports: [
+    MediaModule,
     AccountModule,
     AdminModule,
     SupportModule,

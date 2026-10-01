@@ -1,6 +1,7 @@
 import { Transactional } from 'typeorm-transactional';
 import { User } from 'src/user/domain/model/user.entity';
-import { Injectable } from '@nestjs/common';
+import { generationQuota } from 'src/analysis/domain/generation-quota';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   UserSummary,
@@ -45,28 +46,53 @@ export class UserSummaryRepositoryImpl implements UserSummaryRepository {
     return summary;
   }
 
+  @Transactional()
   async claim(
     userId: string,
     fingerprint: string,
     token: string,
     now: Date,
   ): Promise<boolean> {
-    const result = await this.ormRepository
-      .createQueryBuilder()
-      .update()
-      .set({
+    // Same lock as snapshot preparation: reserve quota and generation atomically.
+    await this.ormRepository.manager.getRepository(User).findOneOrFail({
+      where: { id: userId },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const summary = await this.findByUserId(userId);
+    if (
+      !summary ||
+      summary.sourceFingerprint !== fingerprint ||
+      !(
+        summary.status === 'pending' ||
+        summary.status === 'failed' ||
+        (summary.status === 'processing' &&
+          summary.generationStartedAt &&
+          summary.generationStartedAt.getTime() < now.getTime() - 60000)
+      )
+    )
+      return false;
+    const quota = generationQuota(summary, now);
+    if (quota.remaining === 0)
+      throw new HttpException(
+        {
+          code: 'ANALYSIS_DAILY_LIMIT',
+          message:
+            '오늘의 AI 분석 3회를 모두 사용했어요. 한국시간 자정에 다시 이용할 수 있어요.',
+          quota,
+        },
+        429,
+      );
+    await this.ormRepository.update(
+      { id: summary.id },
+      {
         status: 'processing',
         generationToken: token,
         generationStartedAt: now,
-      })
-      .where('user_id = :userId', { userId })
-      .andWhere('sourceFingerprint = :fingerprint', { fingerprint })
-      .andWhere(
-        "(status IN ('pending','failed') OR (status = 'processing' AND generationStartedAt < :expired))",
-        { expired: new Date(now.getTime() - 60000) },
-      )
-      .execute();
-    return result.affected === 1;
+        generationDate: quota.date,
+        generationAttempts: quota.limit - quota.remaining + 1,
+      },
+    );
+    return true;
   }
 
   async finish(

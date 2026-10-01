@@ -14,9 +14,10 @@ export class SubmitStageOneResponse {
     requiresApp = false,
     explanation = '',
     philosopherId = '',
+    aggregated = true,
   ): SubmitStageOneResponse {
     const res = new SubmitStageOneResponse();
-    res.aggregated = true;
+    res.aggregated = aggregated;
     res.requiresApp = requiresApp;
     res.explanation = explanation;
     res.philosopherId = philosopherId;

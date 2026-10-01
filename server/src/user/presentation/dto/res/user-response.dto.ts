@@ -7,6 +7,8 @@ export class UserResponse {
   userId!: string;
 
   name!: string;
+  @ApiProperty({ nullable: true })
+  avatarId!: string | null;
   userRole!: string;
 
   @ApiProperty({ enum: OnboardingStatus })
@@ -31,6 +33,7 @@ export class UserResponse {
 
     dto.userId = user.userId;
     dto.name = user.name;
+    dto.avatarId = user.avatarId ?? null;
     dto.userRole = user.userRole;
     dto.onboardingStatus = user.onboardingStatus;
     dto.dailyQuestionTime = user.dailyQuestionTime;

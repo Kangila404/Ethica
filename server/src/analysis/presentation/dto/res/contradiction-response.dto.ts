@@ -9,7 +9,15 @@ class Insight {
   @ApiProperty() title!: string;
   @ApiProperty() summary!: string;
 }
+class GenerationQuota {
+  @ApiProperty() date!: string;
+  @ApiProperty({ example: 3 }) limit!: number;
+  @ApiProperty() remaining!: number;
+  @ApiProperty({ description: '한국시간 자정 초기화 시각 (ISO 8601)' })
+  resetsAt!: string;
+}
 export class ContradictionResponse {
+  @ApiProperty({ type: GenerationQuota }) quota!: GenerationQuota;
   @ApiProperty({ nullable: true, type: String }) nearestPhilosopherId!:
     | string
     | null;

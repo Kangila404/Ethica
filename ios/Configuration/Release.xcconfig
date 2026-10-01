@@ -1,0 +1,9 @@
+ETHICA_API_BASE_URL = https:/$()/unconfigured.invalid/api/
+ETHICA_MEDIA_BASE_URL =
+GOOGLE_IOS_CLIENT_ID =
+GOOGLE_REVERSED_CLIENT_ID = ethica-google-unconfigured
+KAKAO_NATIVE_APP_KEY =
+DEVELOPMENT_TEAM =
+APS_ENVIRONMENT = production
+ETHICA_ALLOW_LOCAL_NETWORK = NO
+#include? "Release.local.xcconfig"

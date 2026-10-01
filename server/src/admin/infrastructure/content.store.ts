@@ -1,3 +1,5 @@
+import { ContentStatus } from 'src/common/content-status';
+import type { PostCardInput } from '../presentation/content.dto';
 import {
   BadRequestException,
   ConflictException,
@@ -11,6 +13,7 @@ import type {
   ContentStore,
   Content,
   ContentKind,
+  ContentFilters,
   QuestionWrite,
 } from '../domain/content-store';
 import { Category } from 'src/category/domain/model/category.entity';
@@ -38,16 +41,31 @@ export class SqlContentStore implements ContentStore {
   private repo(kind: ContentKind) {
     return this.db.getRepository(targets[kind]);
   }
-  list(kind: ContentKind, after?: string) {
-    return this.repo(kind).find({
-      where: after ? { id: MoreThan(after) } : {},
-      order: { id: 'ASC' },
-      take: 50,
-    });
+  list(kind: ContentKind, after?: string, filters: ContentFilters = {}) {
+    const qb = this.repo(kind)
+      .createQueryBuilder('item')
+      .orderBy('item.id', 'ASC')
+      .take(50);
+    if (after) qb.andWhere('item.id > :after', { after });
+    if (kind === 'posts') {
+      if (filters.status)
+        qb.andWhere('item.status = :status', { status: filters.status });
+      if (filters.search?.trim())
+        qb.andWhere('item.title LIKE :search', {
+          search: `%${filters.search.trim()}%`,
+        });
+    }
+    return qb.getMany();
   }
   async get(kind: ContentKind, id: string, lock = false) {
     const item = await this.repo(kind).findOne({
       where: { id },
+      ...(kind === 'posts' && !lock
+        ? {
+            relations: { segments: true },
+            order: { segments: { sortOrder: 'ASC' as const } },
+          }
+        : {}),
       ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
     });
     if (!item) throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
@@ -59,6 +77,46 @@ export class SqlContentStore implements ContentStore {
     if (kind === 'posts') {
       const post = input as Partial<Post>;
       await this.get('philosophers', post.philosopherId!, true);
+      const cards = (input as { segments?: PostCardInput[] }).segments;
+      const segmentRepo = this.db.getRepository(PostSegment);
+      const old = id ? await segmentRepo.findBy({ postId: id }) : [];
+      if (cards) {
+        const ids = cards.flatMap((c) => (c.id ? [c.id] : []));
+        if (
+          new Set(ids).size !== ids.length ||
+          ids.some((key) => !old.some((c) => c.id === key))
+        )
+          throw new BadRequestException(
+            '게시글에 속한 카드만 수정할 수 있습니다.',
+          );
+        for (const card of cards) {
+          if (
+            card.segmentType === PostSegmentType.TEXT
+              ? !card.body?.trim()
+              : !card.imageKey?.trim()
+          )
+            throw new BadRequestException(
+              '카드 타입에 맞는 내용이 필요합니다.',
+            );
+        }
+      }
+      const status =
+        post.status ?? (item as Post).status ?? ContentStatus.DRAFT;
+      if (status === ContentStatus.PUBLISHED && !(cards ?? old).length)
+        throw new BadRequestException('공개하려면 학습 카드를 추가해주세요.');
+      const metadata = { ...input } as Partial<Post>;
+      delete metadata.segments;
+      Object.assign(item, metadata, { status });
+      await this.repo(kind).save(item);
+      if (cards) {
+        for (const removed of old.filter(
+          (c) => !cards.some((next) => next.id === c.id),
+        ))
+          await segmentRepo.delete(removed.id);
+        for (const [sortOrder, card] of cards.entries())
+          await segmentRepo.save({ ...card, postId: item.id, sortOrder });
+      }
+      return this.get(kind, item.id);
     }
     if (kind === 'segments') {
       const segment = input as Partial<PostSegment>;
@@ -95,12 +153,29 @@ export class SqlContentStore implements ContentStore {
       );
     await this.repo(kind).delete(id);
   }
-  questions(after?: string) {
-    return this.db.getRepository(Question).find({
-      where: after ? { id: MoreThan(after) } : {},
-      order: { id: 'ASC' },
-      take: 50,
-    });
+  questions(after?: string, filters: ContentFilters = {}) {
+    const qb = this.db
+      .getRepository(Question)
+      .createQueryBuilder('q')
+      .orderBy('q.id', 'ASC')
+      .take(50);
+    if (after) qb.andWhere('q.id > :after', { after });
+    if (filters.status)
+      qb.andWhere('q.status = :status', { status: filters.status });
+    if (filters.usage)
+      qb.andWhere('q.usage = :usage', { usage: filters.usage });
+    if (filters.categoryId)
+      qb.innerJoin(
+        'q.categories',
+        'category',
+        'category.categoryId = :categoryId',
+        { categoryId: filters.categoryId },
+      );
+    if (filters.search?.trim())
+      qb.andWhere('(q.title LIKE :search OR q.stage1Body LIKE :search)', {
+        search: `%${filters.search.trim()}%`,
+      });
+    return qb.getMany();
   }
   async question(id: string): Promise<Question> {
     const q = await this.db.getRepository(Question).findOne({
@@ -168,7 +243,20 @@ export class SqlContentStore implements ContentStore {
       stage1Body: input.stage1Body,
       followupBody: input.followupBody ?? null,
       imageKey: input.imageKey ?? null,
-      isActive: input.isActive,
+      status:
+        input.status ??
+        (input.isActive === undefined
+          ? (q.status ?? ContentStatus.DRAFT)
+          : input.isActive
+            ? ContentStatus.PUBLISHED
+            : ContentStatus.HELD),
+      isActive:
+        (input.status ??
+          (input.isActive === undefined
+            ? (q.status ?? ContentStatus.DRAFT)
+            : input.isActive
+              ? ContentStatus.PUBLISHED
+              : ContentStatus.HELD)) === ContentStatus.PUBLISHED,
     });
     await repo.save(q);
     for (const choice of input.answers) {
@@ -223,6 +311,7 @@ export class SqlContentStore implements ContentStore {
       .findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
     if (!q) throw new NotFoundException('문제를 찾을 수 없습니다.');
     q.isActive = false;
+    q.status = ContentStatus.HELD;
     await this.db.getRepository(Question).save(q);
   }
   async users(after?: string) {

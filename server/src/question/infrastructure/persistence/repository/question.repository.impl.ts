@@ -35,7 +35,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
         categoryId,
       })
       .where('q.usage = :usage', { usage: QuestionUsage.ONBOARDING })
-      .andWhere('q.isActive = true')
+      .andWhere("q.status = 'published'")
       .orderBy('q.id', 'ASC')
       .take(limit)
       .getMany();
@@ -72,7 +72,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     const qb = this.ormRepository
       .createQueryBuilder('q')
       .where('q.usage = :usage', { usage: QuestionUsage.DAILY })
-      .andWhere('q.isActive = true');
+      .andWhere("q.status = 'published'");
 
     if (excludeIds.length > 0) {
       qb.andWhere('q.id NOT IN (:...excludeIds)', { excludeIds });

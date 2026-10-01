@@ -1,3 +1,5 @@
+import { generationQuota } from '../domain/generation-quota';
+import { composeThoughts } from '../domain/composition';
 import { Transactional } from 'typeorm-transactional';
 import {
   Inject,
@@ -59,7 +61,6 @@ export class AnalysisService {
     const counts = (await this.counts.findByUserId(user.id)).filter(
       (c) => c.count > 0,
     );
-    const total = counts.reduce((n, c) => n + c.count, 0);
     const philosophers = counts.length
       ? await this.philosophers.findBy({
           id: In(counts.map((c) => c.philosopherId)),
@@ -70,29 +71,7 @@ export class AnalysisService {
         code: 'ANALYSIS_CONTENT_MISSING',
         message: '분석에 필요한 사상가 정보를 확인 중입니다.',
       });
-    const ranked = counts
-      .map((c) => ({
-        philosopher: philosophers.find((p) => p.id === c.philosopherId)!,
-        count: c.count,
-      }))
-      .sort(
-        (a, b) =>
-          b.count - a.count ||
-          (BigInt(a.philosopher.id) < BigInt(b.philosopher.id) ? -1 : 1),
-      );
-    // Largest remainder allocation makes displayed percentages add up to exactly 100.0.
-    const units = ranked.map((c) => Math.floor((c.count * 1000) / total));
-    const remainder = ranked
-      .map((c, i) => ({ i, fraction: (c.count * 1000) / total - units[i] }))
-      .sort((a, b) => b.fraction - a.fraction || a.i - b.i);
-    const remaining = 1000 - units.reduce((n, u) => n + u, 0);
-    for (let i = 0; i < remaining && ranked.length; i++)
-      units[remainder[i].i]++;
-    const composition = ranked.map((r, i) => ({
-      philosopherId: r.philosopher.id,
-      name: r.philosopher.name,
-      percent: units[i] / 10,
-    }));
+    const composition = composeThoughts(counts, philosophers);
     const contexts = await this.source.findContexts(user.id);
     const answeredCount = new Set(contexts.map((c) => c.questionId)).size;
     const response: AnalysisResponse = {
@@ -129,6 +108,7 @@ export class AnalysisService {
   async getContradiction(userId: string): Promise<ContradictionResponse> {
     const { s, summary } = await this.prepareSummary(userId);
     const status = summary?.status ?? 'pending';
+    const quota = generationQuota(summary);
     const expired =
       status === 'processing' &&
       !!summary?.generationStartedAt &&
@@ -141,8 +121,11 @@ export class AnalysisService {
       status,
       overallSummaries: summary?.overallSummaries ?? [],
       contradictions: summary?.contradictions ?? [],
+      quota,
       canRetry:
-        !!summary && (status === 'pending' || status === 'failed' || expired),
+        quota.remaining > 0 &&
+        !!summary &&
+        (status === 'pending' || status === 'failed' || expired),
       message:
         status === 'ready'
           ? null
