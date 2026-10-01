@@ -6,11 +6,13 @@ on:
     paths:
       - 'ios/**'
       - '.github/workflows/ios-build.yml'
+      - '.github/workflows/ios-testflight.yml'
   push:
     branches: [develop]
     paths:
       - 'ios/**'
       - '.github/workflows/ios-build.yml'
+      - '.github/workflows/ios-testflight.yml'
   workflow_dispatch:
 
 permissions:
@@ -32,6 +34,12 @@ jobs:
         run: |
           xcodebuild -version
           xcodebuild -showsdks
+      - name: Validate release tooling and privacy manifests
+        run: |
+          python3 -m py_compile ios/ci/prepare-signing.py ios/ci/cleanup-signing.py
+          node --check ios/ci/asc.cjs
+          plutil -lint ios/Ethica.xcodeproj/project.pbxproj
+          plutil -lint ios/Ethica/Resources/PrivacyInfo.xcprivacy ios/EthicaWidget/PrivacyInfo.xcprivacy
       - name: Build app and widget without signing
         shell: bash
         run: |
