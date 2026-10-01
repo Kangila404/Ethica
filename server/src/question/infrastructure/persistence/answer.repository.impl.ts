@@ -11,8 +11,11 @@ export class AnswerRepositoryImpl implements AnswerRepository {
     private readonly ormRepository: Repository<Answer>,
   ) {}
 
-  async findById(id: string): Promise<Answer | null> {
-    return this.ormRepository.findOne({ where: { id } });
+  async findById(id: string, lock = false): Promise<Answer | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
   }
 
   async findByIds(ids: string[]): Promise<Answer[]> {

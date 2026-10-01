@@ -129,9 +129,12 @@ export class DailyService {
     if (!cycle || cycle.questionId !== request.questionId) {
       throw new ForbiddenException('현재 출제된 문제가 아닙니다.');
     }
-    const question = await this.questionRepository.findById(request.questionId);
+    const question = await this.questionRepository.findById(
+      request.questionId,
+      true,
+    );
     if (!question) throw new NotFoundException('문제를 찾을 수 없습니다.');
-    const answer = await this.answerRepository.findById(request.answerId);
+    const answer = await this.answerRepository.findById(request.answerId, true);
     if (!answer || answer.questionId !== cycle.questionId)
       throw new ForbiddenException('해당 문제의 선택지가 아닙니다.');
     if (
@@ -179,9 +182,13 @@ export class DailyService {
         '현재 문제의 1단 답변을 먼저 제출해야 합니다.',
       );
     }
-    const question = await this.questionRepository.findById(request.questionId);
+    const question = await this.questionRepository.findById(
+      request.questionId,
+      true,
+    );
     const answer = await this.followupAnswerRepository.findById(
       request.followupAnswerId,
+      true,
     );
     if (
       question?.type !== QuestionType.TWO_STAGE ||
