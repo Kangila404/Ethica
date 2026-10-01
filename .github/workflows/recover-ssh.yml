@@ -1,0 +1,55 @@
+name: Stop Ethica and Orchestra through recovery SSH
+
+on:
+  push:
+    branches: [ops/ssh-recovery-20261001]
+    paths: ['.github/workflows/recover-ssh.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ethica-production
+  cancel-in-progress: false
+
+jobs:
+  stop-only:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 8
+    steps:
+      - name: Connect recovery runner to existing tailnet
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          hostname: github-actions-ethica-recovery
+      - name: Stop only the two authorized containers
+        shell: bash
+        env:
+          NAS_HOST: ${{ secrets.NAS_HOST }}
+          NAS_USER: ${{ secrets.NAS_USER }}
+          NAS_SSH_KEY: ${{ secrets.NAS_SSH_KEY }}
+          NAS_KNOWN_HOSTS: ${{ secrets.NAS_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$NAS_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+$ ]]
+          [[ "$NAS_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          test -n "$NAS_SSH_KEY"
+          test -n "$NAS_KNOWN_HOSTS"
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$NAS_SSH_KEY" > "$HOME/.ssh/recovery-nas"
+          printf '%s\n' "$NAS_KNOWN_HOSTS" > "$HOME/.ssh/recovery-known-hosts"
+          opts=(-i "$HOME/.ssh/recovery-nas" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/recovery-known-hosts" -o ConnectTimeout=30 -o ConnectionAttempts=1 -o ServerAliveInterval=10 -o ServerAliveCountMax=2)
+          # No deployment, reboot, config changes, or volume/container deletion.
+          for attempt in 1 2 3; do
+            echo "Recovery SSH attempt $attempt"
+            if timeout 100s ssh "${opts[@]}" "${NAS_USER}@${NAS_HOST}" 'sudo -n docker stop --time 30 ethica-mysql-1 orchestra-web'; then
+              echo 'Stop command completed successfully'
+              timeout 30s ssh "${opts[@]}" "${NAS_USER}@${NAS_HOST}" 'uptime; free -m; sudo -n docker ps --format "{{.Names}} {{.Status}}"'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Recovery SSH failed; container stop was not confirmed' >&2
+          exit 1
