@@ -81,6 +81,6 @@ jobs:
           target="${NAS_USER}@${NAS_HOST}"
           ssh "${opts[@]}" "$target" "test -s '$NAS_APP_DIR/.env' && test -s '$NAS_APP_DIR/server.env' && mkdir -p '$NAS_APP_DIR/infra'"
           scp "${opts[@]}" docker-compose.prod.yml "$target:$NAS_APP_DIR/docker-compose.prod.yml"
-          scp "${opts[@]}" infra/deploy.sh infra/backup.sh "$target:$NAS_APP_DIR/infra/"
+          scp "${opts[@]}" infra/deploy.sh infra/backup.sh infra/renew-tls.sh "$target:$NAS_APP_DIR/infra/"
           printf '%s' "$REGISTRY_TOKEN" | ssh "${opts[@]}" "$target" "umask 077; mkdir -p '$NAS_APP_DIR/.docker' && docker --config '$NAS_APP_DIR/.docker' login --username '$REGISTRY_USER' --password-stdin"
           ssh "${opts[@]}" "$target" "bash '$NAS_APP_DIR/infra/deploy.sh' '$IMAGE'"
