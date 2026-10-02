@@ -43,6 +43,12 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   notificationEnabled!: boolean;
 
+  @Column({ type: 'varchar', length: 24, nullable: true })
+  aiConsentVersion!: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  aiConsentUpdatedAt!: Date | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   fcmToken!: string | null;
 

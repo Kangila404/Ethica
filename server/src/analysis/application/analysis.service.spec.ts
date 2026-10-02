@@ -1,3 +1,4 @@
+import { AI_CONSENT_VERSION } from 'src/user/domain/ai-consent';
 jest.mock('typeorm-transactional', () => ({
   Transactional: () => () => undefined,
 }));
@@ -13,6 +14,7 @@ import { AnswerContext } from '../domain/repository/analysis-source.repository';
 
 describe('AnalysisService', () => {
   let service: AnalysisService;
+  let consent: string | null;
   let summary: UserSummary | null;
   let contexts: AnswerContext[];
   let counts: { philosopherId: string; count: number }[];
@@ -26,6 +28,7 @@ describe('AnalysisService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     summary = null;
+    consent = AI_CONSENT_VERSION;
     contexts = Array.from({ length: 5 }, (_, i) => ({
       userAnswerId: String(i),
       questionId: String(i),
@@ -98,9 +101,13 @@ describe('AnalysisService', () => {
     };
     service = new AnalysisService(
       {
-        findByUserId: jest
-          .fn()
-          .mockResolvedValue({ id: '1', userStatus: UserStatus.ACTIVE }),
+        findByUserId: jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            id: '1',
+            userStatus: UserStatus.ACTIVE,
+            aiConsentVersion: consent,
+          }),
+        ),
       } as unknown as UserRepository,
       {
         findByUserId: jest
@@ -125,6 +132,18 @@ describe('AnalysisService', () => {
         ),
       } as unknown as Repository<Philosopher>,
     );
+  });
+  it('does not call AI or claim quota without current consent, including after withdrawal', async () => {
+    consent = null;
+    await expect(service.analyzeContradiction('u')).rejects.toMatchObject({
+      response: { code: 'AI_CONSENT_REQUIRED' },
+    });
+    expect(ai.analyze).not.toHaveBeenCalled();
+    consent = 'old-version';
+    await expect(service.analyzeContradiction('u')).rejects.toMatchObject({
+      response: { code: 'AI_CONSENT_REQUIRED' },
+    });
+    expect(ai.analyze).not.toHaveBeenCalled();
   });
   it('uses answer count rather than dominant philosopher percentage, with a 100 cap', async () => {
     expect(await service.getAnalysis('u')).toMatchObject({

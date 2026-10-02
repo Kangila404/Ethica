@@ -248,7 +248,7 @@
               "overallSummaries": [
                 [
                   "title": "원칙과 배려 사이",
-                  "summary": "원칙을 지키며 상대의 입장도 살펴요.", "userAnswerIds": [],
+                  "summary": "원칙을 지키며 상대의 입장도 살펴요", "userAnswerIds": [],
                 ]
               ],
             ],
@@ -259,16 +259,17 @@
         timezone = body["timezone"] as? String ?? TimeZone.current.identifier
         complete = true
         return (200, [:])
-      case "/api/users/me":
+      case "/api/users/me/ai-consent", "/api/users/me":
         return (
           200,
           [
             "userId": "preview", "name": "미리보기", "userRole": "user",
+            "aiConsentVersion": "2026-10-02",
             "onboardingStatus": complete ? "complete" : "incomplete",
             "dailyQuestionTime": time, "timezone": timezone, "notificationEnabled": false,
           ]
         )
-      default: return (404, ["message": "미리보기에 준비되지 않은 화면이에요."])
+      default: return (404, ["message": "미리보기에 준비되지 않은 화면이에요"])
       }
     }
     // Editorial UI draft based on onboarding-v1. Apply approved copy to DB in a later migration.
@@ -282,7 +283,7 @@
             {
               "questionId": "1-1",
               "type": "double",
-              "stage1Body": "발표 직전, 친구가 의견을 물어요. 단점을 말하면 자신감을 잃을 수도 있어요.",
+              "stage1Body": "발표 직전, 친구가 의견을 물어요. 단점을 말하면 자신감을 잃을 수도 있어요",
               "answers": [
                 {
                   "answerId": "1-1-1",
@@ -325,7 +326,7 @@
             {
               "questionId": "1-3",
               "type": "single",
-              "stage1Body": "같은 회비가 부담돼 모임을 떠나는 사람이 있어요.",
+              "stage1Body": "같은 회비가 부담돼 모임을 떠나는 사람이 있어요",
               "answers": [
                 {
                   "answerId": "1-3-1",
@@ -375,7 +376,7 @@
             {
               "questionId": "2-1",
               "type": "single",
-              "stage1Body": "무료 수리 행사를 알려야 해요. 미확정 혜택도 알리면 참여자가 늘 수 있어요.",
+              "stage1Body": "무료 수리 행사를 알려야 해요. 미확정 혜택도 알리면 참여자가 늘 수 있어요",
               "answers": [
                 {
                   "answerId": "2-1-1",
@@ -433,7 +434,7 @@
             {
               "questionId": "2-4",
               "type": "single",
-              "stage1Body": "도서관 예산으로 프로그램 하나만 열 수 있어요.",
+              "stage1Body": "도서관 예산으로 프로그램 하나만 열 수 있어요",
               "answers": [
                 {
                   "answerId": "2-4-1",
@@ -448,7 +449,7 @@
             {
               "questionId": "2-5",
               "type": "single",
-              "stage1Body": "봉사단의 좋은 역할을 오래된 회원만 맡고 있어요.",
+              "stage1Body": "봉사단의 좋은 역할을 오래된 회원만 맡고 있어요",
               "answers": [
                 {
                   "answerId": "2-5-1",
@@ -468,7 +469,7 @@
             {
               "questionId": "3-1",
               "type": "single",
-              "stage1Body": "공유한 자료에 오류가 있어요. 알리면 동료들이 재작업해야 해요.",
+              "stage1Body": "공유한 자료에 오류가 있어요. 알리면 동료들이 재작업해야 해요",
               "answers": [
                 {
                   "answerId": "3-1-1",
@@ -541,7 +542,7 @@
             {
               "questionId": "3-5",
               "type": "single",
-              "stage1Body": "평가에서 지원 업무가 잘 드러나지 않아요.",
+              "stage1Body": "평가에서 지원 업무가 잘 드러나지 않아요",
               "answers": [
                 {
                   "answerId": "3-5-1",

@@ -7,7 +7,7 @@ struct APIError: LocalizedError {
   let message: String
   var errorDescription: String? { message }
   static let signedOut = APIError(
-    status: 401, code: "SESSION_EXPIRED", message: "로그인이 만료됐어요. 다시 로그인해주세요.")
+    status: 401, code: "SESSION_EXPIRED", message: "로그인이 만료됐어요. 다시 로그인해주세요")
 }
 enum AppConfiguration {
   static var onboardingPreview: Bool {
@@ -77,7 +77,7 @@ struct KeychainStore: SessionPersistence {
     if status == errSecItemNotFound { return nil }
     guard status == errSecSuccess, let data = result as? Data else {
       throw APIError(
-        status: 0, code: "KEYCHAIN", message: "저장된 로그인 정보를 읽을 수 없어요. 기기 잠금을 해제하고 다시 시도해주세요.")
+        status: 0, code: "KEYCHAIN", message: "저장된 로그인 정보를 읽을 수 없어요. 기기 잠금을 해제하고 다시 시도해주세요")
     }
     return try JSONDecoder().decode(StoredSession.self, from: data)
   }
@@ -94,7 +94,7 @@ struct KeychainStore: SessionPersistence {
   }
   func clear() { SecItemDelete(query as CFDictionary) }
   private var storageError: APIError {
-    APIError(status: 0, code: "KEYCHAIN", message: "로그인 정보를 안전하게 저장하지 못했어요.")
+    APIError(status: 0, code: "KEYCHAIN", message: "로그인 정보를 안전하게 저장하지 못했어요")
   }
 }
 
@@ -171,7 +171,7 @@ actor APIClient {
   ) async throws -> T {
     let payload = try await data(path, method: method, body: body, authenticated: authenticated)
     do { return try JSONDecoder().decode(T.self, from: payload) } catch {
-      throw APIError(status: 0, code: "RESPONSE_FORMAT", message: "내용을 불러오지 못했어요. 잠시 후 다시 시도해주세요.")
+      throw APIError(status: 0, code: "RESPONSE_FORMAT", message: "내용을 불러오지 못했어요. 잠시 후 다시 시도해주세요")
     }
   }
   private func data(_ path: String, method: String, body: [String: JSONValue]?, authenticated: Bool, rawBody: Data? = nil, contentType: String? = nil)
@@ -262,15 +262,16 @@ actor APIClient {
   {
     guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL, url.host == baseURL.host,
       url.scheme == baseURL.scheme
-    else { throw APIError(status: 0, code: "URL", message: "서비스에 연결할 수 없어요. 잠시 후 다시 시도해주세요.") }
+    else { throw APIError(status: 0, code: "URL", message: "서비스에 연결할 수 없어요. 잠시 후 다시 시도해주세요") }
     #if !DEBUG
       guard url.scheme == "https" else {
-        throw APIError(status: 0, code: "HTTPS", message: "보안 연결을 사용할 수 없어요.")
+        throw APIError(status: 0, code: "HTTPS", message: "보안 연결을 사용할 수 없어요")
       }
     #endif
     var request = URLRequest(url: url)
     request.httpMethod = method
-    request.timeoutInterval = 75
+    // Session restoration must reach a retryable screen promptly; AI generation can take longer.
+    request.timeoutInterval = (path == "users/me" || path == "auth/token/refresh") ? 15 : 75
     request.cachePolicy = .reloadIgnoringLocalCacheData
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     if let access { request.setValue("Bearer \(access)", forHTTPHeaderField: "Authorization") }
@@ -290,7 +291,7 @@ actor APIClient {
         ? payload["message"]!.text : payload["message"]?.array.map(\.text).joined(separator: "\n")
       throw APIError(
         status: response.statusCode, code: payload["code"]?.text ?? "HTTP_ERROR",
-        message: message?.isEmpty == false ? message! : "요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.")
+        message: message?.isEmpty == false ? message! : "요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요")
     }
     return data
   }

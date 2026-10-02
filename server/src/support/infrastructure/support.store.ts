@@ -6,6 +6,7 @@ import { Inquiry } from '../domain/model/inquiry.entity';
 import { Notice } from '../domain/model/notice.entity';
 import { Term } from '../domain/model/term.entity';
 import { SupportStore } from '../domain/support-store';
+import legalDrafts from '../legal-drafts.json';
 @Injectable()
 export class SqlSupportStore implements SupportStore {
   constructor(@InjectDataSource() private readonly db: DataSource) {}
@@ -72,8 +73,11 @@ export class SqlSupportStore implements SupportStore {
   }
   async term(type: string) {
     const item = await this.db.getRepository(Term).findOneBy({ type });
-    if (!item) throw new NotFoundException('등록된 약관이 없습니다.');
-    return item;
+    if (item) return item;
+    const draft = legalDrafts.find((document) => document.type === type);
+    if (!draft) throw new NotFoundException('등록된 약관이 없습니다.');
+    // Never replace operator-authored terms. Missing documents expose a labeled draft only.
+    return this.db.getRepository(Term).create(draft);
   }
   @Transactional()
   async saveTerm(input: Pick<Term, 'type' | 'title' | 'content' | 'version'>) {

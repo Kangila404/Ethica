@@ -19,7 +19,7 @@ struct LiveTodayView: View {
           case "waiting", "preparing":
             EmptyMessage(
               title: daily.userDailyQuestion == "waiting" ? "첫 질문이 곧 찾아와요" : "새 질문을 준비 중이에요",
-              symbol: "sunrise", detail: "기다리는 동안 사상가의 글을 읽어보세요.")
+              symbol: "sunrise", detail: "기다리는 동안 사상가의 글을 읽어보세요")
             Button("학습 둘러보기") { session.selectedTab = 2 }.buttonStyle(.bordered)
           default:
             if let key = daily.imageKey, AppConfiguration.imageURL(key) != nil {
@@ -39,7 +39,7 @@ struct LiveTodayView: View {
               }
               DisclosureGroup("해설 보기") {
                 VStack(alignment: .leading, spacing: 16) {
-                  Text(daily.selectedAnswer?.explanation ?? "").textSelection(.enabled)
+                  Text(interfaceCopy(daily.selectedAnswer?.explanation ?? "")).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
                   if let explanation = daily.selectedFollowupAnswer?.explanation {
                     ReadingText(title: "추가 답변", bodyText: explanation)
                   }
@@ -82,7 +82,7 @@ struct LiveTodayView: View {
                 ChoiceButton(text: choice.body) { Task { await submit(choice.id) } }.disabled(
                   session.busy)
               }
-              Text("정답은 없어요.").font(.footnote).foregroundStyle(.secondary)
+              Text("정답은 없어요").font(.footnote).foregroundStyle(.secondary)
             }
           }
           if let next = Date.serverDate(daily.nextDailyAt) {
@@ -137,7 +137,7 @@ struct LiveTodayView: View {
       }
     } catch is CancellationError {} catch let error as URLError where error.code == .cancelled {
     } catch {
-      failure = (error as? APIError)?.message ?? "연결 상태를 확인해주세요."
+      failure = (error as? APIError)?.message ?? "연결 상태를 확인해주세요"
       if (error as? APIError)?.status == 401 { await session.report(error) }
     }
   }
@@ -184,12 +184,12 @@ struct DailyFollowupView: View {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 finished()
               } catch {
-                failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요."
+                failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요"
               }
             }
           }.disabled(saving)
         }
-        Text("마지막 답변까지 고르면 완료돼요.").font(.footnote).foregroundStyle(.secondary)
+        Text("마지막 답변까지 고르면 완료돼요").font(.footnote).foregroundStyle(.secondary)
         if saving { ProgressView() }
         if let failure { Text(failure).font(.footnote).foregroundStyle(.red) }
       }.readingPage()
@@ -208,7 +208,7 @@ struct CompositionView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       if snapshot.composition.isEmpty {
-        Text("질문에 답하면 생각의 구성을 볼 수 있어요.").foregroundStyle(.secondary)
+        Text("질문에 답하면 생각의 구성을 볼 수 있어요").foregroundStyle(.secondary)
       } else {
         ThoughtCompositionRing(
           composition: snapshot.composition,
@@ -279,13 +279,13 @@ struct AIAnalysisControl: View {
           if canRetry { Button("분석 다시 시도", action: generate).font(.subheadline) }
         }
       } else if !ready && quota?.remaining == 0 {
-        Text("오늘의 분석을 모두 사용했어요. 한국시간 자정에 다시 만나요.")
+        Text("오늘의 분석을 모두 사용했어요. 한국시간 자정에 다시 만나요")
           .font(.caption).foregroundStyle(.secondary)
         Button("상태 새로고침", action: refresh).font(.subheadline)
       } else if !ready && !canRetry {
-        Text("먼저 질문에 답해주세요.").font(.caption).foregroundStyle(.secondary)
+        Text("먼저 질문에 답해주세요").font(.caption).foregroundStyle(.secondary)
       } else if status == "failed" {
-        Text("완료하지 못했어요. 다시 시도해주세요.").font(.caption).foregroundStyle(.secondary)
+        Text("완료하지 못했어요. 다시 시도해주세요").font(.caption).foregroundStyle(.secondary)
       }
       if !ready, let quota, quota.remaining > 0 {
         Text("오늘 \(quota.remaining)회 남음").font(.caption).foregroundStyle(.secondary)
@@ -362,6 +362,7 @@ struct SummarySection: View {
   var automaticallyGenerate = false
   @State private var updated: ThoughtSummary?
   @State private var generating = false
+  @State private var showConsent = false
   private var summary: ThoughtSummary { updated ?? initial }
   var body: some View {
     VStack(alignment: .leading, spacing: 22) {
@@ -377,19 +378,26 @@ struct SummarySection: View {
         if part != .overview {
           if part == .all { Text("선택의 차이").font(.title3.bold()).padding(.top, 8) }
           if summary.contradictions.isEmpty {
-            Text("아직 드러난 모순이 없어요.").foregroundStyle(.secondary)
+            Text("아직 드러난 모순이 없어요").foregroundStyle(.secondary)
           }
           InsightTabs(insights: summary.contradictions, kind: "모순")
         }
       }
-      Text("AI 해석은 참고용이에요.").font(.caption).foregroundStyle(.secondary)
     }.task { if automaticallyGenerate && summary.status == "pending" { await generate() } }
+      .sheet(isPresented: $showConsent) {
+        AIConsentSheet {
+          showConsent = false
+          Task { await generate() }
+        }
+      }
   }
   private func generate() async {
     guard !generating && summary.canRetry else { return }
+    guard session.hasAiConsent else { showConsent = true; return }
     generating = true
     defer { generating = false }
     do { updated = try await session.api.send("analysis/contradictions") } catch {
+      if (error as? APIError)?.code == "AI_CONSENT_REQUIRED" { showConsent = true; return }
       if (error as? APIError)?.status == 429 { await refresh() }
       await session.report(error)
     }
@@ -418,12 +426,10 @@ struct InsightTabs: View {
         }.pickerStyle(.segmented)
       }
       if !insights.isEmpty {
-        if preview {
-          ReadingText(
-            title: insights[selectedIndex].title, bodyText: insights[selectedIndex].summary)
-        } else {
-          InsightView(insight: insights[selectedIndex])
-        }
+        InsightView(insight: insights[selectedIndex], preview: preview)
+          .padding(22)
+          .background(Color(uiColor: .secondarySystemGroupedBackground),
+            in: RoundedRectangle(cornerRadius: 22))
       }
     }.frame(maxWidth: .infinity, alignment: .leading)
       .onChange(of: insights.map { $0.title + $0.summary }) { _ in selection = 0 }
@@ -432,15 +438,56 @@ struct InsightTabs: View {
 
 struct InsightView: View {
   let insight: Insight
+  var preview = false
+  @State private var showingAnswers = false
+  private var answerIDs: [String] { Array(NSOrderedSet(array: insight.userAnswerIds)) as? [String] ?? [] }
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
+    VStack(alignment: .leading, spacing: 24) {
       ReadingText(title: insight.title, bodyText: insight.summary)
-      ForEach(Array(insight.userAnswerIds.enumerated()), id: \.element) { index, id in
-        NavigationLink {
-          LiveArchiveDetailView(id: id)
-        } label: {
-          Label("관련 답변 \(index + 1) 보기", systemImage: "arrow.turn.up.right")
-        }.font(.footnote)
+      if !answerIDs.isEmpty {
+        Divider()
+        Button { showingAnswers = true } label: {
+          HStack(spacing: 10) {
+            Image(systemName: "text.bubble").foregroundStyle(.blue)
+            Text("관련 답변").foregroundStyle(.primary)
+            Spacer()
+            Text("\(answerIDs.count)개").foregroundStyle(.secondary)
+            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+          }.font(.subheadline).frame(minHeight: 44).contentShape(Rectangle())
+        }.buttonStyle(.plain)
+      }
+    }
+    .sheet(isPresented: $showingAnswers) {
+      NavigationStack {
+        List {
+          ForEach(Array(answerIDs.enumerated()), id: \.element) { index, id in
+            if preview {
+              VStack(alignment: .leading, spacing: 8) {
+                Text(index == 0 ? "친구를 위한 거짓말" : "함께 정하는 기준").font(.headline)
+                Text(index == 0 ? "진실을 말한다" : "모두가 납득할 원칙을 정한다")
+                  .font(.subheadline).foregroundStyle(.secondary)
+              }.padding(.vertical, 6)
+            } else {
+              RelatedAnswerRow(id: id)
+            }
+          }
+        }.navigationTitle("관련 답변").navigationBarTitleDisplayMode(.inline)
+          .toolbar { ToolbarItem(placement: .confirmationAction) { Button("닫기") { showingAnswers = false } } }
+      }.presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+    }
+  }
+}
+private struct RelatedAnswerRow: View {
+  @EnvironmentObject private var session: AppSession
+  let id: String
+  var body: some View {
+    LoadView(load: { () -> ArchiveDetail in try await session.api.get("archive/\(id)") }) { answer in
+      NavigationLink { LiveArchiveDetailView(id: id) } label: {
+        VStack(alignment: .leading, spacing: 8) {
+          Text(interfaceCopy(answer.questionBody)).font(.headline).lineLimit(2)
+          Text(interfaceCopy(answer.myAnswer)).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+          Text(answer.serviceDate).font(.caption).foregroundStyle(.tertiary)
+        }.multilineTextAlignment(.leading).padding(.vertical, 6)
       }
     }
   }
@@ -547,5 +594,48 @@ struct ThoughtResultView: View {
         let profile: PhilosopherProfile? = try? await session.api.get("philosophers/\(id)")
         portraitKey = profile?.imageKey
       }
+  }
+}
+
+struct AIConsentSheet: View {
+  @EnvironmentObject private var session: AppSession
+  @Environment(\.dismiss) private var dismiss
+  @State private var saving = false
+  @State private var failure: String?
+  let onAgree: () -> Void
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 24) {
+          Text("AI와 함께 살펴볼까요?").font(.title2.bold())
+          ReadingText(title: "OpenAI에 보내는 정보",
+            bodyText: "문제와 선택한 답변, 후속 답변, 사상 구성과 답변 기록 식별자를 보내 해석을 만들어요")
+          Text("이메일·닉네임·로그인 정보는 보내지 않아요\n동의하지 않아도 질문·통계·학습을 이용할 수 있어요")
+            .font(.subheadline).foregroundStyle(.secondary).lineSpacing(5)
+          Text("계정 설정에서 언제든 동의를 철회할 수 있어요")
+            .font(.footnote).foregroundStyle(.secondary)
+          NavigationLink("개인정보 처리방침") { LegalView(type: "privacy") }
+          if let failure { Text(interfaceCopy(failure)).font(.footnote).foregroundStyle(.red) }
+        }.readingPage()
+      }
+      .safeAreaInset(edge: .bottom) {
+        VStack(spacing: 12) {
+          Button {
+            guard !saving else { return }
+            saving = true
+            Task {
+              defer { saving = false }
+              do { try await session.setAiConsent(true); onAgree(); dismiss() }
+              catch { failure = (error as? APIError)?.message ?? "동의를 저장하지 못했어요" }
+            }
+          } label: {
+            HStack { if saving { ProgressView() }; Text("동의하고 계속") }
+              .frame(maxWidth: .infinity, minHeight: 36)
+          }.buttonStyle(.borderedProminent).disabled(saving)
+          Button("나중에") { dismiss() }.disabled(saving).frame(minHeight: 44)
+        }.padding(.horizontal, 24).padding(.vertical, 12).background(.bar)
+      }
+      .navigationTitle("AI 정보 전송").navigationBarTitleDisplayMode(.inline)
+    }.presentationDetents([.large]).interactiveDismissDisabled(saving)
   }
 }

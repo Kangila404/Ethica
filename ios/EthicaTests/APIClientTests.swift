@@ -89,6 +89,20 @@ final class APIClientTests: XCTestCase {
       WidgetSnapshot.clear()
     #endif
   }
+  func testProfileTimeoutPreservesSessionAndAllowsRetry() async throws {
+    StubURLProtocol.handler = { _ in throw URLError(.timedOut) }
+    do {
+      let _: [String: String] = try await api.get("users/me")
+      XCTFail("Expected a timeout")
+    } catch let error as URLError {
+      XCTAssertEqual(error.code, .timedOut)
+    }
+    let preserved = await api.currentSession()
+    XCTAssertNotNil(preserved)
+    StubURLProtocol.handler = { _ in (200, Data(#"{"state":"ready"}"#.utf8), 0) }
+    let retried: [String: String] = try await api.get("users/me")
+    XCTAssertEqual(retried["state"], "ready")
+  }
   func testImageUploadRetainsMultipartWhenRefreshingSession() async throws {
     let refreshed = try JSONEncoder().encode(tokens("new-access"))
     let counts = LockedCounter()
@@ -380,4 +394,15 @@ final class APIClientTests: XCTestCase {
     }
   #endif
 
+}
+
+final class InterfaceCopyTests: XCTestCase {
+  func testRemovesKoreanSentencePeriodsButPreservesDecimalsAndLinks() {
+    XCTAssertEqual(interfaceCopy("선택했어요. 함께 살펴봐요."), "선택했어요\n함께 살펴봐요")
+    XCTAssertEqual(interfaceCopy("46.2% · https://ethica.example.com"), "46.2% · https://ethica.example.com")
+  }
+  func testPreservesParagraphsAndQuestionMarks() {
+    XCTAssertEqual(interfaceCopy("왜 그럴까요?\n\n함께 살펴봐요."), "왜 그럴까요?\n\n함께 살펴봐요")
+    XCTAssertEqual(interfaceCopy("선택했어요.\n다음 문장이에요."), "선택했어요\n다음 문장이에요")
+  }
 }

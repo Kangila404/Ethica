@@ -48,7 +48,7 @@ final class PushNotifications: NSObject, MessagingDelegate, UNUserNotificationCe
   func register(api: APIClient) async throws {
     guard configured else {
       throw APIError(
-        status: 0, code: "PUSH_NOT_CONFIGURED", message: "알림 연결을 준비하고 있어요. 질문은 앱에서 확인할 수 있습니다.")
+        status: 0, code: "PUSH_NOT_CONFIGURED", message: "알림 연결을 준비하고 있어요. 질문은 앱에서 확인할 수 있습니다")
     }
     UIApplication.shared.registerForRemoteNotifications()
     if let token {

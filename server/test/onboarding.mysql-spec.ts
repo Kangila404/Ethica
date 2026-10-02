@@ -433,8 +433,13 @@ describe('Server workflows with MySQL', () => {
       await migrationDb.destroy();
     }
   });
-  async function newUser() {
-    const user = await db.getRepository(User).save(User.create('테스트'));
+  async function newUser(consent = true) {
+    const entity = User.create('테스트');
+    if (consent) {
+      entity.aiConsentVersion = '2026-10-02';
+      entity.aiConsentUpdatedAt = new Date();
+    }
+    const user = await db.getRepository(User).save(entity);
     return { user, token: jwt.sign({ sub: user.userId, type: 'access' }) };
   }
   function post(path: string, token: string, body: object = {}) {
@@ -522,7 +527,7 @@ describe('Server workflows with MySQL', () => {
       .expect(400);
   });
   it('runs the full HTTP flow, serializes simultaneous submissions, and persists summary retries', async () => {
-    const { user, token } = await newUser();
+    const { user, token } = await newUser(false);
     await request(app.getHttpServer() as Server)
       .get('/api/categories')
       .expect(401);
@@ -564,6 +569,13 @@ describe('Server workflows with MySQL', () => {
       summary: { status: 'pending' },
     });
     expect(ai.analyze).not.toHaveBeenCalled();
+    await post('analysis/contradictions', token).expect(403);
+    expect(ai.analyze).not.toHaveBeenCalled();
+    await request(app.getHttpServer() as Server)
+      .patch('/api/users/me/ai-consent')
+      .set('Authorization', 'Bearer ' + token)
+      .send({ enabled: true, version: '2026-10-02' })
+      .expect(200);
     ai.analyze.mockRejectedValueOnce(new Error('simulated upstream timeout'));
     expect(
       (await post('analysis/contradictions', token).expect(200)).body,
@@ -1427,7 +1439,7 @@ describe('Server workflows with MySQL', () => {
       .expect(200);
     await request(app.getHttpServer() as Server)
       .get('/api/terms')
-      .expect(404);
+      .expect(200);
     await put('admin/terms', admin.token, {
       type: 'service',
       title: '테스트 약관',

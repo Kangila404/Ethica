@@ -1,3 +1,4 @@
+import { AiConsentRequest } from '../presentation/dto/req/ai-consent-request.dto';
 import { Transactional } from 'typeorm-transactional';
 import { dailyBoundary, dailyDate } from 'src/common/daily-clock';
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
@@ -18,6 +19,18 @@ export class UserService {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepository,
   ) {}
+
+  @Transactional()
+  async updateAiConsent(
+    userId: string,
+    request: AiConsentRequest,
+  ): Promise<UserResponse> {
+    const user = await this.getUserOrThrow(userId);
+    user.aiConsentVersion = request.enabled ? request.version : null;
+    user.aiConsentUpdatedAt = new Date();
+    await this.userRepository.save(user);
+    return UserResponse.from(user);
+  }
 
   async getMe(userId: string): Promise<UserResponse> {
     const user = await this.getUserOrThrow(userId, false);

@@ -20,7 +20,6 @@ struct OnboardingFlow: View {
         VStack(spacing: 0) {
           content(progress).frame(maxWidth: .infinity, maxHeight: .infinity)
           VStack(spacing: 10) {
-            if session.busy { ProgressView().accessibilityLabel("저장 중") }
             actions(progress)
           }
           .padding(.horizontal, 28).padding(.top, 12).padding(.bottom, 16)
@@ -64,7 +63,7 @@ struct OnboardingFlow: View {
         isFollowup: progress.nextStage == 2, isTransitioning: $questionTransitioning)
     } else {
       EmptyMessage(
-        title: "진행 상황을 다시 불러와주세요", symbol: "arrow.clockwise", detail: "저장된 답변은 그대로 유지됩니다."
+        title: "진행 상황을 다시 불러와주세요", symbol: "arrow.clockwise", detail: "저장된 답변은 그대로 유지됩니다"
       ) {
         Task { await reload() }
       }
@@ -90,7 +89,7 @@ struct OnboardingFlow: View {
         Button("다시 불러오기") { Task { await reload() } }.buttonStyle(OnboardingActionStyle())
       } else {
         Button("계속") { Task { await chooseCategory() } }
-          .buttonStyle(OnboardingActionStyle()).disabled(selectedCategory == nil)
+          .buttonStyle(OnboardingActionStyle(dimWhenDisabled: true)).disabled(selectedCategory == nil)
         Text("5개의 짧은 질문").font(.footnote).foregroundStyle(.secondary)
       }
     } else if let question = questions.first(where: { $0.id == progress.nextQuestionId }) {
@@ -99,43 +98,24 @@ struct OnboardingFlow: View {
         choices(question, progress: progress)
         ScrollView { choices(question, progress: progress) }.frame(maxHeight: 240)
       }.fixedSize(horizontal: false, vertical: true)
-        .opacity(questionTransitioning ? 0 : 1)
-        .animation(.easeOut(duration: 0.18), value: questionTransitioning)
-        .disabled(questionTransitioning)
-        .overlay {
-          if questionTransitioning {
-            Label(
-              progress.nextStage == 2 ? "선택했어요" : "\(progress.answeredCount) / \(progress.totalCount) 완료",
-              systemImage: "checkmark.circle.fill"
-            )
-            .font(.headline).foregroundStyle(.mint)
-            .padding(.horizontal, 22).padding(.vertical, 14)
-            .background(.mint.opacity(0.12), in: Capsule())
-            .transition(.scale(scale: reduceMotion ? 1 : 0.75).combined(with: .opacity))
-            .accessibilityAddTraits(.updatesFrequently)
-          }
-        }
-        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.35, dampingFraction: 0.72), value: questionTransitioning)
     }
   }
 
-  @ViewBuilder private func choices(_ question: OnboardingQuestion, progress: OnboardingProgress)
-    -> some View
-  {
-    VStack(spacing: 12) {
-      if progress.nextStage == 2, let followup = question.followup {
-        ForEach(followup.answers) { choice in
-          Button(choice.body) {
-            Task { await submit(question, answerID: progress.draftAnswerId, followupID: choice.id) }
-          }.buttonStyle(OnboardingActionStyle())
-        }
-      } else {
-        ForEach(question.answers) { choice in
-          Button(choice.body) { Task { await submit(question, answerID: choice.id) } }
-            .buttonStyle(OnboardingActionStyle())
-        }
+  private func choices(_ question: OnboardingQuestion, progress: OnboardingProgress) -> some View {
+    let followup = progress.nextStage == 2
+    let options = followup
+      ? (question.followup?.answers.map { DailyChoice(id: $0.id, body: $0.body) } ?? [])
+      : question.answers.map { DailyChoice(id: $0.id, body: $0.body) }
+    return OnboardingChoiceButtons(
+      stepID: question.id + "-\(progress.nextStage)", choices: options,
+      locked: session.busy || questionTransitioning, saving: session.busy,
+      completedText: questionTransitioning
+        ? (followup ? "선택했어요" : "\(progress.answeredCount) / \(progress.totalCount) 완료") : nil
+    ) { id in
+      Task {
+        await submit(question, answerID: followup ? progress.draftAnswerId : id,
+          followupID: followup ? id : nil)
       }
-      Text("정답은 없어요.").font(.caption).foregroundStyle(.secondary)
     }
   }
 
@@ -172,13 +152,13 @@ struct OnboardingFlow: View {
         let list: OnboardingQuestions = try await session.api.get("onboarding/questions")
         questions = list.items
       }
-      withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.45)) { progress = latest }
+      progress = latest
       failure = nil
       if latest.resultRequested, result == nil {
         result = try await session.api.send("onboarding/result")
       }
     } catch {
-      failure = (error as? APIError)?.message ?? "연결 상태를 확인해주세요."
+      failure = (error as? APIError)?.message ?? "연결 상태를 확인해주세요"
       await session.report(error)
     }
   }

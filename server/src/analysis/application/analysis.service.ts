@@ -1,3 +1,4 @@
+import { AI_CONSENT_VERSION } from 'src/user/domain/ai-consent';
 import { generationQuota } from '../domain/generation-quota';
 import { composeThoughts } from '../domain/composition';
 import { Transactional } from 'typeorm-transactional';
@@ -138,6 +139,12 @@ export class AnalysisService {
   }
   async analyzeContradiction(userId: string): Promise<ContradictionResponse> {
     const { s } = await this.prepareSummary(userId);
+    if (s.user.aiConsentVersion !== AI_CONSENT_VERSION) {
+      throw new ForbiddenException({
+        code: 'AI_CONSENT_REQUIRED',
+        message: 'AI 해석을 위한 정보 전송에 동의해주세요',
+      });
+    }
     if (!s.response.nearestPhilosopherId)
       throw new ConflictException({
         code: 'ANALYSIS_NO_ANSWERS',

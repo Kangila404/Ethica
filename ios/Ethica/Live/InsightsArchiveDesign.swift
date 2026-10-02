@@ -82,11 +82,11 @@ struct TodayImpactView: View {
               .font(.subheadline)
           } else {
             Text(after.nearestPhilosopher?.name ?? "").font(.subheadline)
-            Text(before.answerCount == 0 ? "첫 생각이 기록됐어요." : "오늘도 가장 가까운 철학자는 같아요.")
+            Text(before.answerCount == 0 ? "첫 생각이 기록됐어요" : "오늘도 가장 가까운 철학자는 같아요")
               .font(.caption).foregroundStyle(.secondary)
           }
         }
-        Text("첫 답변으로 달라진 비율이에요. 추가 답변은 모순 분석에만 반영돼요.")
+        Text("첫 답변으로 달라진 비율이에요. 추가 답변은 모순 분석에만 반영돼요")
           .font(.caption).foregroundStyle(.secondary)
       } else {
         VStack(spacing: 16) {
@@ -96,7 +96,7 @@ struct TodayImpactView: View {
             .font(.title3.bold())
           Text(
             analysis.status == "pending"
-              ? "답하면 내 생각이 어떻게 달라졌는지 보여드릴게요." : "지금까지의 생각은 누적에서 볼 수 있어요."
+              ? "답하면 내 생각이 어떻게 달라졌는지 보여드릴게요" : "지금까지의 생각은 누적에서 볼 수 있어요"
           )
           .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
           if analysis.status == "pending" {
@@ -259,44 +259,42 @@ struct PreviewInsightsView: View {
           kind: detail == 0 ? "해석" : "모순", preview: true
         )
         .id(detail)
-        .padding(20).frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-          Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      Text("미리보기 · 실제 AI 분석이 아닌 예시예요.")
+      Text("미리보기 · 실제 AI 분석이 아닌 예시예요")
         .font(.caption).foregroundStyle(.secondary)
     }
   }
   private var previewSummaries: [Insight] {
     [
       Insight(
-        userAnswerIds: [], title: "관계 속에서도 기준을 지키려는 시선",
+        userAnswerIds: ["preview-1", "preview-2"], title: "관계 속에서도 기준을 지키려는 시선",
         summary:
-          "원칙을 중시하는 선택이 가장 많았어요. 친구와의 관계에서도 사실을 전하는 쪽에 무게를 두었어요. 상대가 스스로 판단할 수 있도록 정보를 주는 일을 중요하게 여긴 것으로 볼 수 있습니다. 다만 원칙을 지키는 이유까지 답변만으로 단정할 수는 없어요."
+          "원칙을 중시하는 선택이 가장 많았어요. 친구와의 관계에서도 사실을 전하는 쪽에 무게를 두었어요. 상대가 스스로 판단할 수 있도록 정보를 주는 일을 중요하게 여긴 것으로 볼 수 있습니다. 다만 원칙을 지키는 이유까지 답변만으로 단정할 수는 없어요"
       ),
       Insight(
-        userAnswerIds: [], title: "같은 몫보다 서로 다른 출발선을 살펴요",
+        userAnswerIds: ["preview-1", "preview-2"], title: "같은 몫보다 서로 다른 출발선을 살펴요",
         summary:
-          "함께 나누는 상황에서는 각자의 형편을 고려했어요. 모두에게 같은 몫을 주는 것보다 참여할 기회를 지키는 데 관심을 둔 선택입니다. 기준을 포기했다기보다 그 기준이 누구에게 어떤 영향을 주는지 살핀 것으로 읽을 수 있어요. 이런 선택이 다른 상황에서도 이어지는지 더 알아볼 수 있습니다."
+          "함께 나누는 상황에서는 각자의 형편을 고려했어요. 모두에게 같은 몫을 주는 것보다 참여할 기회를 지키는 데 관심을 둔 선택입니다. 기준을 포기했다기보다 그 기준이 누구에게 어떤 영향을 주는지 살핀 것으로 읽을 수 있어요. 이런 선택이 다른 상황에서도 이어지는지 더 알아볼 수 있습니다"
       ),
       Insight(
-        userAnswerIds: [], title: "솔직함과 배려를 함께 지키려는 태도",
+        userAnswerIds: ["preview-1", "preview-2"], title: "솔직함과 배려를 함께 지키려는 태도",
         summary:
-          "불편한 사실을 피하기보다 전하는 방법을 고민하는 모습이 보여요. 솔직함과 관계를 함께 지킬 수 있다고 보는 관점과 닿아 있습니다. 기준을 지키는 것과 상대를 배려하는 것을 별개의 선택으로만 보지는 않는 셈이에요. 다만 이 둘이 충돌할 때 무엇을 우선하는지는 더 많은 답변이 필요합니다."
+          "불편한 사실을 피하기보다 전하는 방법을 고민하는 모습이 보여요. 솔직함과 관계를 함께 지킬 수 있다고 보는 관점과 닿아 있습니다. 기준을 지키는 것과 상대를 배려하는 것을 별개의 선택으로만 보지는 않는 셈이에요. 다만 이 둘이 충돌할 때 무엇을 우선하는지는 더 많은 답변이 필요합니다"
       ),
     ]
   }
   private var previewContradictions: [Insight] {
     [
       Insight(
-        userAnswerIds: [], title: "가까운 사람에게는 달라지는 판단",
+        userAnswerIds: ["preview-1", "preview-2"], title: "가까운 사람에게는 달라지는 판단",
         summary:
-          "같은 규칙도 관계가 가까워지면 다르게 적용하는 선택이 있었어요. 원칙보다 상대가 받을 영향을 더 크게 고려했을 수 있습니다. 이것만으로 일관성이 없다고 단정할 수는 없어요. 어떤 조건이 판단을 바꿨는지 돌아볼 만한 지점입니다."
+          "같은 규칙도 관계가 가까워지면 다르게 적용하는 선택이 있었어요. 원칙보다 상대가 받을 영향을 더 크게 고려했을 수 있습니다. 이것만으로 일관성이 없다고 단정할 수는 없어요. 어떤 조건이 판단을 바꿨는지 돌아볼 만한 지점입니다"
       ),
       Insight(
-        userAnswerIds: [], title: "이해관계가 생겼을 때 흔들리는 기준",
+        userAnswerIds: ["preview-1", "preview-2"], title: "이해관계가 생겼을 때 흔들리는 기준",
         summary:
-          "처음에는 모두에게 같은 기준을 적용했지만, 자신과 얽힌 상황에서는 다른 쪽을 골랐어요. 공정함을 바라는 생각과 개인의 경험이 맞부딪힌 장면으로 볼 수 있습니다. 감정이 판단의 일부가 됐을 가능성도 있어요. 비슷한 상황의 답변이 쌓이면 이 차이를 더 구체적으로 살펴볼 수 있습니다."
+          "처음에는 모두에게 같은 기준을 적용했지만, 자신과 얽힌 상황에서는 다른 쪽을 골랐어요. 공정함을 바라는 생각과 개인의 경험이 맞부딪힌 장면으로 볼 수 있습니다. 감정이 판단의 일부가 됐을 가능성도 있어요. 비슷한 상황의 답변이 쌓이면 이 차이를 더 구체적으로 살펴볼 수 있습니다"
       ),
     ]
   }
@@ -429,18 +427,18 @@ private struct PreviewArchiveEntry: Identifiable {
   static let history: [Self] = [
     .init(
       id: "garden", daysAgo: 1, title: "같은 기회, 다른 출발선", question: "마을 정원을 나눠 쓴다면 어떤 기준이 공정할까요?",
-      answer: "필요한 사람에게 더 나눠요", explanation: "서로 다른 출발선을 고려했어요. 공정한 기회를 고민하는 롤스의 관점과 이어져요.",
+      answer: "필요한 사람에게 더 나눠요", explanation: "서로 다른 출발선을 고려했어요. 공정한 기회를 고민하는 롤스의 관점과 이어져요",
       asset: "archive-garden"),
     .init(
       id: "truth", daysAgo: 2, title: "친구에게 건네는 진실", question: "친구에게 상처가 될 수 있는 사실도 전해야 할까요?",
-      answer: "솔직하되 조심스럽게 전해요", explanation: "친구가 스스로 판단할 수 있도록 사실을 전하는 선택이에요.",
+      answer: "솔직하되 조심스럽게 전해요", explanation: "친구가 스스로 판단할 수 있도록 사실을 전하는 선택이에요",
       asset: "archive-truth"),
     .init(
       id: "share", daysAgo: 3, title: "함께 나누는 몫", question: "모임의 같은 회비가 누군가에게는 부담이라면?",
-      answer: "형편에 따라 조정해요", explanation: "모임에 참여할 기회를 모두에게 열어 두려는 선택이에요.", asset: "archive-garden"),
+      answer: "형편에 따라 조정해요", explanation: "모임에 참여할 기회를 모두에게 열어 두려는 선택이에요", asset: "archive-garden"),
     .init(
       id: "care", daysAgo: 4, title: "기다림 끝의 대화", question: "약속을 잊은 친구에게 어떤 말을 건넬까요?",
-      answer: "서운함을 차분히 전해요", explanation: "관계를 지키며 자신의 감정도 표현하는 선택이에요.", asset: "archive-truth"),
+      answer: "서운함을 차분히 전해요", explanation: "관계를 지키며 자신의 감정도 표현하는 선택이에요", asset: "archive-truth"),
   ]
 }
 
@@ -500,7 +498,7 @@ struct PreviewArchiveGrid: View {
           }.font(.subheadline).textCase(nil)
         }
       }
-      if records.isEmpty { Text("검색 결과가 없어요.").foregroundStyle(.secondary) }
+      if records.isEmpty { Text("검색 결과가 없어요").foregroundStyle(.secondary) }
       Text("디자인 미리보기 · 예시 기록").font(.caption2).foregroundStyle(.tertiary)
         .listRowSeparator(.hidden)
     }.listStyle(.plain)

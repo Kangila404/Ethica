@@ -50,6 +50,13 @@ import WidgetKit
     if profile.userRole != "admin" && selectedTab == 4 { selectedTab = 0 }
     if profile.notificationEnabled { await PushNotifications.shared.sync(api: api) }
   }
+  static let aiConsentVersion = "2026-10-02"
+  var hasAiConsent: Bool { user?.aiConsentVersion == Self.aiConsentVersion }
+  func setAiConsent(_ enabled: Bool) async throws {
+    let profile: UserProfile = try await api.send("users/me/ai-consent", method: "PATCH",
+      body: ["enabled": .bool(enabled), "version": .string(Self.aiConsentVersion)])
+    user = profile
+  }
   func login(_ provider: SocialProvider) async {
     guard !busy else { return }
     busy = true
@@ -128,7 +135,7 @@ import WidgetKit
     {
       await reset()
     }
-    errorMessage = (error as? APIError)?.message ?? "연결하지 못했어요. 네트워크 상태를 확인하고 다시 시도해주세요."
+    errorMessage = (error as? APIError)?.message ?? "연결하지 못했어요. 네트워크 상태를 확인하고 다시 시도해주세요"
   }
   func perform(_ action: () async throws -> Void) async {
     guard !busy else { return }
