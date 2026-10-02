@@ -1,0 +1,34 @@
+name: Inspect Ethica deployment memory
+on:
+  push:
+    branches: [ops/release-memory-check-20261002]
+    paths: ['.github/workflows/inspect-release-memory.yml']
+permissions:
+  contents: read
+concurrency:
+  group: ethica-production
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          hostname: github-actions-ethica-inspect
+      - name: Read host memory and Ethica container usage
+        shell: bash
+        env:
+          NAS_HOST: ${{ secrets.NAS_HOST }}
+          NAS_USER: ${{ secrets.NAS_USER }}
+          NAS_SSH_KEY: ${{ secrets.NAS_SSH_KEY }}
+          NAS_KNOWN_HOSTS: ${{ secrets.NAS_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$NAS_SSH_KEY" > "$HOME/.ssh/ethica-nas"
+          printf '%s\n' "$NAS_KNOWN_HOSTS" > "$HOME/.ssh/ethica-known-hosts"
+          timeout 90s ssh -i "$HOME/.ssh/ethica-nas" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$HOME/.ssh/ethica-known-hosts" -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 "$NAS_USER@$NAS_HOST" 'free -m; du -sm /tmp 2>/dev/null || true; ps -eo comm,rss --sort=-rss | head -n 12; sudo -n docker ps --filter name=ethica --format "{{.Names}} {{.Status}}"; sudo -n docker stats --no-stream --format "{{.Name}} {{.MemUsage}}" $(sudo -n docker ps -q --filter name=ethica)'
