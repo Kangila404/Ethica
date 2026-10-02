@@ -21,7 +21,6 @@ check_memory() {
   }
   echo "Available RAM: $((available_kib / 1024)) MiB"
 }
-check_memory 1024
 
 # A separate interpolation file works with NAS sudo rules allowing only Docker.
 printf 'SERVER_IMAGE=%s\n' "$image" > .deploy-image.env
@@ -43,12 +42,16 @@ recover_before_migration() {
 }
 trap recover_before_migration EXIT
 compose config --quiet
+# This shared 8 GB host cannot always hold both the old API and rollout headroom.
+# Pause only this stack's API/backup BEFORE pulling; preserve the full 1 GiB gate.
+# A failed pre-migration check/pull restarts the previous release via the trap.
+compose stop server backup
+api_stopped=1
+check_memory 1024
 compose pull
 check_memory 1024
 compose up -d --wait --wait-timeout 180 mysql
-# No API process or scheduler may write while schema migrations are running.
-compose stop server backup
-api_stopped=1
+# API and scheduler remain stopped throughout backup/schema migration.
 check_memory 768
 compose run --rm --no-deps backup once
 migration_started=1
