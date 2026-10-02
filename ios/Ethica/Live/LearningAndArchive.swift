@@ -129,9 +129,8 @@ struct LiveReaderView: View {
                   if index == 0 {
                     Text(post.title).font(.system(.largeTitle, design: .serif, weight: .medium))
                   }
-                  if AppConfiguration.imageURL(card.imageKey) != nil {
-                    ContentPortrait(imageKey: card.imageKey, name: post.title).frame(height: 280)
-                      .clipped()
+                  if let url = AppConfiguration.imageURL(card.imageKey) {
+                    LearningSlideImage(url: url, label: post.title + " 관련 자료")
                   }
                   if let body = card.body {
                     Text(body).font(.title3).lineSpacing(8).textSelection(.enabled)
@@ -168,6 +167,27 @@ struct LiveReaderView: View {
     }
   }
 }
+// Preserve complete book pages and diagrams. A light backing keeps transparent
+// archival illustrations legible even when the surrounding reader is dark.
+struct LearningSlideImage: View {
+  let url: URL
+  let label: String
+  var body: some View {
+    AsyncImage(url: url) { phase in
+      switch phase {
+      case .success(let image):
+        image.resizable().scaledToFit().accessibilityLabel(label)
+      case .failure:
+        Label("이미지를 불러오지 못했어요", systemImage: "photo").foregroundStyle(.black)
+      case .empty:
+        ProgressView().tint(.black).accessibilityLabel("이미지 불러오는 중")
+      @unknown default:
+        EmptyView()
+      }
+    }.frame(maxWidth: .infinity).frame(height: 280).background(Color.white)
+  }
+}
+
 struct LiveArchiveView: View {
   @EnvironmentObject private var session: AppSession
   @State private var search = ""

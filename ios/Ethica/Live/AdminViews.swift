@@ -526,7 +526,11 @@ struct AdminCardDraft: Identifiable {
     image = value["imageKey"]?.text ?? ""
   }
   var payload: [String: JSONValue] {
-    var result: [String: JSONValue] = ["segmentType": .string(kind), "body": kind == "text" ? .string(body) : .null, "imageKey": kind == "image" ? .string(image) : .null]
+    var result: [String: JSONValue] = [
+      "segmentType": .string(kind),
+      "body": body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .null : .string(body),
+      "imageKey": image.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .null : .string(image),
+    ]
     if let serverId { result["id"] = .string(serverId) }
     return result
   }
@@ -541,14 +545,12 @@ struct AdminCardSheet: View {
   var body: some View {
     NavigationStack {
       Form {
-        Picker("카드 종류", selection: $card.kind) { Text("글").tag("text"); Text("이미지").tag("image") }.pickerStyle(.segmented)
-        if card.kind == "text" {
-          Section("본문") { TextEditor(text: $card.body).frame(minHeight: 200).accessibilityLabel("카드 본문") }
-        } else {
-          Section("이미지") {
-            AdminImageField(imageKey: $card.image)
-
-          }
+        Picker("카드 종류", selection: $card.kind) { Text("글 중심").tag("text"); Text("이미지 중심").tag("image") }.pickerStyle(.segmented)
+        Section("본문") { TextEditor(text: $card.body).frame(minHeight: 200).accessibilityLabel("카드 본문") }
+        Section {
+          AdminImageField(imageKey: $card.image)
+        } header: { Text("이미지") } footer: {
+          Text("두 종류 모두 이미지와 글을 함께 담을 수 있어요. 관련 이미지의 출처와 이용 조건을 자료 출처 카드에 남겨주세요.")
         }
       }.editorKeyboard().navigationTitle("학습 카드").navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -572,10 +574,10 @@ struct AdminPostPreview: View {
           ScrollView {
             VStack(alignment: .leading, spacing: 24) {
               Text("\(index + 1) / \(cards.count)").font(.caption).foregroundStyle(.secondary)
-              if card.kind == "text" { Text(card.body).font(.title3).lineSpacing(7) }
-              else if let url = AppConfiguration.imageURL(card.image) {
-                AsyncImage(url: url) { image in image.resizable().scaledToFit() } placeholder: { Image(systemName: "photo").font(.largeTitle).foregroundStyle(.secondary) }
-              } else { Label("이미지 주소를 확인해주세요", systemImage: "photo") }
+              if let url = AppConfiguration.imageURL(card.image) {
+                LearningSlideImage(url: url, label: title + " 관련 자료")
+              } else if !card.image.isEmpty { Label("이미지 주소를 확인해주세요", systemImage: "photo") }
+              if !card.body.isEmpty { Text(card.body).font(.title3).lineSpacing(7) }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(24).padding(.bottom, 36)
           }
         }

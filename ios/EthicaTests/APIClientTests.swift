@@ -7,6 +7,32 @@ import XCTest
   @testable import EthicaCore
 #endif
 
+#if canImport(Ethica)
+final class AdminMixedCardTests: XCTestCase {
+  func testTextAndImageCardsPreserveBothFieldsOnSave() {
+    for kind in ["text", "image"] {
+      let draft = AdminCardDraft(value: [
+        "id": .string("42"), "segmentType": .string(kind),
+        "body": .string("본문과 출처"), "imageKey": .string("learning-v3-harvard.jpg"),
+      ])
+      XCTAssertEqual(draft.payload["id"]?.text, "42")
+      XCTAssertEqual(draft.payload["segmentType"]?.text, kind)
+      XCTAssertEqual(draft.payload["body"]?.text, "본문과 출처")
+      XCTAssertEqual(draft.payload["imageKey"]?.text, "learning-v3-harvard.jpg")
+    }
+  }
+
+  func testBlankOptionalFieldsEncodeAsNull() {
+    var draft = AdminCardDraft()
+    draft.body = " \n"
+    draft.image = " "
+    guard case .null? = draft.payload["body"], case .null? = draft.payload["imageKey"] else {
+      return XCTFail("Blank optional card fields must be null")
+    }
+  }
+}
+#endif
+
 final class MemorySessionStore: SessionPersistence {
   private let lock = NSLock()
   private var data: Data?

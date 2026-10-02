@@ -34,6 +34,7 @@ assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")
 assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),15);
 const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),10);
 const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),80);
+const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),80);
 const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,5);assert.ok(perThinker.every(p=>Number(p.count)===2));
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 const [[thinkers]]=await db.query("SELECT COUNT(*) AS count FROM philosopher WHERE imageKey IS NOT NULL");assert.equal(Number(thinkers.count),28);
@@ -49,6 +50,8 @@ done
 [[ "$ready" == 1 ]] || { docker logs "$api"; exit 1; }
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/editorial-v1-accuracy.jpg").then(async r=>{if(r.status!==200||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/thinker-v1-odysseus.jpg").then(async r=>{if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
+docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/learning-v3-harvard.jpg").then(async r=>{if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
+
 docker stop "$db" >/dev/null
 if docker exec "$api" node /app/healthcheck.cjs; then echo 'Health check ignored DB outage' >&2; exit 1; fi
 echo 'Fresh install, repeat migration, reviewed content publication, runtime media and DB outage checks passed'

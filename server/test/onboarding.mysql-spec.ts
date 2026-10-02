@@ -1,3 +1,8 @@
+import { IllustrateLearningSlides1791007200000 } from '../src/database/migrations/1791007200000-IllustrateLearningSlides';
+import {
+  slideCredits,
+  slideImages,
+} from '../src/database/migrations/content/learning-slides-v3';
 import { ReplaceLearningPosts1791003600000 } from '../src/database/migrations/1791003600000-ReplaceLearningPosts';
 import {
   postsV1,
@@ -1948,6 +1953,132 @@ describe('Server workflows with MySQL', () => {
       await runner.rollbackTransaction();
       expect(await db.getRepository(LearningPost).count()).toBe(after.length);
     } finally {
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
+
+  it('illustrates all 80 cards atomically without replacing IDs, prose or unrelated data', async () => {
+    const posts = await db
+      .getRepository(LearningPost)
+      .find({ order: { id: 'ASC' } });
+    const before = await db
+      .getRepository(PostSegment)
+      .find({ order: { id: 'ASC' } });
+    const profiles = await db
+      .getRepository(Philosopher)
+      .find({ order: { id: 'ASC' } });
+    const questionsBefore = await db
+      .getRepository(Question)
+      .find({ order: { id: 'ASC' } });
+    const usersBefore = await db
+      .getRepository(User)
+      .find({ order: { id: 'ASC' } });
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      const target = posts.find((p) => p.title === learningPostsV2[0].title)!;
+      await runner.startTransaction();
+      await runner.query(
+        'UPDATE post_segment SET body = ? WHERE post_id = ? AND sort_order = 1',
+        ['operator edit', target.id],
+      );
+      await expect(
+        new IllustrateLearningSlides1791007200000().up(runner),
+      ).rejects.toThrow('Learning cards changed');
+      await runner.rollbackTransaction();
+
+      await runner.startTransaction();
+      const originalQuery = runner.query.bind(runner) as (
+        sql: string,
+        parameters?: unknown[],
+      ) => Promise<unknown>;
+      let writes = 0;
+      const spy = jest
+        .spyOn(runner, 'query')
+        .mockImplementation((sql: string, parameters?: unknown[]) => {
+          if (sql.startsWith('UPDATE post_segment') && ++writes === 2)
+            return Promise.reject(new Error('injected illustration failure'));
+          return originalQuery(sql, parameters);
+        });
+      await expect(
+        new IllustrateLearningSlides1791007200000().up(runner),
+      ).rejects.toThrow('injected illustration failure');
+      spy.mockRestore();
+      await runner.rollbackTransaction();
+      expect(
+        await db.getRepository(PostSegment).find({ order: { id: 'ASC' } }),
+      ).toEqual(before);
+
+      await runner.startTransaction();
+      await new IllustrateLearningSlides1791007200000().up(runner);
+      await runner.commitTransaction();
+      const after = await db
+        .getRepository(PostSegment)
+        .find({ order: { id: 'ASC' } });
+      expect(after.map((c) => c.id)).toEqual(before.map((c) => c.id));
+      expect(
+        await db.getRepository(LearningPost).find({ order: { id: 'ASC' } }),
+      ).toEqual(posts);
+      expect(
+        await db.getRepository(Philosopher).find({ order: { id: 'ASC' } }),
+      ).toEqual(profiles);
+      expect(
+        await db.getRepository(Question).find({ order: { id: 'ASC' } }),
+      ).toEqual(questionsBefore);
+      expect(
+        await db.getRepository(User).find({ order: { id: 'ASC' } }),
+      ).toEqual(usersBefore);
+      const targetIds = new Set(
+        posts
+          .filter((p) => learningPostsV2.some((a) => a.title === p.title))
+          .map((p) => p.id),
+      );
+      expect(after.filter((c) => !targetIds.has(c.postId))).toEqual(
+        before.filter((c) => !targetIds.has(c.postId)),
+      );
+
+      const user = await newUser();
+      for (const article of learningPostsV2) {
+        const post = posts.find((p) => p.title === article.title)!;
+        const original = before
+          .filter((c) => c.postId === post.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const response = await request(app.getHttpServer() as Server)
+          .get('/api/philosophers/post/' + post.id)
+          .set('Authorization', 'Bearer ' + user.token)
+          .expect(200);
+        const result = response.body as {
+          segments: Array<{
+            id: string;
+            body: string | null;
+            imageKey: string;
+            sortOrder: number;
+          }>;
+        };
+        expect(result.segments.map((s) => s.id)).toEqual(
+          original.map((c) => c.id),
+        );
+        expect(result.segments.map((s) => s.sortOrder)).toEqual([
+          0, 1, 2, 3, 4, 5, 6, 7,
+        ]);
+        expect(result.segments.map((s) => s.imageKey)).toEqual(
+          slideImages(article).map((i) => i.imageKey),
+        );
+        expect(result.segments.slice(1, 7).map((s) => s.body)).toEqual(
+          article.cards,
+        );
+        expect(result.segments[7].body).toBe(slideCredits(article));
+      }
+      for (const image of new Set(
+        learningPostsV2.flatMap(slideImages).map((i) => i.imageKey),
+      ))
+        await request(app.getHttpServer() as Server)
+          .get('/api/media/' + image)
+          .expect('Content-Type', /^image\//)
+          .expect(200);
+    } finally {
+      jest.restoreAllMocks();
       if (runner.isTransactionActive) await runner.rollbackTransaction();
       await runner.release();
     }
