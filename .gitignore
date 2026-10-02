@@ -16,6 +16,8 @@ dist
 # Local iOS configuration and generated build data.
 /ios/Configuration/Local.xcconfig
 /ios/Configuration/Release.local.xcconfig
+/ios/Configuration/Client.generated.xcconfig
+/ios/ci/__pycache__/
 /ios/Ethica/Resources/GoogleService-Info.plist
 /ios/.build/
 /ios/**/xcuserdata/

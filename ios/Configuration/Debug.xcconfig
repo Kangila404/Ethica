@@ -1,9 +1,11 @@
 ETHICA_API_BASE_URL = http:/$()/localhost:3000/api/
 ETHICA_MEDIA_BASE_URL =
 GOOGLE_IOS_CLIENT_ID =
+GOOGLE_SERVER_CLIENT_ID =
 GOOGLE_REVERSED_CLIENT_ID = ethica-google-unconfigured
 KAKAO_NATIVE_APP_KEY =
 DEVELOPMENT_TEAM =
 APS_ENVIRONMENT = development
 ETHICA_ALLOW_LOCAL_NETWORK = YES
+#include? "Client.generated.xcconfig"
 #include? "Local.xcconfig"
