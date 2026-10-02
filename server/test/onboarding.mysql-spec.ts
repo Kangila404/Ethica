@@ -1,3 +1,8 @@
+import { ThinkerProfiles1791000000000 } from '../src/database/migrations/1791000000000-ThinkerProfiles';
+import {
+  thinkerProfilesV1,
+  portraitAttribution,
+} from '../src/database/migrations/content/thinker-profiles-v1';
 import { ContentReview1790816400000 } from '../src/database/migrations/1790816400000-ContentReview';
 import { ContentStatus } from '../src/common/content-status';
 import { Post as LearningPost } from '../src/philosopher/domain/model/post.entity';
@@ -1703,6 +1708,88 @@ describe('Server workflows with MySQL', () => {
       .expect(200);
     expect(JSON.stringify(visible.body)).not.toContain('encryptedCredential');
   });
+  it('adds the thinker catalog idempotently without replacing existing profiles, posts or answers', async () => {
+    const kant = await db
+      .getRepository(Philosopher)
+      .findOneByOrFail({ name: '이마누엘 칸트' });
+    const mill = await db
+      .getRepository(Philosopher)
+      .findOneByOrFail({ name: '존 스튜어트 밀' });
+    await db.getRepository(Philosopher).update(kant.id, {
+      coreThought: '운영자가 수정한 사상 소개',
+      imageKey: null,
+    });
+    await db
+      .getRepository(Philosopher)
+      .update(mill.id, { imageKey: 'operator-owned.jpg' });
+    const originals = await db.getRepository(Philosopher).find();
+    const oldPosts = await db.getRepository(LearningPost).find();
+    const oldAnswers = await db.getRepository(Answer).find();
+    const oldCounts = await db.getRepository(UserPhilosopherCount).find();
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      await runner.startTransaction();
+      await new ThinkerProfiles1791000000000().up(runner);
+      await runner.commitTransaction();
+      const first = await db
+        .getRepository(Philosopher)
+        .find({ order: { id: 'ASC' } });
+      await runner.startTransaction();
+      await new ThinkerProfiles1791000000000().up(runner);
+      await runner.commitTransaction();
+      expect(
+        await db.getRepository(Philosopher).find({ order: { id: 'ASC' } }),
+      ).toEqual(first);
+      for (const original of originals) {
+        const current = first.find((p) => p.id === original.id)!;
+        expect(current.name).toBe(original.name);
+        expect(current.coreThought).toBe(original.coreThought);
+        expect(current.era).toBe(original.era);
+        expect(current.school).toBe(original.school);
+        expect(current.lifeRoots.startsWith(original.lifeRoots)).toBe(true);
+      }
+      expect(first.find((p) => p.id === kant.id)!.lifeRoots).toBe(
+        kant.lifeRoots + portraitAttribution('kant'),
+      );
+      expect(first.find((p) => p.id === mill.id)!.imageKey).toBe(
+        'operator-owned.jpg',
+      );
+      expect(first.find((p) => p.id === mill.id)!.lifeRoots).toBe(
+        mill.lifeRoots,
+      );
+      for (const profile of thinkerProfilesV1)
+        expect(first.filter((p) => p.name === profile.name)).toHaveLength(1);
+      expect(await db.getRepository(LearningPost).find()).toEqual(oldPosts);
+      expect(await db.getRepository(Answer).find()).toEqual(oldAnswers);
+      expect(await db.getRepository(UserPhilosopherCount).find()).toEqual(
+        oldCounts,
+      );
+      const user = await newUser();
+      const odysseus = first.find((p) => p.name === '오디세우스')!;
+      const detail = await request(app.getHttpServer() as Server)
+        .get('/api/philosophers/' + odysseus.id)
+        .set('Authorization', 'Bearer ' + user.token)
+        .expect(200);
+      const body = detail.body as {
+        school: string;
+        posts: unknown[];
+        imageKey: string;
+        lifeRoots: string;
+      };
+      expect(body.school).toBe('신화·문학 인물');
+      expect(body.posts).toEqual([]);
+      expect(body.imageKey).toBe('thinker-v1-odysseus.jpg');
+      expect(body.lifeRoots).toContain('commons.wikimedia.org');
+      await request(app.getHttpServer() as Server)
+        .get('/api/media/thinker-v1-odysseus.jpg')
+        .expect(200);
+    } finally {
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
+
   it('purges legacy withdrawn accounts after unlink, preserving accounts with pending unlink', async () => {
     const old = await newUser(),
       recent = await newUser();

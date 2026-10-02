@@ -1,3 +1,4 @@
+import { ThinkerProfiles1791000000000 } from './migrations/1791000000000-ThinkerProfiles';
 import { PublishReviewedContent1790989200000 } from './migrations/1790989200000-PublishReviewedContent';
 import { AiConsent1790985600000 } from './migrations/1790985600000-AiConsent';
 import { Baseline1790720000000 } from './migrations/1790720000000-Baseline';
@@ -39,6 +40,7 @@ const db = new DataSource({
     EditorialMedia1790920800000,
     AiConsent1790985600000,
     PublishReviewedContent1790989200000,
+    ThinkerProfiles1791000000000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });
