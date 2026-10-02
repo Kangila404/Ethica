@@ -1553,23 +1553,24 @@ describe('Server workflows with MySQL', () => {
       .post('/api/auth/login/social')
       .send({
         provider: 'google',
-        challengeId: next.body.challengeId,
+        challengeId: (next.body as { challengeId: string }).challengeId,
         idToken: 'fresh-token',
       })
       .expect(201);
-    expect(joined.body.user.userId).not.toBe(user.userId);
-    expect(joined.body.user.onboardingStatus).toBe('incomplete');
+    const rejoined = joined.body as {
+      user: { userId: string; onboardingStatus: string };
+    };
+    expect(rejoined.user.userId).not.toBe(user.userId);
+    expect(rejoined.user.onboardingStatus).toBe('incomplete');
   });
   it('keeps encrypted legacy revocation retries fenced by a lease', async () => {
     const { user } = await newUser();
     const vault = app.get<CredentialCipher>(CREDENTIAL_CIPHER);
-    await db
-      .getRepository(RevocationJob)
-      .save({
-        userId: user.id,
-        encryptedCredential: vault.encrypt('private-access-token'),
-        nextAttemptAt: new Date(),
-      });
+    await db.getRepository(RevocationJob).save({
+      userId: user.id,
+      encryptedCredential: vault.encrypt('private-access-token'),
+      nextAttemptAt: new Date(),
+    });
     const row = await db
       .getRepository(RevocationJob)
       .createQueryBuilder('job')
@@ -1624,13 +1625,11 @@ describe('Server workflows with MySQL', () => {
       deletedAt: new Date('2026-01-01T00:00:00Z'),
       userStatus: UserStatus.SUSPENDED,
     });
-    await db
-      .getRepository(RevocationJob)
-      .save({
-        userId: recent.user.id,
-        encryptedCredential: 'pending',
-        nextAttemptAt: new Date(),
-      });
+    await db.getRepository(RevocationJob).save({
+      userId: recent.user.id,
+      encryptedCredential: 'pending',
+      nextAttemptAt: new Date(),
+    });
     await db
       .getRepository(UserAnswer)
       .save(UserAnswer.onboarding(old.user.id, questions[0].answers[0].id));
