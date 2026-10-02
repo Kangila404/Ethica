@@ -214,7 +214,7 @@ export const thinkerProfilesV1: readonly ThinkerProfile[] = [
     '고대 그리스 서사시의 신화 시대',
     '신화·문학 인물',
     '철학 학설을 남긴 실존 철학자가 아니라 지혜와 책략, 귀향의 욕망을 보여 주는 서사시 속 인물입니다. 그의 이야기를 통해 정체성, 유혹, 책임과 고향의 의미를 질문할 수 있습니다.',
-    '호메로스에게 전해지는 《일리아스》와 《오디세이아》에 등장하는 이타카의 왕입니다. 특히 《오디세이아》는 트로이 전쟁 이후 그의 귀향을 중심으로 전개됩니다. 두 작품의 저자가 아니라 등장인물입니다.',
+    '호메로스의 작품으로 전해지는 《일리아스》와 《오디세이아》에 등장하는 이타카의 왕입니다. 특히 《오디세이아》는 트로이 전쟁 이후 그의 귀향을 중심으로 전개됩니다. 두 작품의 저자가 아니라 등장인물입니다.',
     'https://www.metmuseum.org/perspectives/discovering-homer-odyssey',
   ),
   // Retain the existing fifth onboarding thinker even though not in the new shortlist.
