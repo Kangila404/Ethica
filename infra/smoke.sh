@@ -31,8 +31,8 @@ const assert=require("node:assert/strict");
 (async()=>{const db=await require("mysql2/promise").createConnection({host:"mysql",user:"root",password:"verification-only",database:"ethica_verify_deploy"});
 try {const [rows]=await db.query("SELECT `usage`, status, COUNT(*) AS count FROM question GROUP BY `usage`, status");
 assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),15);
-assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="draft")?.count),15);
-const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["draft"]);assert.equal(Number(posts.count),5);
+assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),15);
+const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),5);
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 }finally{await db.end();}})().catch(e=>{console.error(e);process.exit(1)});'
 docker run -d --name "$api" --memory=384m --memory-swap=384m -e NODE_OPTIONS=--max-old-space-size=160 --network "$network" "${env_args[@]}" --read-only --tmpfs /tmp:size=32m,mode=1777 "$image" >/dev/null
@@ -45,4 +45,4 @@ done
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/editorial-v1-accuracy.jpg").then(async r=>{if(r.status!==200||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
 docker stop "$db" >/dev/null
 if docker exec "$api" node /app/healthcheck.cjs; then echo 'Health check ignored DB outage' >&2; exit 1; fi
-echo 'Fresh install, repeat migration, draft preservation, runtime media and DB outage checks passed'
+echo 'Fresh install, repeat migration, reviewed content publication, runtime media and DB outage checks passed'

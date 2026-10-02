@@ -1,3 +1,4 @@
+import { AiConsentRequest } from '../dto/req/ai-consent-request.dto';
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { UserService } from '../../application/user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -32,6 +33,15 @@ export class UserController {
     @Body() request: NicknameUpdateRequest,
   ): Promise<MessageResponse> {
     return this.userService.updateNickname(userId, request);
+  }
+
+  @Patch('/me/ai-consent')
+  @ApiOperation({ summary: 'AI 외부 전송 동의 또는 철회' })
+  updateAiConsent(
+    @CurrentUserId() userId: string,
+    @Body() request: AiConsentRequest,
+  ): Promise<UserResponse> {
+    return this.userService.updateAiConsent(userId, request);
   }
 
   @Patch('/me/avatar')

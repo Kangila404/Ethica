@@ -10,6 +10,7 @@ export class UserResponse {
   @ApiProperty({ nullable: true })
   avatarId!: string | null;
   userRole!: string;
+  aiConsentVersion!: string | null;
 
   @ApiProperty({ enum: OnboardingStatus })
   onboardingStatus!: OnboardingStatus;
@@ -35,6 +36,7 @@ export class UserResponse {
     dto.name = user.name;
     dto.avatarId = user.avatarId ?? null;
     dto.userRole = user.userRole;
+    dto.aiConsentVersion = user.aiConsentVersion ?? null;
     dto.onboardingStatus = user.onboardingStatus;
     dto.dailyQuestionTime = user.dailyQuestionTime;
     dto.timezone = user.timezone;

@@ -11,7 +11,8 @@ struct CompactEditorSheet: ViewModifier {
   @Environment(\.dynamicTypeSize) private var typeSize
   func body(content: Content) -> some View {
     content.presentationDetents(
-      typeSize.isAccessibilitySize ? [.large] : [.height(editor == .nickname ? 250 : 380), .large]
+      typeSize.isAccessibilitySize ? [.large]
+        : (editor == .nickname ? [.height(280)] : [.height(380), .large])
     )
     .presentationDragIndicator(.visible)
   }
@@ -22,6 +23,7 @@ struct LiveSettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.scenePhase) private var scenePhase
   @State private var editor: AccountEditor?
+  @State private var aiConsent = false
   @State private var withdrawal = false
   @State private var logout = false
   @State private var permissionDenied = false
@@ -59,7 +61,7 @@ struct LiveSettingsView: View {
                 symbol: "clock")
             }.foregroundStyle(.primary)
             if let pending = user.pendingDailyQuestionTime {
-              Text("다음 출제부터 \(pending)에 알려드려요.").font(.caption).foregroundStyle(.secondary)
+              Text("다음 출제부터 \(pending)에 알려드려요").font(.caption).foregroundStyle(.secondary)
             }
           }
           Toggle(
@@ -79,14 +81,14 @@ struct LiveSettingsView: View {
             )
             .font(.caption).foregroundStyle(.secondary)
           }
-          Text("알림을 꺼도 질문과 위젯은 사용할 수 있어요.").font(.caption).foregroundStyle(.secondary)
+          Text("알림을 꺼도 질문과 위젯은 사용할 수 있어요").font(.caption).foregroundStyle(.secondary)
           NavigationLink {
             NotificationWidgetGallery(notificationsEnabled: user.notificationEnabled)
           } label: {
             Label("알림과 위젯 미리보기", systemImage: "rectangle.on.rectangle")
           }
           if !PushNotifications.shared.configured {
-            Text("알림 연결을 준비하고 있어요.").font(.caption).foregroundStyle(.secondary)
+            Text("알림 연결을 준비하고 있어요").font(.caption).foregroundStyle(.secondary)
           }
           if permissionDenied {
             Button("아이폰 알림 설정 열기") {
@@ -95,6 +97,15 @@ struct LiveSettingsView: View {
               }
             }
           }
+        }
+        Section("AI 해석") {
+          Toggle("OpenAI 정보 전송", isOn: Binding(
+            get: { session.hasAiConsent },
+            set: { enabled in
+              if enabled { aiConsent = true }
+              else { Task { await session.perform { try await session.setAiConsent(false) } } }
+            }))
+          Text("문제·답변·사상 구성을 전송해 해석을 만들어요").font(.caption).foregroundStyle(.secondary)
         }
         Section("도움말") {
           NavigationLink {
@@ -134,6 +145,7 @@ struct LiveSettingsView: View {
           }
         }.presentationDetents([.height(520), .large]).presentationDragIndicator(.visible)
       }
+      .sheet(isPresented: $aiConsent) { AIConsentSheet { aiConsent = false } }
       .sheet(item: $editor) { selection in
         NavigationStack {
           if let user = session.user {
@@ -169,7 +181,7 @@ struct LiveSettingsView: View {
         Button("계정 확인 후 탈퇴", role: .destructive) { Task { await session.withdraw() } }
       } message: {
         Text(
-          "\(session.provider?.title ?? "소셜") 계정을 다시 확인합니다. 탈퇴하면 즉시 이용이 중단되고 소셜 연결 해제를 요청합니다. 보관 데이터는 2년 후 삭제됩니다."
+          "\(session.provider?.title ?? "소셜") 계정을 다시 확인합니다. 탈퇴하면 즉시 이용이 중단되고 소셜 연결 해제를 요청합니다. 보관 데이터는 2년 후 삭제됩니다"
         )
       }
   }
@@ -320,7 +332,7 @@ struct ProfileAvatarEditor: View {
         Button("기본 이미지로 변경") { selectedID = nil }.disabled(selectedID == nil)
           .font(.subheadline)
         if saving { ProgressView("저장 중") }
-        if let failure { Text(failure).font(.footnote).foregroundStyle(.red) }
+        if let failure { Text(interfaceCopy(failure)).font(.footnote).foregroundStyle(.red) }
       }.padding(24)
     }.disabled(saving).navigationTitle("프로필 이미지").navigationBarTitleDisplayMode(.inline)
       .interactiveDismissDisabled(saving)
@@ -336,7 +348,7 @@ struct ProfileAvatarEditor: View {
                 try await save(selectedID)
                 dismiss()
               } catch {
-                failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요."
+                failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요"
               }
             }
           }
@@ -400,16 +412,20 @@ struct NicknameEditor: View {
       } footer: {
         Text("앱에서 사용할 이름 · 1~50자")
       }
-      if let failure { Text(failure).font(.footnote).foregroundStyle(.red) }
+      if let failure { Text(interfaceCopy(failure)).font(.footnote).foregroundStyle(.red) }
       if saving { ProgressView() }
-    }.disabled(saving).navigationTitle("닉네임 변경").navigationBarTitleDisplayMode(.inline)
+    }.editorKeyboard().disabled(saving).navigationTitle("닉네임 변경").navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() }.disabled(saving) }
         ToolbarItem(placement: .confirmationAction) {
           Button("저장", action: submit).disabled(!valid)
         }
       }
-      .task { nameFocused = true }
+      .task {
+        // Let the native sheet settle before requesting the software keyboard.
+        do { try await Task.sleep(nanoseconds: 320_000_000) } catch { return }
+        nameFocused = true
+      }
       .interactiveDismissDisabled(saving)
   }
   private var valid: Bool {
@@ -424,7 +440,7 @@ struct NicknameEditor: View {
       do {
         try await save(trimmed)
         dismiss()
-      } catch { failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요." }
+      } catch { failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요" }
     }
   }
 }
@@ -447,9 +463,9 @@ struct QuestionTimeEditor: View {
         DatePicker("질문 시간", selection: $time, displayedComponents: .hourAndMinute)
           .datePickerStyle(.wheel).labelsHidden().frame(maxWidth: .infinity)
       } footer: {
-        Text("새 시간은 내일부터 적용돼요.")
+        Text("새 시간은 내일부터 적용돼요")
       }
-      if let failure { Text(failure).font(.footnote).foregroundStyle(.red) }
+      if let failure { Text(interfaceCopy(failure)).font(.footnote).foregroundStyle(.red) }
       if saving { ProgressView() }
     }.disabled(saving).navigationTitle("질문 시간").navigationBarTitleDisplayMode(.inline)
       .toolbar {
@@ -463,7 +479,7 @@ struct QuestionTimeEditor: View {
               do {
                 try await save(time)
                 dismiss()
-              } catch { failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요." }
+              } catch { failure = (error as? APIError)?.message ?? "저장하지 못했어요. 다시 시도해주세요" }
             }
           }.disabled(saving)
         }
@@ -513,7 +529,7 @@ struct PreviewAccountView: View {
         if !store.notificationsEnabled {
           Label("알림을 받지 않아요", systemImage: "bell.slash").font(.caption).foregroundStyle(.secondary)
         }
-        Text("알림을 꺼도 질문과 위젯은 사용할 수 있어요.").font(.caption).foregroundStyle(.secondary)
+        Text("알림을 꺼도 질문과 위젯은 사용할 수 있어요").font(.caption).foregroundStyle(.secondary)
         NavigationLink {
           NotificationWidgetGallery(notificationsEnabled: store.notificationsEnabled)
         } label: {
@@ -523,22 +539,22 @@ struct PreviewAccountView: View {
       }
       Section("도움말") {
         NavigationLink {
-          PreviewAccountDetail(title: "공지사항", message: "등록된 공지가 없어요.")
+          PreviewAccountDetail(title: "공지사항", message: "등록된 공지가 없어요")
         } label: {
           Label("공지사항", systemImage: "megaphone")
         }
         NavigationLink {
-          PreviewAccountDetail(title: "문의하기", message: "연동 후 문의를 작성하고 답변을 확인할 수 있어요.")
+          PreviewAccountDetail(title: "문의하기", message: "연동 후 문의를 작성하고 답변을 확인할 수 있어요")
         } label: {
           Label("문의하기", systemImage: "bubble.left.and.bubble.right")
         }
       }
       Section("앱 정보") {
         NavigationLink("이용약관") {
-          PreviewAccountDetail(title: "이용약관", message: "연동 후 등록된 약관을 표시합니다.")
+          LegalView(type: "service", preview: true)
         }
         NavigationLink("개인정보 처리방침") {
-          PreviewAccountDetail(title: "개인정보 처리방침", message: "연동 후 등록된 개인정보 처리방침을 표시합니다.")
+          LegalView(type: "privacy", preview: true)
         }
         LabeledContent(
           "버전", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -549,7 +565,7 @@ struct PreviewAccountView: View {
         Button("회원 탈퇴", role: .destructive) { withdrawal = true }
       }
       Section("디자인 미리보기") {
-        Text("예시 계정이에요. 프로필 이미지는 이 기기에 저장되고, 나머지 변경은 앱을 종료하면 초기화됩니다.").font(.caption)
+        Text("예시 계정이에요. 프로필 이미지는 이 기기에 저장되고, 나머지 변경은 앱을 종료하면 초기화됩니다").font(.caption)
           .foregroundStyle(.secondary)
         Button("오늘 답변 초기화") { store.reset() }
       }
@@ -575,12 +591,12 @@ struct PreviewAccountView: View {
       .confirmationDialog("계정을 탈퇴할까요?", isPresented: $withdrawal, titleVisibility: .visible) {
         Button("계정 확인 후 탈퇴", role: .destructive) { notice = true }
       } message: {
-        Text("Apple 계정을 다시 확인합니다. 탈퇴하면 즉시 이용이 중단되고 소셜 연결 해제를 요청합니다. 보관 데이터는 2년 후 삭제됩니다.")
+        Text("Apple 계정을 다시 확인합니다. 탈퇴하면 즉시 이용이 중단되고 소셜 연결 해제를 요청합니다. 보관 데이터는 2년 후 삭제됩니다")
       }
       .alert("디자인 미리보기", isPresented: $notice) {
         Button("확인", role: .cancel) {}
       } message: {
-        Text("실제 계정에는 영향을 주지 않아요. 재인증과 계정 처리는 연동 후 확인합니다.")
+        Text("실제 계정에는 영향을 주지 않아요. 재인증과 계정 처리는 연동 후 확인합니다")
       }
   }
 }
@@ -603,30 +619,64 @@ struct WidgetGuideView: View {
   var body: some View {
     List {
       Section("홈 화면") {
-        Text("홈 화면을 길게 누르고 편집 → 위젯 추가에서 Ethica를 선택하세요.")
-        Text("질문을 누르면 앱에서 답변을 이어갈 수 있어요.")
+        Text("홈 화면을 길게 누르고 편집 → 위젯 추가에서 Ethica를 선택하세요")
+        Text("질문을 누르면 앱에서 답변을 이어갈 수 있어요")
       }
-      Section("잠금화면") { Text("잠금화면을 길게 누르고 사용자화 → 위젯 추가에서 Ethica를 선택하세요.") }
-      Section { Text("위젯에는 마지막으로 앱에서 불러온 질문이 표시됩니다. 새 질문 시각이 지나면 앱에서 최신 질문을 확인해주세요.") }
+      Section("잠금화면") { Text("잠금화면을 길게 누르고 사용자화 → 위젯 추가에서 Ethica를 선택하세요") }
+      Section { Text("위젯에는 마지막으로 앱에서 불러온 질문이 표시됩니다. 새 질문 시각이 지나면 앱에서 최신 질문을 확인해주세요") }
     }.navigationTitle("위젯 추가").navigationBarTitleDisplayMode(.inline)
   }
 }
 struct LegalView: View {
   @EnvironmentObject private var session: AppSession
   let type: String
+  var preview = false
   var body: some View {
     LoadView(load: { () -> TermDocument in
-      try await session.api.get("terms?type=\(type)", authenticated: false)
+      if preview { return try bundledDraft() }
+      do { return try await session.api.get("terms?type=\(type)", authenticated: false) }
+      catch let error as APIError where error.status == 404 { return try bundledDraft() }
     }) { term in
       ScrollView {
-        VStack(alignment: .leading, spacing: 20) {
-          Text(term.title).font(.title2.bold())
-          Text("버전 \(term.version)").font(.caption).foregroundStyle(.secondary)
-          Text(term.content).lineSpacing(6).textSelection(.enabled)
-        }.readingPage()
+        VStack(alignment: .leading, spacing: 28) {
+          if term.version.hasPrefix("draft-") {
+            Label("검토 중인 초안", systemImage: "doc.text")
+              .font(.subheadline).foregroundStyle(.secondary)
+          }
+          let sections = term.content.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+          ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
+            let lines = section.split(separator: "\n", maxSplits: 1).map(String.init)
+            VStack(alignment: .leading, spacing: 12) {
+              if lines.count > 1 {
+                Text(lines[0]).font(.headline).accessibilityAddTraits(.isHeader)
+                Text(lines[1]).font(.body).foregroundStyle(.secondary)
+                  .lineSpacing(7).fixedSize(horizontal: false, vertical: true)
+              } else {
+                Text(section).font(.body).foregroundStyle(.secondary)
+                  .lineSpacing(7).fixedSize(horizontal: false, vertical: true)
+              }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+          }
+          Text(term.version).font(.caption).foregroundStyle(.tertiary)
+        }.multilineTextAlignment(.leading).textSelection(.enabled).readingPage()
       }
-    }.navigationTitle(type == "privacy" ? "개인정보 처리방침" : "이용약관").navigationBarTitleDisplayMode(
-      .inline)
+    }.navigationTitle(type == "privacy" ? "개인정보 처리방침" : "이용약관")
+      .navigationBarTitleDisplayMode(.inline)
+  }
+  private func bundledDraft() throws -> TermDocument {
+    struct Draft: Decodable {
+      let type: String
+      let title: String
+      let content: String
+      let version: String
+    }
+    guard let url = Bundle.main.url(forResource: "legal-drafts", withExtension: "json"),
+      let draft = try JSONDecoder().decode([Draft].self, from: Data(contentsOf: url))
+        .first(where: { $0.type == type }) else {
+      throw APIError(status: 404, code: "LEGAL_DOCUMENT_MISSING", message: "문서를 준비하고 있어요")
+    }
+    return TermDocument(title: draft.title, content: draft.content, version: draft.version)
   }
 }
 enum SupportKind: String {
@@ -658,7 +708,7 @@ struct SupportListView: View {
       }
       if more { Button("더 보기") { Task { await reload(append: true) } }.disabled(loading) }
       if loaded && rows.isEmpty {
-        Text(kind == .notices ? "등록된 공지가 없어요." : "아직 문의한 내용이 없어요.").foregroundStyle(.secondary)
+        Text(kind == .notices ? "등록된 공지가 없어요" : "아직 문의한 내용이 없어요").foregroundStyle(.secondary)
       }
       if loading { ProgressView() }
       if !loaded && !loading { Button("다시 불러오기") { Task { await reload() } } }
@@ -715,15 +765,19 @@ struct InquiryComposer: View {
   @Environment(\.dismiss) private var dismiss
   @State private var title = ""
   @State private var content = ""
+  private enum Field: Hashable { case title, content }
+  @FocusState private var focused: Field?
   var body: some View {
     Form {
-      TextField("제목", text: $title)
+      TextField("제목", text: $title).focused($focused, equals: .title)
+        .submitLabel(.next).onSubmit { focused = .content }
       Section("문의 내용") {
-        TextEditor(text: $content).frame(minHeight: 220).accessibilityLabel("문의 내용")
+        TextEditor(text: $content).frame(minHeight: 160).accessibilityLabel("문의 내용")
+          .focused($focused, equals: .content)
       }
-    }.navigationTitle("문의하기").navigationBarTitleDisplayMode(.inline)
+    }.editorKeyboard().disabled(session.busy).navigationTitle("문의하기").navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
+        ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() }.disabled(session.busy) }
         ToolbarItem(placement: .confirmationAction) {
           Button("보내기") {
             Task {
@@ -770,7 +824,7 @@ struct NotificationWidgetGallery: View {
         if placement == 0 {
           lockScreen
           Toggle("아이폰 알림 차단 상태 보기", isOn: $blocked).font(.subheadline)
-          Text("알림은 설정한 시간에 도착해요. 길게 누르면 ‘문제 풀기’로 앱을 열 수 있어요.")
+          Text("알림은 설정한 시간에 도착해요. 길게 누르면 ‘문제 풀기’로 앱을 열 수 있어요")
             .font(.subheadline).foregroundStyle(.secondary)
         } else {
           Text("작은 위젯").font(.headline)
@@ -785,10 +839,10 @@ struct NotificationWidgetGallery: View {
             .background(
               Color(uiColor: .secondarySystemGroupedBackground),
               in: RoundedRectangle(cornerRadius: 24))
-          Text("위젯을 누르면 앱에서 답할 수 있어요. 알림을 꺼도 위젯은 사용할 수 있어요.")
+          Text("위젯을 누르면 앱에서 답할 수 있어요. 알림을 꺼도 위젯은 사용할 수 있어요")
             .font(.subheadline).foregroundStyle(.secondary)
         }
-        Text("화면 예시 · 실제 알림의 크기와 표시 여부는 아이폰 설정에 따라 달라집니다.")
+        Text("화면 예시 · 실제 알림의 크기와 표시 여부는 아이폰 설정에 따라 달라집니다")
           .font(.caption).foregroundStyle(.secondary)
       }.padding(24)
     }.background(Color(uiColor: .systemGroupedBackground))
@@ -825,7 +879,7 @@ struct NotificationWidgetGallery: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
           Text(question).font(.system(.title3, design: .serif).weight(.semibold))
             .fixedSize(horizontal: false, vertical: true)
-          Text("잠깐, 나의 생각을 만나볼 시간.")
+          Text("잠깐, 나의 생각을 만나볼 시간")
             .font(.caption).foregroundStyle(.secondary)
           Divider()
           Label("문제 풀기", systemImage: "arrow.up.right").font(.subheadline.weight(.medium))

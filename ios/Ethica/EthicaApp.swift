@@ -227,7 +227,7 @@ struct ReaderView: View {
                             Text(index == 0 ? essay.title : index == essay.pages.count - 1 ? "당신의 생각은\n어떤가요?" : "조금 더\n생각해 보면").font(.system(.largeTitle, design: .serif, weight: .medium))
                             Text(essay.pages[index]).font(.title3).lineSpacing(10)
                             Divider()
-                            Text("사상을 풀어 쓴 학습용 글입니다.").font(.caption).foregroundStyle(.secondary)
+                            Text("사상을 풀어 쓴 학습용 글입니다").font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, alignment: .leading).padding(28)
                     }.tag(index)
                 }
@@ -254,12 +254,12 @@ struct FollowupView: View {
                     Text("그 친구가 당신에게 똑같이 거짓말을 했어도 보호할 건가요?").font(.title3).lineSpacing(6)
                     if let followup = store.followup {
                         Label(Library.followups[followup], systemImage: "checkmark.circle").font(.headline)
-                        Text("관계에 따라 달라지는 판단도 나를 이해하는 단서가 됩니다. 이 답변은 사상 구성 비율에는 반영되지 않아요.").foregroundStyle(.secondary)
+                        Text("관계에 따라 달라지는 판단도 나를 이해하는 단서가 됩니다. 이 답변은 사상 구성 비율에는 반영되지 않아요").foregroundStyle(.secondary)
                     } else {
                         ForEach(0..<2) { index in
                             Button(Library.followups[index]) { store.submitFollowup(index); dismiss() }.buttonStyle(PrimaryAction())
                         }
-                        Text("마지막 답변까지 고르면 완료돼요.").font(.footnote).foregroundStyle(.secondary)
+                        Text("마지막 답변까지 고르면 완료돼요").font(.footnote).foregroundStyle(.secondary)
                     }
                 }.padding(24)
             }.navigationTitle("질문 2 / 2").navigationBarTitleDisplayMode(.inline)
@@ -302,7 +302,7 @@ struct PreviewLearningCatalogView: View {
                         }.padding(.vertical, 8)
                     }
                 }
-                if people.isEmpty { Text("검색 결과가 없어요.").foregroundStyle(.secondary) }
+                if people.isEmpty { Text("검색 결과가 없어요").foregroundStyle(.secondary) }
             }
         }.listStyle(.plain).navigationTitle("학습")
             .searchable(text: $search, prompt: "철학자, 학파")

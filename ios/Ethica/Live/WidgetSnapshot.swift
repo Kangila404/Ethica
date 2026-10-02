@@ -81,7 +81,7 @@ struct DailyWidgetContent: View {
             if completed { Text("완료").font(.caption2).foregroundStyle(.secondary) }
           }
           if completed {
-            Text("오늘의 생각을\n남겼어요.").font(.title3.bold())
+            Text("오늘의 생각을\n남겼어요").font(.title3.bold())
             Spacer(minLength: 0)
             Text("내일 또 만나요").font(.caption).foregroundStyle(.secondary)
           } else if pending {
@@ -103,7 +103,7 @@ struct DailyWidgetContent: View {
                 .secondary)
             }
           } else {
-            Text("새로운 질문을\n기다리고 있어요.").font(.headline)
+            Text("새로운 질문을\n기다리고 있어요").font(.headline)
             Spacer(minLength: 0)
             Text("앱에서 최신 질문 확인").font(.caption).foregroundStyle(.secondary)
           }

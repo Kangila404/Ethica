@@ -34,7 +34,7 @@ struct LoadView<Value, Content: View>: View {
     do { value = try await load() } catch is CancellationError {} catch let error as URLError
       where error.code == .cancelled
     {} catch {
-      failure = (error as? APIError)?.message ?? "네트워크 상태를 확인하고 다시 시도해주세요."
+      failure = (error as? APIError)?.message ?? "네트워크 상태를 확인하고 다시 시도해주세요"
       if let e = error as? APIError, e.status == 401 { await session.report(e) }
     }
   }
@@ -95,8 +95,13 @@ struct ReadingText: View {
   let bodyText: String
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text(title).font(.headline)
-      Text(bodyText).lineSpacing(6).textSelection(.enabled)
+      Text(interfaceCopy(title)).font(.title3.weight(.semibold))
+        .foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+        .accessibilityAddTraits(.isHeader)
+      Text(interfaceCopy(bodyText)).font(.body).foregroundStyle(.secondary)
+        .lineSpacing(7).multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 }
@@ -107,7 +112,7 @@ extension View {
 }
 @available(iOS 17.0, *) struct DailyLearningTip: Tip {
   var title: Text { Text("하루에 한 가지 생각") }
-  var message: Text? { Text("답변은 분석과 보관함에 남아요. 가까운 사상가의 글도 읽어보세요.") }
+  var message: Text? { Text("답변은 분석과 보관함에 남아요. 가까운 사상가의 글도 읽어보세요") }
   var image: Image? { Image(systemName: "book.closed") }
 }
 /// The introduction is device-local presentation, not account onboarding or an AI chat.
@@ -520,11 +525,16 @@ struct LiveRootView: View {
   var body: some View {
     Group {
       switch session.phase {
-      case .loading: ProgressView("Ethica")
+      case .loading:
+        VStack(spacing: 16) {
+          ProgressView()
+          Text("계정을 확인하고 있어요").font(.subheadline).foregroundStyle(.secondary)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+          .background(Color(uiColor: .systemBackground))
       case .signedOut: SignedOutWelcomeView()
       case .unavailable:
         EmptyMessage(
-          title: "연결하지 못했어요", symbol: "network", detail: "인터넷 연결을 확인하고 다시 시도해주세요."
+          title: "연결하지 못했어요", symbol: "network", detail: "인터넷 연결을 확인하고 다시 시도해주세요"
         ) { Task { await session.restore() } }
       case .onboarding:
         NavigationStack { OnboardingFlow().toolbar { profileToolbar } }
@@ -587,4 +597,24 @@ struct LiveRootView: View {
       }.accessibilityLabel("내 계정")
     }
   }
+}
+
+/// Let the system track the keyboard safe area instead of calculating screen offsets.
+struct EditorKeyboard: ViewModifier {
+  func body(content: Content) -> some View {
+    content.scrollDismissesKeyboard(.interactively)
+      .toolbar {
+        ToolbarItemGroup(placement: .keyboard) {
+          Spacer()
+          Button {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+              to: nil, from: nil, for: nil)
+          } label: { Image(systemName: "keyboard.chevron.compact.down") }
+            .accessibilityLabel("키보드 내리기")
+        }
+      }
+  }
+}
+extension View {
+  func editorKeyboard() -> some View { modifier(EditorKeyboard()) }
 }

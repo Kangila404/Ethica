@@ -18,9 +18,9 @@ struct LearningCatalogView: View {
             }
           ) { person in personRow(person) }
           if catalog.all.isEmpty {
-            Text("철학자의 글을 준비하고 있어요.").foregroundStyle(.secondary)
+            Text("철학자의 글을 준비하고 있어요").foregroundStyle(.secondary)
           } else if !search.isEmpty && !catalog.all.contains(where: { ($0.name + $0.school + $0.era).localizedCaseInsensitiveContains(search) }) {
-            Text("검색 결과가 없어요. 다른 이름이나 학파로 찾아보세요.").foregroundStyle(.secondary)
+            Text("검색 결과가 없어요. 다른 이름이나 학파로 찾아보세요").foregroundStyle(.secondary)
           }
         }
       }.listStyle(.plain)
@@ -98,7 +98,7 @@ struct LivePhilosopherView: View {
         if person.posts.isEmpty {
           EmptyMessage(
             title: "첫 글을 준비하고 있어요", symbol: "text.book.closed",
-            detail: "위의 소개에서 이 사람의 생각과 삶을 읽어보세요.")
+            detail: "위의 소개에서 이 사람의 생각과 삶을 읽어보세요")
         }
       }.navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
     }
@@ -120,7 +120,7 @@ struct LiveReaderView: View {
             .monospacedDigit()
         }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 24).padding(.vertical, 12)
         if post.segments.isEmpty {
-          EmptyMessage(title: "글을 준비하고 있어요", symbol: "book.closed", detail: "새 글이 등록되면 여기서 읽을 수 있어요.")
+          EmptyMessage(title: "글을 준비하고 있어요", symbol: "book.closed", detail: "새 글이 등록되면 여기서 읽을 수 있어요")
         } else {
           TabView(selection: $page) {
             ForEach(Array(post.segments.enumerated()), id: \.element.id) { index, card in
@@ -174,7 +174,7 @@ struct LiveArchiveView: View {
   var body: some View {
     LoadView(load: { () -> ArchivePage in try await session.api.get("archive") }) { page in
       if page.items.isEmpty {
-        EmptyMessage(title: "생각이 쌓이는 곳", symbol: "tray", detail: "답변한 질문과 해설을 여기에서 다시 읽을 수 있어요.")
+        EmptyMessage(title: "생각이 쌓이는 곳", symbol: "tray", detail: "답변한 질문과 해설을 여기에서 다시 읽을 수 있어요")
       } else {
         let filtered = page.items.filter {
           search.isEmpty || $0.questionPreview.localizedCaseInsensitiveContains(search)
@@ -201,7 +201,7 @@ struct LiveArchiveView: View {
               Text(month.replacingOccurrences(of: "-", with: "년 ") + "월").textCase(nil)
             }
           }
-          if filtered.isEmpty { Text("검색 결과가 없어요.").foregroundStyle(.secondary) }
+          if filtered.isEmpty { Text("검색 결과가 없어요").foregroundStyle(.secondary) }
         }.listStyle(.plain)
       }
     }.navigationTitle("보관함").searchable(text: $search, prompt: "지난 질문 검색")
@@ -224,9 +224,9 @@ struct LiveArchiveDetailView: View {
             Divider()
             ReadingText(title: "한 걸음 더", bodyText: followup.questionBody)
             Label(followup.myAnswer, systemImage: "checkmark").font(.headline)
-            Text(followup.explanation).lineSpacing(6)
+            Text(interfaceCopy(followup.explanation)).lineSpacing(7).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
           }
-          Text("기록한 답변은 바꿀 수 없어요.").font(.footnote).foregroundStyle(.secondary)
+          Text("기록한 답변은 바꿀 수 없어요").font(.footnote).foregroundStyle(.secondary)
         }.readingPage()
       }
     }.navigationTitle("그날의 생각").navigationBarTitleDisplayMode(.inline)

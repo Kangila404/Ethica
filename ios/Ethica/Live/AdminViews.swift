@@ -136,7 +136,7 @@ struct AdminListView: View {
         }
       }
       if more { Button("더 불러오기") { Task { await reload(append: true) } }.disabled(loading) }
-      if loaded && rows.isEmpty { Text(queryKey == "|||" ? "등록된 항목이 없어요." : "조건에 맞는 항목이 없어요.").foregroundStyle(.secondary) }
+      if loaded && rows.isEmpty { Text(queryKey == "|||" ? "등록된 항목이 없어요" : "조건에 맞는 항목이 없어요").foregroundStyle(.secondary) }
       if loading { ProgressView() }
       if !loaded && !loading { Button("다시 불러오기") { Task { await reload() } } }
     }.navigationTitle(resource.title).searchable(text: $search, prompt: reviewed ? "전체 콘텐츠 검색" : "불러온 항목 검색")
@@ -242,7 +242,7 @@ struct AdminEditor: View {
         ProgressView()
         Button("다시 불러오기") { Task { await prepare() } }
       }
-    }.disabled(session.busy).navigationTitle(
+    }.editorKeyboard().disabled(session.busy).navigationTitle(
       id == nil ? "\(resource.title) 추가" : "\(resource.title) 편집"
     ).navigationBarTitleDisplayMode(.inline)
       .task { if !ready { await prepare() } }
@@ -261,7 +261,7 @@ struct AdminEditor: View {
         }
       }
       .confirmationDialog(
-        "변경한 질문은 과거 풀이에도 반영됩니다.", isPresented: $saveConfirmation, titleVisibility: .visible
+        "변경한 질문은 과거 풀이에도 반영됩니다", isPresented: $saveConfirmation, titleVisibility: .visible
       ) { Button("수정 내용 저장") { Task { await save() } } }
       .confirmationDialog(
         resource == .questions ? "앞으로 출제하지 않을까요?" : "이 항목을 삭제할까요?",
@@ -326,7 +326,7 @@ struct AdminEditor: View {
         Button { previewCards = true } label: { Label("미리보기", systemImage: "eye") }.disabled(cards.isEmpty)
       } header: {
         HStack { Text("학습 카드 · \(cards.count)"); Spacer(); EditButton() }
-      } footer: { Text("게시글을 저장하면 카드와 순서도 함께 반영돼요.") }
+      } footer: { Text("게시글을 저장하면 카드와 순서도 함께 반영돼요") }
     case .segments:
       reference("게시물", key: "postId", rows: posts)
       Picker("카드 종류", selection: string("segmentType")) {
@@ -550,7 +550,7 @@ struct AdminCardSheet: View {
 
           }
         }
-      }.navigationTitle("학습 카드").navigationBarTitleDisplayMode(.inline)
+      }.editorKeyboard().navigationTitle("학습 카드").navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
           ToolbarItem(placement: .confirmationAction) {
@@ -630,9 +630,9 @@ struct AdminOperationView: View {
         LabeledContent("권한", value: row["userRole"]?.text == "admin" ? "관리자" : "일반 회원")
         LabeledContent("상태", value: adminOperationStatus(row["userStatus"]?.text ?? ""))
         LabeledContent("온보딩", value: row["onboardingStatus"]?.text == "complete" ? "완료" : "진행 중")
-        Text("관리자 권한은 DB에서 지정합니다.").font(.footnote).foregroundStyle(.secondary)
+        Text("관리자 권한은 DB에서 지정합니다").font(.footnote).foregroundStyle(.secondary)
       }
-    }.disabled(session.busy).navigationTitle(resource.title).navigationBarTitleDisplayMode(.inline)
+    }.editorKeyboard().disabled(session.busy).navigationTitle(resource.title).navigationBarTitleDisplayMode(.inline)
       .task { await load() }
   }
   private func load() async {
@@ -668,7 +668,7 @@ struct AdminTermEditor: View {
           }
         }
       }.disabled(title.isEmpty || version.isEmpty || content.isEmpty || session.busy)
-    }.navigationTitle(type == "service" ? "이용약관" : "개인정보 처리방침").navigationBarTitleDisplayMode(
+    }.editorKeyboard().navigationTitle(type == "service" ? "이용약관" : "개인정보 처리방침").navigationBarTitleDisplayMode(
       .inline
     )
     .alert("저장했어요", isPresented: $saved) { Button("확인", role: .cancel) {} }
@@ -706,16 +706,16 @@ actor AdminPreviewData {
     "categories": [["id": .string("1"), "name": .string("윤리 · 관계"), "sortOrder": .number(0)],
                    ["id": .string("2"), "name": .string("사회 · 정의"), "sortOrder": .number(1)]],
     "philosophers": [
-      ["id": .string("1"), "name": .string("이마누엘 칸트"), "era": .string("18세기"), "school": .string("의무론"), "coreThought": .string("옳은 원칙에 따라 행동하기"), "lifeRoots": .string("쾨니히스베르크에서 철학을 가르쳤습니다.")],
+      ["id": .string("1"), "name": .string("이마누엘 칸트"), "era": .string("18세기"), "school": .string("의무론"), "coreThought": .string("옳은 원칙에 따라 행동하기"), "lifeRoots": .string("쾨니히스베르크에서 철학을 가르쳤습니다")],
       ["id": .string("2"), "name": .string("존 스튜어트 밀"), "era": .string("19세기"), "school": .string("공리주의")]],
     "posts": [["id": .string("1"), "philosopherId": .string("1"), "title": .string("옳은 선택은 어디에서 시작될까")]],
-    "segments": [["id": .string("1"), "postId": .string("1"), "segmentType": .string("text"), "body": .string("칸트는 행동의 결과보다 그 행동의 원칙을 살폈습니다."), "sortOrder": .number(0)]],
+    "segments": [["id": .string("1"), "postId": .string("1"), "segmentType": .string("text"), "body": .string("칸트는 행동의 결과보다 그 행동의 원칙을 살폈습니다"), "sortOrder": .number(0)]],
     "questions": [["id": .string("1"), "title": .string("친구를 위한 거짓말"), "usage": .string("daily"), "type": .string("twoStage"), "isActive": .bool(true), "stage1Body": .string("친구를 지키기 위한 거짓말도 잘못일까요?"), "categories": .array([.object(["categoryId": .string("1")])]), "answers": .array([
-      .object(["id": .string("1"), "body": .string("진실을 말한다"), "philosopherId": .string("1"), "explanation": .string("진실을 지키는 원칙에 무게를 두었어요.")]),
-      .object(["id": .string("2"), "body": .string("친구를 지킨다"), "philosopherId": .string("2"), "explanation": .string("선택이 가져올 결과를 살폈어요.")])]), "followupBody": .string("거짓말로 다른 사람이 피해를 본다면요?"), "followupAnswers": .array([
-        .object(["id": .string("3"), "body": .string("진실을 말한다"), "explanation": .string("다른 사람의 피해도 고려했어요.")]),
-        .object(["id": .string("4"), "body": .string("친구를 지킨다"), "explanation": .string("관계의 책임을 우선했어요.")])])]],
-    "notices": [["id": .string("1"), "title": .string("Ethica에 오신 것을 환영해요"), "content": .string("매일 하나의 질문으로 철학을 만나요."), "isPublished": .bool(true)]],
+      .object(["id": .string("1"), "body": .string("진실을 말한다"), "philosopherId": .string("1"), "explanation": .string("진실을 지키는 원칙에 무게를 두었어요")]),
+      .object(["id": .string("2"), "body": .string("친구를 지킨다"), "philosopherId": .string("2"), "explanation": .string("선택이 가져올 결과를 살폈어요")])]), "followupBody": .string("거짓말로 다른 사람이 피해를 본다면요?"), "followupAnswers": .array([
+        .object(["id": .string("3"), "body": .string("진실을 말한다"), "explanation": .string("다른 사람의 피해도 고려했어요")]),
+        .object(["id": .string("4"), "body": .string("친구를 지킨다"), "explanation": .string("관계의 책임을 우선했어요")])])]],
+    "notices": [["id": .string("1"), "title": .string("Ethica에 오신 것을 환영해요"), "content": .string("매일 하나의 질문으로 철학을 만나요"), "isPublished": .bool(true)]],
     "inquiries": [["id": .string("1"), "title": .string("알림 시간을 바꾸고 싶어요"), "content": .string("저녁에도 질문을 받을 수 있나요?"), "status": .string("pending")]],
     "users": [["id": .string("1"), "name": .string("에티카 운영자"), "userRole": .string("admin"), "userStatus": .string("active"), "onboardingStatus": .string("complete")]],
     "revocations": [["id": .string("1"), "status": .string("failed"), "attempts": .number(1), "lastErrorCode": .string("PROVIDER_UNAVAILABLE")]]
@@ -731,12 +731,12 @@ actor AdminPreviewData {
     let parts = path.split(separator: "?")[0].split(separator: "/").map(String.init)
     if parts.first == "terms" {
       let type = path.contains("privacy") ? "privacy" : "service"
-      return try JSONEncoder().encode(terms[type] ?? ["title": .string(type == "service" ? "이용약관" : "개인정보 처리방침"), "version": .string("1.0"), "content": .string("미리보기용 약관입니다. 실제 서비스 약관을 편집하는 화면이에요.")])
+      return try JSONEncoder().encode(terms[type] ?? ["title": .string(type == "service" ? "이용약관" : "개인정보 처리방침"), "version": .string("1.0"), "content": .string("미리보기용 약관입니다. 실제 서비스 약관을 편집하는 화면이에요")])
     }
-    guard parts.count >= 2, parts[0] == "admin" else { throw APIError(status: 404, code: "PREVIEW", message: "이 경로는 관리자 미리보기에 없어요.") }
+    guard parts.count >= 2, parts[0] == "admin" else { throw APIError(status: 404, code: "PREVIEW", message: "이 경로는 관리자 미리보기에 없어요") }
     let resource = parts[1]
     if resource == "terms" { terms[body["type"]?.text ?? "service"] = body; return Data("{}".utf8) }
-    guard var rows = records[resource] else { throw APIError(status: 404, code: "PREVIEW", message: "항목을 찾을 수 없어요.") }
+    guard var rows = records[resource] else { throw APIError(status: 404, code: "PREVIEW", message: "항목을 찾을 수 없어요") }
     if method == "GET" {
       if parts.count == 2 {
         let query = URLComponents(string: "https://preview.invalid/" + path)?.queryItems ?? []
@@ -751,7 +751,7 @@ actor AdminPreviewData {
         }
         return try JSONEncoder().encode(rows)
       }
-      guard let row = rows.first(where: { $0["id"]?.text == parts[2] }) else { throw APIError(status: 404, code: "PREVIEW", message: "항목을 찾을 수 없어요.") }
+      guard let row = rows.first(where: { $0["id"]?.text == parts[2] }) else { throw APIError(status: 404, code: "PREVIEW", message: "항목을 찾을 수 없어요") }
       return try JSONEncoder().encode(row)
     }
     if parts.count == 2 {

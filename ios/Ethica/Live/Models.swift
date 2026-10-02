@@ -32,6 +32,7 @@ struct Challenge: Decodable {
   let expiresAt: String
 }
 struct UserProfile: Decodable {
+  let aiConsentVersion: String?
   let userId: String
   let name: String
   let avatarId: String?
@@ -317,4 +318,13 @@ indirect enum JSONValue: Codable, Equatable {
     if case .array(let v) = self { return v }
     return []
   }
+}
+
+/// Presentation-only punctuation: keep decimals, URLs and stored answer text intact.
+func interfaceCopy(_ text: String) -> String {
+  text.replacingOccurrences(of: #"(?<=[가-힣])\.[ \t]+"#,
+    with: "\n", options: .regularExpression)
+    .replacingOccurrences(of: #"(?<=[가-힣])\.(?=\r?\n|$)"#,
+      with: "", options: .regularExpression)
+    .trimmingCharacters(in: .whitespacesAndNewlines)
 }

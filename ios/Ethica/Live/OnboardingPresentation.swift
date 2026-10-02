@@ -3,6 +3,8 @@ import UIKit
 
 struct OnboardingActionStyle: ButtonStyle {
   var secondary = false
+  var dimWhenDisabled = false
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.isEnabled) private var enabled
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
@@ -12,7 +14,10 @@ struct OnboardingActionStyle: ButtonStyle {
       .foregroundStyle(secondary ? Color.white : Color.black)
       .background(secondary ? Color(white: 0.13) : Color(white: 0.96), in: Capsule())
       .overlay(Capsule().strokeBorder(secondary ? Color.white.opacity(0.2) : .clear, lineWidth: 1))
-      .opacity(enabled ? (configuration.isPressed ? 0.65 : 1) : 0.35)
+      .compositingGroup()
+      .opacity(dimWhenDisabled && !enabled ? 0.35 : 1)
+      .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
+      .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
   }
 }
 
@@ -27,12 +32,12 @@ struct OnboardingCategoryPage: View {
     GeometryReader { geometry in
       ScrollView {
         VStack(alignment: .leading, spacing: 20) {
-          Text("원하는 분야를\n골라주세요.").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
-          Text("관심 있는 하나로 시작해요.")
+          Text("원하는 분야를\n골라주세요").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
+          Text("관심 있는 하나로 시작해요")
             .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
           if categories.isEmpty {
             Spacer(minLength: 40)
-            Text("첫 질문을 준비하고 있어요.").foregroundStyle(.secondary)
+            Text("첫 질문을 준비하고 있어요").foregroundStyle(.secondary)
           } else if reduceMotion || voiceOver || typeSize.isAccessibilitySize {
             Spacer(minLength: 30)
             ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
@@ -279,7 +284,7 @@ struct OnboardingQuestionStage: View {
               VStack(alignment: .leading, spacing: 14) {
                 Text(isFollowup ? "한 번 더" : "질문 \(answeredCount + 1)")
                   .font(.subheadline).foregroundStyle(.secondary).opacity(current ? 1 : 0)
-                Text(entry.text).font(.system(.title2, weight: .medium)).lineSpacing(5)
+                Text(interfaceCopy(entry.text)).font(.system(.title2, weight: .medium)).lineSpacing(5)
                   .fixedSize(horizontal: false, vertical: true)
               }.frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8).padding(.bottom, 16)
@@ -403,7 +408,7 @@ struct OnboardingTimePage: View {
         )
         .accessibilityHidden(true)
         Text("언제 알려드릴까요?").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
-        Text("하루 한 번, 짧은 질문 하나.")
+        Text("하루 한 번, 짧은 질문 하나")
           .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         DatePicker("알림 받을 시간", selection: $time, displayedComponents: .hourAndMinute)
           .datePickerStyle(.wheel).labelsHidden()
@@ -416,7 +421,7 @@ struct OnboardingTimePage: View {
         }.font(.headline).padding(.vertical, 16)
           .overlay(alignment: .top) { Divider() }
           .overlay(alignment: .bottom) { Divider() }
-        Text("나중에 바꿀 수 있어요.")
+        Text("나중에 바꿀 수 있어요")
           .font(.footnote).foregroundStyle(.secondary)
       }.padding(.horizontal, 28).padding(.top, 24).padding(.bottom, 12)
     }
@@ -470,7 +475,7 @@ struct OnboardingCelebration: View {
             .offset(y: appeared || reduceMotion ? 0 : 8)
             .accessibilityLabel("Ethica")
           Spacer(minLength: 40)
-          Text("하루 한 질문부터 시작해요.")
+          Text("하루 한 질문부터 시작해요")
             .font(.footnote).foregroundStyle(.secondary).lineSpacing(3)
         }.frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .leading)
           .padding(.horizontal, 28)
@@ -483,5 +488,75 @@ struct OnboardingCelebration: View {
     .onChange(of: scenePhase) { phase in glowing = !reduceMotion && phase == .active }
     .onChange(of: reduceMotion) { reduced in glowing = !reduced && scenePhase == .active }
     .onDisappear { glowing = false }
+  }
+}
+
+/// Keep the capsule surfaces in place while replacing only their text between questions.
+struct OnboardingChoiceButtons: View {
+  let stepID: String
+  let choices: [DailyChoice]
+  let locked: Bool
+  let saving: Bool
+  let completedText: String?
+  let select: (String) -> Void
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @ScaledMetric(relativeTo: .body) private var choiceLabelHeight = 44.0
+  @State private var displayed: [DailyChoice]
+  @State private var displayedStep: String
+  @State private var changing = false
+  @State private var textOpacity = 1.0
+
+  init(stepID: String, choices: [DailyChoice], locked: Bool, saving: Bool,
+       completedText: String?, select: @escaping (String) -> Void) {
+    self.stepID = stepID
+    self.choices = choices
+    self.locked = locked
+    self.saving = saving
+    self.completedText = completedText
+    self.select = select
+    _displayed = State(initialValue: choices)
+    _displayedStep = State(initialValue: stepID)
+  }
+  var body: some View {
+    VStack(spacing: 12) {
+      // Stable positional identities prevent removal/insertion animations of the capsules.
+      ForEach(displayed.indices, id: \.self) { index in
+        Button {
+          guard !locked, !changing, displayedStep == stepID else { return }
+          select(displayed[index].id)
+        } label: {
+          Text(interfaceCopy(displayed[index].body))
+            .frame(minHeight: choiceLabelHeight).opacity(textOpacity)
+        }.buttonStyle(OnboardingActionStyle())
+          .disabled(locked || changing || displayedStep != stepID)
+      }
+      ZStack {
+        if saving {
+          ProgressView().tint(.white).accessibilityLabel("저장 중")
+        } else if let completedText {
+          Label(completedText, systemImage: "checkmark.circle.fill").foregroundStyle(.mint)
+        } else {
+          Text("정답은 없어요").foregroundStyle(.secondary)
+        }
+      }.font(.caption).frame(height: 22)
+    }
+    .task(id: stepID) {
+      guard displayedStep != stepID else { return }
+      changing = true
+      do {
+        withAnimation(.easeOut(duration: reduceMotion ? 0.08 : 0.16)) { textOpacity = 0 }
+        try await Task.sleep(nanoseconds: reduceMotion ? 90_000_000 : 180_000_000)
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { displayed = choices; displayedStep = stepID }
+        try await Task.sleep(nanoseconds: reduceMotion ? 20_000_000 : 180_000_000)
+        withAnimation(.easeIn(duration: reduceMotion ? 0.1 : 0.24)) { textOpacity = 1 }
+        try await Task.sleep(nanoseconds: reduceMotion ? 100_000_000 : 240_000_000)
+        changing = false
+      } catch {
+        // A replacement task owns the next transition; never submit a stale choice.
+        changing = false
+      }
+    }
   }
 }
