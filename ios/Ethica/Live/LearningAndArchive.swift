@@ -61,9 +61,9 @@ struct LivePhilosopherView: View {
               Text(person.school).font(.subheadline).foregroundStyle(.secondary)
             }
           }
-          Text(person.coreThought).lineSpacing(5).textSelection(.enabled)
+          CitedText(text: person.coreThought).lineSpacing(5)
           DisclosureGroup("사상의 뿌리") {
-            Text(person.lifeRoots).lineSpacing(5).padding(.vertical, 12).frame(
+            CitedText(text: person.lifeRoots).lineSpacing(5).padding(.vertical, 12).frame(
               maxWidth: .infinity, alignment: .leading
             ).textSelection(.enabled)
           }
@@ -133,7 +133,7 @@ struct LiveReaderView: View {
                     LearningSlideImage(url: url, label: post.title + " 관련 자료")
                   }
                   if let body = card.body {
-                    Text(body).font(.title3).lineSpacing(8).textSelection(.enabled)
+                    CitedText(text: body).font(.title3).lineSpacing(8)
                   }
                   if index == post.segments.count - 1 {
                     Label("마지막 페이지", systemImage: "checkmark").font(.footnote).foregroundStyle(
@@ -159,11 +159,6 @@ struct LiveReaderView: View {
           }.padding(24)
         }
       }.navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ShareLink(item: "\(post.title) — \(author)\nEthica에서 읽은 글") {
-            Image(systemName: "square.and.arrow.up")
-          }.accessibilityLabel("글 제목 공유")
-        }
     }
   }
 }
@@ -244,7 +239,7 @@ struct LiveArchiveDetailView: View {
             Divider()
             ReadingText(title: "한 걸음 더", bodyText: followup.questionBody)
             Label(followup.myAnswer, systemImage: "checkmark").font(.headline)
-            Text(interfaceCopy(followup.explanation)).lineSpacing(7).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
+            CitedText(text: interfaceCopy(followup.explanation)).lineSpacing(7).multilineTextAlignment(.leading)
           }
           Text("기록한 답변은 바꿀 수 없어요").font(.footnote).foregroundStyle(.secondary)
         }.readingPage()

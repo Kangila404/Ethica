@@ -98,13 +98,59 @@ struct ReadingText: View {
       Text(interfaceCopy(title)).font(.title3.weight(.semibold))
         .foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
         .accessibilityAddTraits(.isHeader)
-      Text(interfaceCopy(bodyText)).font(.body).foregroundStyle(.secondary)
+      CitedText(text: interfaceCopy(bodyText)).font(.body).foregroundStyle(.secondary)
         .lineSpacing(7).multilineTextAlignment(.leading)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 }
+/// Shared by profiles, learning cards and question explanations. Full attribution
+/// remains available without making long credits part of the reading surface.
+struct CitedText: View {
+  let text: String
+  @State private var showSources = false
+  var body: some View {
+    let content = ContentAttribution(text)
+    VStack(alignment: .leading, spacing: 8) {
+      if !content.body.isEmpty { Text(content.body).textSelection(.enabled) }
+      if let sources = content.sources {
+        Button { showSources = true } label: {
+          Label("출처 보기", systemImage: "doc.text.magnifyingglass")
+            .font(.caption).frame(minHeight: 44)
+        }.buttonStyle(.plain).foregroundStyle(.secondary)
+          .accessibilityHint("문헌과 이미지의 출처 및 이용 조건을 엽니다")
+          .sheet(isPresented: $showSources) { ContentSourcesSheet(sources: sources) }
+      }
+    }.frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+struct ContentSourcesSheet: View {
+  @Environment(\.dismiss) private var dismiss
+  let sources: String
+  private var linkedSources: AttributedString {
+    let text = NSMutableAttributedString(string: sources)
+    if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
+      for match in detector.matches(in: sources, range: NSRange(sources.startIndex..., in: sources)) {
+        if let url = match.url, ["https", "http"].contains(url.scheme?.lowercased() ?? "") {
+          text.addAttribute(.link, value: url, range: match.range)
+        }
+      }
+    }
+    return AttributedString(text)
+  }
+  var body: some View {
+    NavigationStack {
+      ScrollView {
+        Text(linkedSources).font(.body).lineSpacing(6).textSelection(.enabled)
+          .frame(maxWidth: .infinity, alignment: .leading).padding(24)
+      }.navigationTitle("출처 및 이용 조건").navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("닫기") { dismiss() } } }
+    }.presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+  }
+}
+
 extension View {
   func readingPage() -> some View {
     padding(24).frame(maxWidth: 680, alignment: .leading).frame(maxWidth: .infinity)

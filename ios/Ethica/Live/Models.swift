@@ -320,6 +320,32 @@ indirect enum JSONValue: Codable, Equatable {
   }
 }
 
+/// Released editorial payloads append attribution under these explicit headings.
+/// Separate only known metadata sections; never strip arbitrary prose or URLs.
+struct ContentAttribution {
+  let body: String
+  let sources: String?
+
+  init(_ text: String) {
+    let lines = text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")
+    let headings: Set<String> = [
+      "[프로필 이미지]", "[이미지 출처]", "[자료 출처]", "[출처]",
+      "더 읽기 · 자료 출처", "자료 출처", "이미지 출처", "참고 문헌", "참고문헌",
+    ]
+    if let index = lines.firstIndex(where: {
+      let line = $0.trimmingCharacters(in: .whitespaces)
+      return headings.contains(line) || line.hasPrefix("출처: ") || line.hasPrefix("출처：")
+    }), !lines[(index + 1)...].joined().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      || lines[index].contains("https://") || lines[index].contains("http://") {
+      body = lines[..<index].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+      sources = lines[index...].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    } else {
+      body = text
+      sources = nil
+    }
+  }
+}
+
 /// Presentation-only punctuation: keep decimals, URLs and stored answer text intact.
 func interfaceCopy(_ text: String) -> String {
   text.replacingOccurrences(of: #"(?<=[가-힣])\.[ \t]+"#,

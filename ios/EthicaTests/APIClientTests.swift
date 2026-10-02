@@ -33,6 +33,37 @@ final class AdminMixedCardTests: XCTestCase {
 }
 #endif
 
+final class ContentAttributionTests: XCTestCase {
+  func testProfileImageCreditsAreSeparatedWithoutTruncation() {
+    let credit = "[프로필 이미지]\n제작자 · CC BY-SA 4.0\n출처: https://example.org/image\n이용 조건: https://creativecommons.org/licenses/by-sa/4.0/"
+    let value = ContentAttribution("생애 본문\n\n" + credit)
+    XCTAssertEqual(value.body, "생애 본문")
+    XCTAssertEqual(value.sources, credit)
+  }
+
+  func testFullSourceCardCollapsesAndRetainsEveryCredit() {
+    let original = "더 읽기 · 자료 출처\n\n원전과 참고 문헌\nhttps://example.org/book\n\n1·3번 슬라이드\n제작자와 이용 조건"
+    let value = ContentAttribution(original)
+    XCTAssertEqual(value.body, "")
+    XCTAssertEqual(value.sources, original)
+  }
+
+  func testOrdinaryProseURLsAndIncompleteHeadingsRemainVisible() {
+    for text in ["출처를 살펴보는 것은 중요해요", "본문 속 https://example.org 는 그대로", "본문\n\n[프로필 이미지]", "", "자료 출처"] {
+      let value = ContentAttribution(text)
+      XCTAssertEqual(value.body, text)
+      XCTAssertNil(value.sources)
+    }
+  }
+
+  func testWindowsLineEndingsAndSingleLineCitation() {
+    let value = ContentAttribution("첫 문단\r\n\r\n둘째 문단\r\n\r\n[출처]\r\n자료")
+    XCTAssertEqual(value.body, "첫 문단\n\n둘째 문단")
+    XCTAssertEqual(value.sources, "[출처]\n자료")
+    XCTAssertEqual(ContentAttribution("본문\n출처: https://example.org").sources, "출처: https://example.org")
+  }
+}
+
 final class MemorySessionStore: SessionPersistence {
   private let lock = NSLock()
   private var data: Data?
