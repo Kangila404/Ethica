@@ -42,6 +42,9 @@ jobs:
           plutil -lint ios/Ethica.xcodeproj/project.pbxproj
           plutil -lint ios/Ethica/Resources/PrivacyInfo.xcprivacy ios/EthicaWidget/PrivacyInfo.xcprivacy
       - name: Build app and widget without signing
+        # Keep the editorial parser independently testable without signing or a simulator.
+        # Full UI visual checks still require an iPhone or Simulator.
+        # The following build verifies SwiftUI integration.
         shell: bash
         run: |
           set -euo pipefail
@@ -54,6 +57,8 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee "$RUNNER_TEMP/ethica-ios-build.log"
+      - name: Test compact attribution parsing
+        run: swift test --package-path ios --filter ContentAttributionTests
       - name: Save build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

@@ -577,7 +577,7 @@ struct AdminPostPreview: View {
               if let url = AppConfiguration.imageURL(card.image) {
                 LearningSlideImage(url: url, label: title + " 관련 자료")
               } else if !card.image.isEmpty { Label("이미지 주소를 확인해주세요", systemImage: "photo") }
-              if !card.body.isEmpty { Text(card.body).font(.title3).lineSpacing(7) }
+              if !card.body.isEmpty { CitedText(text: card.body).font(.title3).lineSpacing(7) }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(24).padding(.bottom, 36)
           }
         }

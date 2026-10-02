@@ -39,7 +39,7 @@ struct LiveTodayView: View {
               }
               DisclosureGroup("해설 보기") {
                 VStack(alignment: .leading, spacing: 16) {
-                  Text(interfaceCopy(daily.selectedAnswer?.explanation ?? "")).multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
+                  CitedText(text: interfaceCopy(daily.selectedAnswer?.explanation ?? "")).multilineTextAlignment(.leading)
                   if let explanation = daily.selectedFollowupAnswer?.explanation {
                     ReadingText(title: "추가 답변", bodyText: explanation)
                   }
