@@ -14,7 +14,9 @@ check_memory() {
   local available_kib
   available_kib=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
   [[ "$available_kib" =~ ^[0-9]+$ ]] && (( available_kib >= $1 * 1024 )) || {
-    echo "Insufficient available RAM (need $1 MiB); deployment stopped" >&2
+    echo "Insufficient available RAM: $(( ${available_kib:-0} / 1024 )) MiB available, need $1 MiB; deployment stopped" >&2
+    echo 'This is RAM pressure, not Docker disk cache. No shared services or volumes were removed.' >&2
+    free -m >&2
     exit 1
   }
   echo "Available RAM: $((available_kib / 1024)) MiB"
@@ -26,14 +28,30 @@ printf 'SERVER_IMAGE=%s\n' "$image" > .deploy-image.env
 compose() {
   sudo -n docker --config "$PWD/.docker" compose --env-file .env --env-file .deploy-image.env -f docker-compose.prod.yml "$@"
 }
+api_stopped=0
+migration_started=0
+recover_before_migration() {
+  local result=$?
+  if (( result != 0 && api_stopped == 1 && migration_started == 0 )); then
+    echo 'Deployment failed before migrations; restoring the previously configured API/backup.' >&2
+    sudo -n docker --config "$PWD/.docker" compose --env-file .env -f docker-compose.prod.yml \
+      up -d --no-deps --wait --wait-timeout 180 server backup || true
+  elif (( result != 0 && migration_started == 1 )); then
+    echo 'Migration phase started; do not roll back the image against an unchecked schema. Backup is preserved.' >&2
+  fi
+  exit "$result"
+}
+trap recover_before_migration EXIT
 compose config --quiet
 compose pull
 check_memory 1024
 compose up -d --wait --wait-timeout 180 mysql
 # No API process or scheduler may write while schema migrations are running.
 compose stop server backup
+api_stopped=1
 check_memory 768
 compose run --rm --no-deps backup once
+migration_started=1
 compose run --rm --no-deps migrate
 check_memory 768
 compose up -d --no-deps --wait --wait-timeout 180 server backup

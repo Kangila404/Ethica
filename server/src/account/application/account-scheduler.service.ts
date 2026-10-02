@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Temporal } from '@js-temporal/polyfill';
 import { ACCOUNT_STORE, type AccountStore } from '../domain/account-store';
 import {
   REVOCATION_CLIENT,
@@ -23,7 +22,7 @@ export class AccountSchedulerService {
   async revokePending(): Promise<void> {
     for (let i = 0; i < 50; i++) {
       const job = await this.store.claim(new Date());
-      if (!job) return;
+      if (!job) break;
       let success = false;
       try {
         const credential = JSON.parse(
@@ -36,13 +35,12 @@ export class AccountSchedulerService {
       }
       await this.store.finish(job.id, job.leaseToken!, success, new Date());
     }
+    await this.purgeWithdrawn();
   }
   @Cron('0 3 * * *', { timeZone: 'UTC', waitForCompletion: true })
   async purgeWithdrawn(): Promise<void> {
-    const cutoff = new Date(
-      Temporal.Now.zonedDateTimeISO('UTC').subtract({ years: 2 })
-        .epochMilliseconds,
-    );
+    // Legacy soft-deleted accounts: unlink first, then erase without a 2-year hold.
+    const cutoff = new Date();
     // Bounded batches avoid a long transaction across the entire account table.
     for (let i = 0; i < 100; i++)
       if ((await this.store.purge(cutoff)) < 100) break;
