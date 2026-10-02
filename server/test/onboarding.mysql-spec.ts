@@ -1454,7 +1454,7 @@ describe('Server workflows with MySQL', () => {
       ).body,
     ).toMatchObject({ version: 'test-1' });
   });
-  it('requires matching reauthentication, revokes sessions immediately and stores only encrypted retry credentials', async () => {
+  it('erases a reauthenticated account, invalidates sessions and allows a fresh registration', async () => {
     const { user, token } = await newUser();
     await db
       .getRepository(AuthIdentity)
@@ -1512,6 +1512,21 @@ describe('Server workflows with MySQL', () => {
       provider: AuthType.GOOGLE,
       token: 'private-access-token',
     });
+    await db
+      .getRepository(UserAnswer)
+      .save(UserAnswer.onboarding(user.id, questions[0].answers[0].id));
+    await db
+      .getRepository(Inquiry)
+      .save({ userId: user.id, title: 'private', content: 'erase me' });
+    revoker.revoke.mockRejectedValueOnce(new Error('provider unavailable'));
+    await withdraw().expect(503);
+    expect(
+      await db.getRepository(User).findOneBy({ id: user.id }),
+    ).not.toBeNull();
+    expect(
+      await db.getRepository(AuthChallenge).findOneBy({ id: challenge.id }),
+    ).not.toBeNull();
+    revoker.revoke.mockResolvedValue(undefined);
     await withdraw().expect(200);
     await request(app.getHttpServer() as Server)
       .get('/api/users/me')
@@ -1520,6 +1535,42 @@ describe('Server workflows with MySQL', () => {
     expect(
       await db.getRepository(RefreshToken).countBy({ userId: user.id }),
     ).toBe(0);
+    expect(
+      await db
+        .getRepository(User)
+        .findOne({ where: { id: user.id }, withDeleted: true }),
+    ).toBeNull();
+    for (const entity of [AuthIdentity, UserAnswer, Inquiry, RevocationJob]) {
+      expect(await db.getRepository(entity).countBy({ userId: user.id })).toBe(
+        0,
+      );
+    }
+    const next = await request(app.getHttpServer() as Server)
+      .post('/api/auth/social/challenge')
+      .send({ provider: 'google' })
+      .expect(201);
+    const joined = await request(app.getHttpServer() as Server)
+      .post('/api/auth/login/social')
+      .send({
+        provider: 'google',
+        challengeId: (next.body as { challengeId: string }).challengeId,
+        idToken: 'fresh-token',
+      })
+      .expect(201);
+    const rejoined = joined.body as {
+      user: { userId: string; onboardingStatus: string };
+    };
+    expect(rejoined.user.userId).not.toBe(user.userId);
+    expect(rejoined.user.onboardingStatus).toBe('incomplete');
+  });
+  it('keeps encrypted legacy revocation retries fenced by a lease', async () => {
+    const { user } = await newUser();
+    const vault = app.get<CredentialCipher>(CREDENTIAL_CIPHER);
+    await db.getRepository(RevocationJob).save({
+      userId: user.id,
+      encryptedCredential: vault.encrypt('private-access-token'),
+      nextAttemptAt: new Date(),
+    });
     const row = await db
       .getRepository(RevocationJob)
       .createQueryBuilder('job')
@@ -1527,7 +1578,6 @@ describe('Server workflows with MySQL', () => {
       .where('job.userId = :id', { id: user.id })
       .getOneOrFail();
     expect(row.encryptedCredential).not.toContain('private-access-token');
-    const vault = app.get<CredentialCipher>(CREDENTIAL_CIPHER);
     expect(vault.decrypt(row.encryptedCredential!)).toContain(
       'private-access-token',
     );
@@ -1564,7 +1614,7 @@ describe('Server workflows with MySQL', () => {
       .expect(200);
     expect(JSON.stringify(visible.body)).not.toContain('encryptedCredential');
   });
-  it('purges only accounts deleted at least two years ago and removes all private records atomically', async () => {
+  it('purges legacy withdrawn accounts after unlink, preserving accounts with pending unlink', async () => {
     const old = await newUser(),
       recent = await newUser();
     await db.getRepository(User).update(old.user.id, {
@@ -1574,6 +1624,11 @@ describe('Server workflows with MySQL', () => {
     await db.getRepository(User).update(recent.user.id, {
       deletedAt: new Date('2026-01-01T00:00:00Z'),
       userStatus: UserStatus.SUSPENDED,
+    });
+    await db.getRepository(RevocationJob).save({
+      userId: recent.user.id,
+      encryptedCredential: 'pending',
+      nextAttemptAt: new Date(),
     });
     await db
       .getRepository(UserAnswer)
@@ -1602,11 +1657,9 @@ describe('Server workflows with MySQL', () => {
       content: '공개 콘텐츠',
       isPublished: true,
     });
-    expect(
-      await app
-        .get<AccountStore>(ACCOUNT_STORE)
-        .purge(new Date('2024-09-30T00:00:00Z')),
-    ).toBe(1);
+    expect(await app.get<AccountStore>(ACCOUNT_STORE).purge(new Date())).toBe(
+      1,
+    );
     expect(
       await db
         .getRepository(User)

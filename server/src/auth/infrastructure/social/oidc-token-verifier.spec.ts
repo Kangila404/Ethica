@@ -84,6 +84,33 @@ describe('OIDC signature and claims', () => {
       verifier.verify(AuthType.APPLE, token(AuthType.APPLE), 'other-nonce'),
     ).rejects.toMatchObject({ status: 401 });
   });
+  it('accepts the configured Google web audience and iOS authorized party, rejecting unknown apps', async () => {
+    verifier = new OidcTokenVerifier(
+      new ConfigService({ GOOGLE_CLIENT_IDS: 'ios-client,web-client' }),
+    );
+    await expect(
+      verifier.verify(
+        AuthType.GOOGLE,
+        token(
+          AuthType.GOOGLE,
+          { azp: 'ios-client' },
+          { audience: 'web-client' },
+        ),
+        'challenge-nonce',
+      ),
+    ).resolves.toMatchObject({ provider: AuthType.GOOGLE });
+    await expect(
+      verifier.verify(
+        AuthType.GOOGLE,
+        token(
+          AuthType.GOOGLE,
+          { azp: 'unknown-client' },
+          { audience: 'web-client' },
+        ),
+        'challenge-nonce',
+      ),
+    ).rejects.toMatchObject({ status: 401 });
+  });
   it('rejects provider mixup', async () => {
     await expect(
       verifier.verify(

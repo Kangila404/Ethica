@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   AUTH_CHALLENGE_REPOSITORY,
   type AuthChallengeRepository,
@@ -12,10 +17,6 @@ import {
   REVOCATION_CLIENT,
   type RevocationClient,
 } from '../domain/revocation-client';
-import {
-  CREDENTIAL_CIPHER,
-  type CredentialCipher,
-} from '../domain/credential-cipher';
 import { WithdrawalRequest } from '../presentation/withdrawal.dto';
 @Injectable()
 export class AccountService {
@@ -26,10 +27,8 @@ export class AccountService {
     @Inject(SOCIAL_TOKEN_VERIFIER)
     private readonly verifier: SocialTokenVerifier,
     @Inject(REVOCATION_CLIENT) private readonly revoker: RevocationClient,
-    @Inject(CREDENTIAL_CIPHER) private readonly vault: CredentialCipher,
   ) {}
   async withdraw(userId: string, input: WithdrawalRequest) {
-    this.vault.assertConfigured();
     const identity = await this.store.identity(userId);
     const challenge = await this.challenges.findValid(input.challengeId);
     if (
@@ -51,9 +50,20 @@ export class AccountService {
       input.credential,
       challenge.nonce,
     );
-    const encrypted = this.vault.encrypt(JSON.stringify(credential));
-    await this.store.withdraw(userId, identity.id, challenge.id, encrypted);
-    return { message: 'success', revocationStatus: 'pending' };
+    await this.store.withdraw(userId, identity.id, challenge.id, async () => {
+      try {
+        // Complete unlink BEFORE releasing the identity for a new registration.
+        // A delayed unlink job could otherwise revoke the newly registered account.
+        await this.revoker.revoke(credential);
+      } catch {
+        throw new ServiceUnavailableException({
+          code: 'SOCIAL_REVOCATION_UNAVAILABLE',
+          message:
+            '소셜 연결 해제를 완료하지 못했습니다. 계정은 삭제되지 않았으니 잠시 후 다시 시도해주세요.',
+        });
+      }
+    });
+    return { message: 'success', revocationStatus: 'done' };
   }
   async jobs(after?: string) {
     return (await this.store.jobs(after)).map((job) => ({

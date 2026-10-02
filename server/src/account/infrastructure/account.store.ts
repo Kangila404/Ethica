@@ -41,7 +41,7 @@ export class SqlAccountStore implements AccountStore {
     userId: string,
     identityId: string,
     challengeId: string,
-    encryptedCredential: string,
+    revoke: () => Promise<void>,
   ) {
     const users = this.db.getRepository(User);
     const user = await users.findOne({
@@ -61,20 +61,8 @@ export class SqlAccountStore implements AccountStore {
       .delete({ id: challengeId, expiresAt: MoreThan(new Date()) });
     if (used.affected !== 1)
       throw new UnauthorizedException('재인증 요청이 만료됐거나 사용됐습니다.');
-    await this.db.getRepository(RevocationJob).save({
-      userId: user.id,
-      encryptedCredential,
-      nextAttemptAt: new Date(),
-    });
-    user.withdraw();
-    user.fcmToken = null;
-    user.nextDailyAt = null;
-    user.pendingDailyQuestionTime = null;
-    user.pendingTimezone = null;
-    user.dailyScheduleEffectiveAt = null;
-    await users.save(user);
-    await users.softRemove(user);
-    await this.db.getRepository(RefreshToken).delete({ userId: user.id });
+    await revoke();
+    await this.erase([user.id]);
   }
   @Transactional()
   async claim(now: Date) {
@@ -153,6 +141,9 @@ export class SqlAccountStore implements AccountStore {
       .createQueryBuilder('user')
       .withDeleted()
       .where('user.deletedAt <= :cutoff', { cutoff })
+      .andWhere(
+        "NOT EXISTS (SELECT 1 FROM social_revocation_job job WHERE job.userId = user.id AND job.status <> 'done')",
+      )
       .orderBy('user.id', 'ASC')
       .take(100)
       .setLock('pessimistic_write')
@@ -160,6 +151,10 @@ export class SqlAccountStore implements AccountStore {
       .getMany();
     if (!users.length) return 0;
     const ids = users.map((user) => user.id);
+    await this.erase(ids);
+    return ids.length;
+  }
+  private async erase(ids: string[]): Promise<void> {
     for (const entity of [
       AuthIdentity,
       RefreshToken,
@@ -186,6 +181,5 @@ export class SqlAccountStore implements AccountStore {
       .getRepository(Notice)
       .update({ authorId: In(ids) }, { authorId: null });
     await this.db.getRepository(User).delete({ id: In(ids) });
-    return ids.length;
   }
 }

@@ -7,7 +7,7 @@ export interface AccountStore {
     userId: string,
     identityId: string,
     challengeId: string,
-    encryptedCredential: string,
+    revoke: () => Promise<void>,
   ): Promise<void>;
   claim(now: Date): Promise<RevocationJob | null>;
   finish(id: string, token: string, success: boolean, now: Date): Promise<void>;
