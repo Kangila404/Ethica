@@ -35,7 +35,7 @@ describe('thinker profile catalog', () => {
       expect(image.sourceUrl).toMatch(
         /^https:\/\/commons.wikimedia.org\/wiki\/File:/,
       );
-      expect(image.license).toMatch(/^(Public domain|CC BY-SA)/);
+      expect(image.license).toMatch(/^(Public domain|CC BY)/);
       expect(image.creator).not.toMatch(/<[^>]+>/);
       expect(portraitAttribution(profile.key)).toContain(image.sourceUrl);
       expect(portraitAttribution(profile.key)).toContain(image.licenseUrl);
@@ -43,6 +43,10 @@ describe('thinker profile catalog', () => {
     const odysseus = thinkerProfilesV1.find((p) => p.key === 'odysseus')!;
     expect(odysseus.school).toBe('신화·문학 인물');
     expect(odysseus.lifeRoots).toContain('저자가 아니라 등장인물');
+    // Commons' summary metadata may report the sculpture's PD status instead of
+    // the photograph's license. Preserve the reviewed file-page conditions.
+    expect(thinkerPortrait('socrates').license).toBe('CC BY-SA 2.5');
+    expect(thinkerPortrait('plato').license).toBe('CC BY 2.5');
   });
 
   it('requires a transaction and refuses destructive rollback', async () => {
