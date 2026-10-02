@@ -10,6 +10,7 @@ import { ProfileAvatar1790902800000 } from './migrations/1790902800000-ProfileAv
 import { AnalysisQuota1790812800000 } from './migrations/1790812800000-AnalysisQuota';
 import { AdminSupportAccount1790733600000 } from './migrations/1790733600000-AdminSupportAccount';
 import 'reflect-metadata';
+import { UniqueLearningSlideImages1791010800000 } from './migrations/1791010800000-UniqueLearningSlideImages';
 import { DailyCycles1790730000000 } from './migrations/1790730000000-DailyCycles';
 import { DataSource } from 'typeorm';
 import { OnboardingAnalysis1790726400000 } from './migrations/1790726400000-OnboardingAnalysis';
@@ -45,6 +46,7 @@ const db = new DataSource({
     ThinkerProfiles1791000000000,
     ReplaceLearningPosts1791003600000,
     IllustrateLearningSlides1791007200000,
+    UniqueLearningSlideImages1791010800000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

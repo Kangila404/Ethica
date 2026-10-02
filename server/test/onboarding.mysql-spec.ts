@@ -1,4 +1,9 @@
 import { IllustrateLearningSlides1791007200000 } from '../src/database/migrations/1791007200000-IllustrateLearningSlides';
+import { UniqueLearningSlideImages1791010800000 } from '../src/database/migrations/1791010800000-UniqueLearningSlideImages';
+import {
+  uniqueSlideCredits,
+  uniqueSlideImages,
+} from '../src/database/migrations/content/learning-slides-v4';
 import {
   slideCredits,
   slideImages,
@@ -2075,6 +2080,128 @@ describe('Server workflows with MySQL', () => {
       ))
         await request(app.getHttpServer() as Server)
           .get('/api/media/' + image)
+          .expect('Content-Type', /^image\//)
+          .expect(200);
+    } finally {
+      jest.restoreAllMocks();
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
+
+  it('replaces duplicate slide images atomically, protects operator edits and preserves all non-image data', async () => {
+    const posts = await db
+      .getRepository(LearningPost)
+      .find({ order: { id: 'ASC' } });
+    const before = await db
+      .getRepository(PostSegment)
+      .find({ order: { id: 'ASC' } });
+    const profiles = await db
+      .getRepository(Philosopher)
+      .find({ order: { id: 'ASC' } });
+    const questions = await db
+      .getRepository(Question)
+      .find({ order: { id: 'ASC' } });
+    const users = await db.getRepository(User).find({ order: { id: 'ASC' } });
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      const lastPost = posts.find((p) => p.title === learningPostsV2[9].title)!;
+      await runner.startTransaction();
+      await runner.query(
+        'UPDATE post_segment SET image_key = ? WHERE post_id = ? AND sort_order = 7',
+        ['operator-image.png', lastPost.id],
+      );
+      await expect(
+        new UniqueLearningSlideImages1791010800000().up(runner),
+      ).rejects.toThrow('Learning cards changed');
+      await runner.rollbackTransaction();
+
+      await runner.startTransaction();
+      const originalQuery = runner.query.bind(runner) as (
+        sql: string,
+        parameters?: unknown[],
+      ) => Promise<unknown>;
+      let writes = 0;
+      const spy = jest
+        .spyOn(runner, 'query')
+        .mockImplementation((sql: string, parameters?: unknown[]) => {
+          if (sql.startsWith('UPDATE post_segment') && ++writes === 2)
+            return Promise.reject(new Error('injected unique-image failure'));
+          return originalQuery(sql, parameters);
+        });
+      await expect(
+        new UniqueLearningSlideImages1791010800000().up(runner),
+      ).rejects.toThrow('injected unique-image failure');
+      spy.mockRestore();
+      await runner.rollbackTransaction();
+      expect(
+        await db.getRepository(PostSegment).find({ order: { id: 'ASC' } }),
+      ).toEqual(before);
+
+      await runner.startTransaction();
+      await new UniqueLearningSlideImages1791010800000().up(runner);
+      await runner.commitTransaction();
+      const after = await db
+        .getRepository(PostSegment)
+        .find({ order: { id: 'ASC' } });
+      expect(after.map((c) => c.id)).toEqual(before.map((c) => c.id));
+      expect(
+        await db.getRepository(LearningPost).find({ order: { id: 'ASC' } }),
+      ).toEqual(posts);
+      expect(
+        await db.getRepository(Philosopher).find({ order: { id: 'ASC' } }),
+      ).toEqual(profiles);
+      expect(
+        await db.getRepository(Question).find({ order: { id: 'ASC' } }),
+      ).toEqual(questions);
+      expect(
+        await db.getRepository(User).find({ order: { id: 'ASC' } }),
+      ).toEqual(users);
+      const targets = new Set(
+        posts
+          .filter((p) => learningPostsV2.some((a) => a.title === p.title))
+          .map((p) => p.id),
+      );
+      expect(after.filter((c) => !targets.has(c.postId))).toEqual(
+        before.filter((c) => !targets.has(c.postId)),
+      );
+      const user = await newUser();
+      for (const article of learningPostsV2) {
+        const post = posts.find((p) => p.title === article.title)!;
+        const original = before
+          .filter((c) => c.postId === post.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const response = await request(app.getHttpServer() as Server)
+          .get('/api/philosophers/post/' + post.id)
+          .set('Authorization', 'Bearer ' + user.token)
+          .expect(200);
+        const segments = (
+          response.body as {
+            segments: Array<{
+              id: string;
+              sortOrder: number;
+              body: string | null;
+              imageKey: string;
+            }>;
+          }
+        ).segments;
+        expect(segments.map((c) => c.id)).toEqual(original.map((c) => c.id));
+        expect(segments.map((c) => c.sortOrder)).toEqual([
+          0, 1, 2, 3, 4, 5, 6, 7,
+        ]);
+        expect(new Set(segments.map((c) => c.imageKey)).size).toBe(8);
+        expect(segments.map((c) => c.imageKey)).toEqual(
+          uniqueSlideImages(article).map((i) => i.imageKey),
+        );
+        expect(segments.slice(1, 7).map((c) => c.body)).toEqual(article.cards);
+        expect(segments[7].body).toBe(uniqueSlideCredits(article));
+      }
+      for (const key of new Set(
+        learningPostsV2.flatMap(uniqueSlideImages).map((i) => i.imageKey),
+      ))
+        await request(app.getHttpServer() as Server)
+          .get('/api/media/' + key)
           .expect('Content-Type', /^image\//)
           .expect(200);
     } finally {
