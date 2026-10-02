@@ -32,14 +32,14 @@ const assert=require("node:assert/strict");
 try {const [rows]=await db.query("SELECT `usage`, status, COUNT(*) AS count FROM question GROUP BY `usage`, status");
 assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),15);
 assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),15);
-const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),10);
-const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),80);
-const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),80);
-const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,5);assert.ok(perThinker.every(p=>Number(p.count)===2));
+const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),69);
+const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),434);
+const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),434);
+const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,28);assert.equal(perThinker.filter(p=>Number(p.count)===2).length,22);assert.equal(perThinker.filter(p=>Number(p.count)===4).length,5);assert.equal(perThinker.filter(p=>Number(p.count)===5).length,1);
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 const [[thinkers]]=await db.query("SELECT COUNT(*) AS count FROM philosopher WHERE imageKey IS NOT NULL");assert.equal(Number(thinkers.count),28);
 const [[odysseus]]=await db.query("SELECT id, school FROM philosopher WHERE name = ?",["오디세우스"]);assert.equal(odysseus.school,"신화·문학 인물");
-const [[newPosts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE philosopher_id = ?",[odysseus.id]);assert.equal(Number(newPosts.count),0);
+const [[newPosts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE philosopher_id = ?",[odysseus.id]);assert.equal(Number(newPosts.count),5);
 }finally{await db.end();}})().catch(e=>{console.error(e);process.exit(1)});'
 docker run -d --name "$api" --memory=384m --memory-swap=384m -e NODE_OPTIONS=--max-old-space-size=160 --network "$network" "${env_args[@]}" --read-only --tmpfs /tmp:size=32m,mode=1777 "$image" >/dev/null
 ready=0

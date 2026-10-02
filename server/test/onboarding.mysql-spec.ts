@@ -1,5 +1,11 @@
 import { IllustrateLearningSlides1791007200000 } from '../src/database/migrations/1791007200000-IllustrateLearningSlides';
 import { UniqueLearningSlideImages1791010800000 } from '../src/database/migrations/1791010800000-UniqueLearningSlideImages';
+import { ExpandLearningLibrary1791025200000 } from '../src/database/migrations/1791025200000-ExpandLearningLibrary';
+import { learningLibraryV5 } from '../src/database/migrations/content/learning-library-v5';
+import {
+  libraryCredits,
+  libraryImages,
+} from '../src/database/migrations/content/learning-library-images-v5';
 import {
   uniqueSlideCredits,
   uniqueSlideImages,
@@ -2204,6 +2210,119 @@ describe('Server workflows with MySQL', () => {
           .get('/api/media/' + key)
           .expect('Content-Type', /^image\//)
           .expect(200);
+    } finally {
+      jest.restoreAllMocks();
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
+
+  it('appends 59 published articles atomically and preserves every existing row', async () => {
+    const before = await db
+      .getRepository(LearningPost)
+      .find({ order: { id: 'ASC' } });
+    const beforeCards = await db
+      .getRepository(PostSegment)
+      .find({ order: { id: 'ASC' } });
+    const profiles = await db
+      .getRepository(Philosopher)
+      .find({ order: { id: 'ASC' } });
+    const oldQuestions = await db
+      .getRepository(Question)
+      .find({ order: { id: 'ASC' } });
+    const oldUsers = await db
+      .getRepository(User)
+      .find({ order: { id: 'ASC' } });
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      await runner.startTransaction();
+      const original = runner.query.bind(runner) as (
+        sql: string,
+        params?: unknown[],
+      ) => Promise<unknown>;
+      let cards = 0;
+      const spy = jest
+        .spyOn(runner, 'query')
+        .mockImplementation((sql: string, params?: unknown[]) => {
+          if (sql.startsWith('INSERT INTO post_segment') && ++cards === 13)
+            return Promise.reject(new Error('injected library failure'));
+          return original(sql, params);
+        });
+      await expect(
+        new ExpandLearningLibrary1791025200000().up(runner),
+      ).rejects.toThrow('injected library failure');
+      spy.mockRestore();
+      await runner.rollbackTransaction();
+      expect(
+        await db.getRepository(LearningPost).find({ order: { id: 'ASC' } }),
+      ).toEqual(before);
+      expect(
+        await db.getRepository(PostSegment).find({ order: { id: 'ASC' } }),
+      ).toEqual(beforeCards);
+
+      await runner.startTransaction();
+      await new ExpandLearningLibrary1791025200000().up(runner);
+      await runner.commitTransaction();
+      const after = await db
+        .getRepository(LearningPost)
+        .find({ order: { id: 'ASC' } });
+      const afterCards = await db
+        .getRepository(PostSegment)
+        .find({ order: { id: 'ASC' } });
+      expect(after).toHaveLength(before.length + 59);
+      expect(afterCards).toHaveLength(beforeCards.length + 354);
+      expect(after.filter((p) => before.some((b) => b.id === p.id))).toEqual(
+        before,
+      );
+      expect(
+        afterCards.filter((c) => beforeCards.some((b) => b.id === c.id)),
+      ).toEqual(beforeCards);
+      expect(
+        await db.getRepository(Philosopher).find({ order: { id: 'ASC' } }),
+      ).toEqual(profiles);
+      expect(
+        await db.getRepository(Question).find({ order: { id: 'ASC' } }),
+      ).toEqual(oldQuestions);
+      expect(
+        await db.getRepository(User).find({ order: { id: 'ASC' } }),
+      ).toEqual(oldUsers);
+      const user = await newUser();
+      for (const a of learningLibraryV5) {
+        const post = after.find((p) => p.title === a.title)!;
+        const response = await request(app.getHttpServer() as Server)
+          .get('/api/philosophers/post/' + post.id)
+          .set('Authorization', 'Bearer ' + user.token)
+          .expect(200);
+        const segments = (
+          response.body as {
+            segments: Array<{
+              body: string | null;
+              imageKey: string;
+              sortOrder: number;
+            }>;
+          }
+        ).segments;
+        expect(segments.map((s) => s.sortOrder)).toEqual([0, 1, 2, 3, 4, 5]);
+        expect(segments.map((s) => s.imageKey)).toEqual(
+          libraryImages(a).map((i) => i.imageKey),
+        );
+        expect(segments.slice(1, 5).map((s) => s.body)).toEqual(a.cards);
+        expect(segments[5].body).toBe(libraryCredits(a));
+      }
+      for (const key of new Set(
+        learningLibraryV5.flatMap(libraryImages).map((i) => i.imageKey),
+      ))
+        await request(app.getHttpServer() as Server)
+          .get('/api/media/' + key)
+          .expect('Content-Type', /^image\//)
+          .expect(200);
+      await runner.startTransaction();
+      await expect(
+        new ExpandLearningLibrary1791025200000().up(runner),
+      ).rejects.toThrow('already exists');
+      await runner.rollbackTransaction();
+      expect(await db.getRepository(LearningPost).count()).toBe(after.length);
     } finally {
       jest.restoreAllMocks();
       if (runner.isTransactionActive) await runner.rollbackTransaction();
