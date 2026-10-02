@@ -43,6 +43,7 @@ import { UserAnswer } from 'src/user-answer/domain/model/user-answer.entity';
 import { UserFollowupAnswer } from 'src/user-answer/domain/model/user-followup-answer.entity';
 import { QuestionType } from 'src/question/domain/enum/question-type.enum';
 import { AnalysisService } from 'src/analysis/application/analysis.service';
+import { DailyService } from 'src/daily/application/daily.service';
 import { OnboardingTimeRequest } from '../presentation/dto/req/onboarding-time-request.dto';
 import { OnboardingAnswerRequest } from '../presentation/dto/req/onboarding-answer-request.dto';
 import { OnboardingCategoryRequest } from '../presentation/dto/req/onboarding-category-request.dto';
@@ -69,6 +70,7 @@ export class OnboardingService {
     @Inject(ONBOARDING_SESSION_REPOSITORY)
     private readonly sessions: OnboardingSessionRepository,
     private readonly analysis: AnalysisService,
+    private readonly daily: DailyService,
   ) {}
   private async getUser(userId: string, lock = false): Promise<User> {
     const u = lock
@@ -297,6 +299,7 @@ export class OnboardingService {
     );
     user.completeOnboarding();
     await this.users.save(user);
+    await this.daily.assignFirstQuestion(userId);
     return DailyTimeResponse.from(user);
   }
 }

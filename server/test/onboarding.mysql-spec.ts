@@ -36,6 +36,11 @@ import {
 } from '../src/philosopher/domain/repository/user-philosopher-count.repository';
 import { DailyQuestionStatus } from '../src/daily/domain/enums/daily-question-status.enum';
 import { DailyService } from '../src/daily/application/daily.service';
+import { dailyBoundary, dailyDate } from '../src/common/daily-clock';
+import {
+  USER_DAILY_QUESTION_REPOSITORY,
+  type UserDailyQuestionRepository,
+} from '../src/daily/domain/repository/user-daily-question.repository';
 import { UserDailyQuestion } from '../src/daily/domain/model/user_daily_question.entity';
 import { OnboardingStatus } from '../src/user/domain/enum/OnboardingStatus.enum';
 import { DailyCycles1790730000000 } from '../src/database/migrations/1790730000000-DailyCycles';
@@ -835,6 +840,90 @@ describe('Server workflows with MySQL', () => {
       quota: { limit: 3, remaining: 0 },
     });
     expect(ai.analyze.mock.calls.length).toBe(calls);
+  });
+  it('atomically completes onboarding with one immediate question under concurrent retries', async () => {
+    const { user, token } = await newUser();
+    const question = await dailyQuestion(QuestionType.SINGLE);
+    await db.getRepository(OnboardingSession).save({
+      userId: user.id,
+      questionIds: questions.map((q) => q.id),
+      completedCount: 5,
+      resultRequested: true,
+    });
+    const before = new Date();
+    await Promise.all(
+      [1, 2].map(() =>
+        post('onboarding/daily-time', token, {
+          timezone: 'Asia/Seoul',
+          dailyQuestionTime: '21:00',
+        }).expect(201),
+      ),
+    );
+    const cycles = await db
+      .getRepository(UserDailyQuestion)
+      .findBy({ userId: user.id });
+    expect(cycles).toHaveLength(1);
+    expect(cycles[0]).toMatchObject({
+      questionId: question.id,
+      status: 'pending',
+      serviceDate: dailyDate(before, 'Asia/Seoul'),
+      notificationStatus: 'skipped',
+    });
+    expect(cycles[0].openedAt!.getTime()).toBeGreaterThanOrEqual(
+      before.getTime(),
+    );
+    const saved = await db.getRepository(User).findOneByOrFail({ id: user.id });
+    expect(saved.nextDailyAt).toEqual(
+      dailyBoundary(before, '21:00', 'Asia/Seoul', true),
+    );
+    expect((await today(token).expect(200)).body).toMatchObject({
+      userDailyQuestion: 'pending',
+      questionId: question.id,
+    });
+    await db.getRepository(Question).update(question.id, {
+      isActive: false,
+      status: ContentStatus.HELD,
+    });
+  });
+  it('rolls back onboarding completion and the first question if its storage fails', async () => {
+    const { user, token } = await newUser();
+    await db.getRepository(OnboardingSession).save({
+      userId: user.id,
+      questionIds: questions.map((q) => q.id),
+      completedCount: 5,
+      resultRequested: true,
+    });
+    const repository = app.get<UserDailyQuestionRepository>(
+      USER_DAILY_QUESTION_REPOSITORY,
+    );
+    const save = repository.save.bind(
+      repository,
+    ) as UserDailyQuestionRepository['save'];
+    const failure = jest
+      .spyOn(repository, 'save')
+      .mockImplementationOnce(async (cycle) => {
+        await save(cycle);
+        throw new Error('simulated failure after inserting the first question');
+      });
+    try {
+      await post('onboarding/daily-time', token, {
+        timezone: 'Asia/Seoul',
+      }).expect(500);
+    } finally {
+      failure.mockRestore();
+    }
+    expect(
+      await db.getRepository(User).findOneByOrFail({ id: user.id }),
+    ).toMatchObject({ onboardingStatus: 'incomplete' });
+    expect(
+      await db.getRepository(UserDailyQuestion).countBy({ userId: user.id }),
+    ).toBe(0);
+    await post('onboarding/daily-time', token, {
+      timezone: 'Asia/Seoul',
+    }).expect(201);
+    expect(
+      await db.getRepository(UserDailyQuestion).countBy({ userId: user.id }),
+    ).toBe(1);
   });
   async function dailyUser() {
     const { user, token } = await newUser();

@@ -13,6 +13,7 @@ import { QuestionRepository } from 'src/question/domain/repository/question.repo
 import { UserPhilosopherCountRepository } from 'src/philosopher/domain/repository/user-philosopher-count.repository';
 import { CategoryRepository } from 'src/category/domain/repository/category.repository';
 import { AnalysisService } from 'src/analysis/application/analysis.service';
+import { DailyService } from 'src/daily/application/daily.service';
 jest.mock('typeorm-transactional', () => ({
   Transactional: () => () => undefined,
 }));
@@ -25,6 +26,7 @@ describe('OnboardingService', () => {
   const saveAnswer = jest.fn();
   const saveFollowup = jest.fn();
   const increase = jest.fn();
+  const daily = { assignFirstQuestion: jest.fn() };
   const analysis = {
     getAnalysis: jest.fn().mockResolvedValue({ composition: [] }),
     getContradiction: jest.fn().mockResolvedValue({ status: 'pending' }),
@@ -88,6 +90,7 @@ describe('OnboardingService', () => {
         }),
       },
       analysis as unknown as AnalysisService,
+      daily as unknown as DailyService,
     );
   });
   const start = () => service.selectCategory('external', { categoryId: '1' });
@@ -178,6 +181,8 @@ describe('OnboardingService', () => {
       timezone: 'UTC',
     });
     expect(user.dailyQuestionTime).toBe('08:00');
+    expect(daily.assignFirstQuestion).toHaveBeenCalledTimes(1);
+    expect(daily.assignFirstQuestion).toHaveBeenCalledWith('external');
     await expect(submit(1)).rejects.toThrow();
   });
   it('rejects incomplete pools and changing a category after assignment', async () => {
