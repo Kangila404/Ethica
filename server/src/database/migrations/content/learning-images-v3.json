@@ -1,0 +1,72 @@
+[
+  {
+    "key": "kant-critique",
+    "sha256": "13f8b0167e6a68fc7b766554a1f2d54972e2d47a9ef8c9332b96dd781d740f0c",
+    "title": "Kritik der reinen vernunft erstausgabe.jpg",
+    "creator": "Foto Wikimedia H.-P.Haack",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "caption": "『순수이성비판』 1781년 초판 표제지. 사진: H.-P.Haack.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Kritik_der_reinen_vernunft_erstausgabe.jpg/960px-Kritik_der_reinen_vernunft_erstausgabe.jpg",
+    "imageKey": "learning-v3-kant-critique.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kritik_der_reinen_vernunft_erstausgabe.jpg",
+    "changes": "Commons 제공 파일 그대로 사용. 앱 표시에 따른 잘림 외에 변경하지 않았습니다.",
+    "verifiedOn": "2026-10-02"
+  },
+  {
+    "key": "harriet",
+    "sha256": "3ac6b30ec4aa1fc0ff8a54a9f07e651e42e3b27dde7f717a5c683526968bab5f",
+    "title": "Harriet Taylor, c1830 (6882958014).jpg",
+    "creator": "작자 미상 / LSE Library, IMAGELIBRARY/1350",
+    "license": "No known copyright restrictions (LSE Library / Flickr Commons)",
+    "licenseUrl": "https://www.flickr.com/commons/usage/",
+    "caption": "해리엇 테일러의 약 1830년 초상화. LSE Library 소장.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/02/Harriet_Taylor%2C_c1830_%286882958014%29.jpg",
+    "imageKey": "learning-v3-harriet.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Harriet_Taylor,_c1830_(6882958014).jpg",
+    "changes": "Commons 제공 파일 그대로 사용. 앱 표시에 따른 잘림 외에 변경하지 않았습니다.",
+    "verifiedOn": "2026-10-02"
+  },
+  {
+    "key": "aristotle-raphael",
+    "sha256": "ef01f010a85a10f5efaa1f38fd9fd5a5e5bfc5ad586db4f1a0f72b77013151e6",
+    "title": "Aristotle by Raphael.jpg",
+    "creator": "Raphael, 1510–1511 / Wikimedia Commons",
+    "license": "Public domain (PD-Art / PD-old-auto-expired)",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "caption": "라파엘로의 『아테네 학당』 속 아리스토텔레스. 생전 초상이 아닌 르네상스 시대의 재현.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Aristotle_by_Raphael.jpg",
+    "imageKey": "learning-v3-aristotle-raphael.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aristotle_by_Raphael.jpg",
+    "changes": "Commons 제공 파일 그대로 사용. 앱 표시에 따른 잘림 외에 변경하지 않았습니다.",
+    "verifiedOn": "2026-10-02"
+  },
+  {
+    "key": "nicopolis",
+    "sha256": "a3b3c78baa045a3e45afa52ba787235edc89c206ce95274f9362f28b7fffdbc3",
+    "title": "Nikopolis, Roman Odeon 1.jpg",
+    "creator": "Vassiliki Feidopoulou, 2015",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "caption": "에픽테토스가 활동한 니코폴리스의 로마 시대 오데온 유적. 그의 학교 건물이라고 확인된 장소는 아닙니다.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Nikopolis%2C_Roman_Odeon_1.jpg/960px-Nikopolis%2C_Roman_Odeon_1.jpg",
+    "imageKey": "learning-v3-nicopolis.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nikopolis,_Roman_Odeon_1.jpg",
+    "changes": "Commons 제공 파일 그대로 사용. 앱 표시에 따른 잘림 외에 변경하지 않았습니다.",
+    "verifiedOn": "2026-10-02"
+  },
+  {
+    "key": "harvard",
+    "sha256": "b4a5a32e22501ce27127e4d3e258bc95a960f22b51a1cb13e622cd1461378998",
+    "title": "Widener Library, Harvard University.jpg",
+    "creator": "Kenneth C. Zirkel, 2012",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "caption": "롤스가 가르친 하버드의 와이드너 도서관. 2012년 촬영된 캠퍼스 자료 사진이며 롤스의 연구실은 아닙니다.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/Widener_Library%2C_Harvard_University.jpg/960px-Widener_Library%2C_Harvard_University.jpg",
+    "imageKey": "learning-v3-harvard.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Widener_Library,_Harvard_University.jpg",
+    "changes": "Commons 제공 파일 그대로 사용. 앱 표시에 따른 잘림 외에 변경하지 않았습니다.",
+    "verifiedOn": "2026-10-02"
+  }
+]

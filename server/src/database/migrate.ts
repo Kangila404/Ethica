@@ -1,3 +1,4 @@
+import { IllustrateLearningSlides1791007200000 } from './migrations/1791007200000-IllustrateLearningSlides';
 import { ReplaceLearningPosts1791003600000 } from './migrations/1791003600000-ReplaceLearningPosts';
 import { ThinkerProfiles1791000000000 } from './migrations/1791000000000-ThinkerProfiles';
 import { PublishReviewedContent1790989200000 } from './migrations/1790989200000-PublishReviewedContent';
@@ -43,6 +44,7 @@ const db = new DataSource({
     PublishReviewedContent1790989200000,
     ThinkerProfiles1791000000000,
     ReplaceLearningPosts1791003600000,
+    IllustrateLearningSlides1791007200000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });
