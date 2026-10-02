@@ -122,6 +122,12 @@ export class DailyService {
     await this.ensureCycle(await this.lockUser(userId));
   }
 
+  /** Joins onboarding's transaction; never replaces an existing assignment. */
+  @Transactional()
+  async assignFirstQuestion(userId: string): Promise<void> {
+    await this.ensureCycle(await this.lockUser(userId), true);
+  }
+
   @Transactional()
   async submitStageOne(
     userId: string,
@@ -236,9 +242,13 @@ export class DailyService {
   }
 
   /** Called under the user row lock, including scheduler and HTTP paths. */
-  private async ensureCycle(user: User): Promise<UserDailyQuestion | null> {
+  private async ensureCycle(
+    user: User,
+    initial = false,
+  ): Promise<UserDailyQuestion | null> {
     const now = new Date();
     let latest = await this.userDailyQuestionRepository.findLatest(user.id);
+    if (initial && latest) return latest;
     if (user.dailyScheduleEffectiveAt && user.dailyScheduleEffectiveAt <= now) {
       user.dailyQuestionTime = user.pendingDailyQuestionTime!;
       user.timezone = user.pendingTimezone!;
@@ -249,7 +259,7 @@ export class DailyService {
     }
     const time = user.dailyQuestionTime || '08:00';
     const zone = user.timezone || 'Asia/Seoul';
-    if (user.nextDailyAt && user.nextDailyAt > now) return latest;
+    if (!initial && user.nextDailyAt && user.nextDailyAt > now) return latest;
     if (
       !user.nextDailyAt &&
       latest &&
@@ -271,18 +281,21 @@ export class DailyService {
     latest = new UserDailyQuestion();
     latest.userId = user.id;
     latest.questionId = question?.id ?? null;
-    latest.openedAt = dailyBoundary(now, time, zone);
+    latest.openedAt = initial ? now : dailyBoundary(now, time, zone);
     latest.serviceDate = dailyDate(latest.openedAt, zone);
     latest.status = question
       ? DailyQuestionStatus.PENDING
       : DailyQuestionStatus.PREPARING;
     latest.notificationStatus =
-      question && user.notificationEnabled && user.fcmToken
+      !initial && question && user.notificationEnabled && user.fcmToken
         ? 'pending'
         : 'skipped';
     await this.userDailyQuestionRepository.save(latest);
     user.nextDailyAt =
-      user.dailyScheduleEffectiveAt ?? nextDailyBoundary(now, time, zone);
+      user.dailyScheduleEffectiveAt ??
+      (initial
+        ? dailyBoundary(now, time, zone, true)
+        : nextDailyBoundary(now, time, zone));
     await this.userRepository.save(user);
     return latest;
   }

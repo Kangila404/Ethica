@@ -15,6 +15,7 @@ import { UserModule } from 'src/user/user.module';
 import { UserAnswerModule } from 'src/user-answer/user-answer.module';
 import { QuestionModule } from 'src/question/question.module';
 import { PhilosopherModule } from 'src/philosopher/philosopher.module';
+import { DailyModule } from 'src/daily/daily.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PhilosopherModule } from 'src/philosopher/philosopher.module';
     UserAnswerModule,
     QuestionModule,
     PhilosopherModule,
+    DailyModule,
   ],
   controllers: [OnboardingController],
   providers: [
