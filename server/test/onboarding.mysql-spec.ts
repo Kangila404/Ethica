@@ -1,3 +1,13 @@
+import { ReplaceLearningPosts1791003600000 } from '../src/database/migrations/1791003600000-ReplaceLearningPosts';
+import {
+  postsV1,
+  contentImage,
+} from '../src/database/migrations/content/editorial-v1';
+import {
+  learningPostsV2,
+  articleImage,
+  articleCredits,
+} from '../src/database/migrations/content/learning-posts-v2';
 import { ThinkerProfiles1791000000000 } from '../src/database/migrations/1791000000000-ThinkerProfiles';
 import {
   thinkerProfilesV1,
@@ -1784,6 +1794,159 @@ describe('Server workflows with MySQL', () => {
       await request(app.getHttpServer() as Server)
         .get('/api/media/thinker-v1-odysseus.jpg')
         .expect(200);
+    } finally {
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
+
+  it('atomically replaces only the five legacy articles, publishes ten ordered articles and preserves other data', async () => {
+    const unrelatedPosts = await db
+      .getRepository(LearningPost)
+      .find({ order: { id: 'ASC' } });
+    const unrelatedCards = await db
+      .getRepository(PostSegment)
+      .find({ order: { id: 'ASC' } });
+    const profiles = await db
+      .getRepository(Philosopher)
+      .find({ order: { id: 'ASC' } });
+    const answers = await db
+      .getRepository(Answer)
+      .find({ order: { id: 'ASC' } });
+    const counts = await db.getRepository(UserPhilosopherCount).find();
+    const legacyIds: string[] = [];
+    // This suite starts at the schema/onboarding migrations; reproduce the five
+    // released v1 posts without rerunning unrelated daily question migrations.
+    for (const post of postsV1) {
+      const thinker = profiles.find(
+        (p) => p.name === philosophersV1[post.philosopher].name,
+      )!;
+      const inserted = await db.query<{ insertId: number }>(
+        'INSERT INTO post (philosopher_id, title, image_key, status) VALUES (?, ?, ?, ?)',
+        [thinker.id, post.title, contentImage(post.image), 'published'],
+      );
+      const postId = String(inserted.insertId);
+      legacyIds.push(postId);
+      for (const [order, body] of post.cards.entries())
+        await db.query(
+          'INSERT INTO post_segment (post_id, segment_type, body, image_key, sort_order) VALUES (?, ?, ?, NULL, ?)',
+          [postId, 'text', body, order],
+        );
+    }
+    const snapshot = await db
+      .getRepository(LearningPost)
+      .find({ order: { id: 'ASC' } });
+    const snapshotCards = await db
+      .getRepository(PostSegment)
+      .find({ order: { id: 'ASC' } });
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      // A modified legacy card must be preserved and block destructive replacement.
+      await runner.startTransaction();
+      await runner.query(
+        'UPDATE post_segment SET body = ? WHERE post_id = ? AND sort_order = 0',
+        ['operator edit', legacyIds[0]],
+      );
+      await expect(
+        new ReplaceLearningPosts1791003600000().up(runner),
+      ).rejects.toThrow('Legacy cards changed');
+      await runner.rollbackTransaction();
+
+      // Simulate failure after deletion and the first new insert; a real MySQL
+      // transaction must restore old post AND child-card IDs and contents.
+      await runner.startTransaction();
+      const originalQuery = runner.query.bind(runner) as (
+        sql: string,
+        parameters?: unknown[],
+      ) => Promise<unknown>;
+      const failingQuery = jest
+        .spyOn(runner, 'query')
+        .mockImplementation((sql: string, parameters?: unknown[]) => {
+          if (sql.startsWith('INSERT INTO post_segment'))
+            return Promise.reject(new Error('injected card failure'));
+          return originalQuery(sql, parameters);
+        });
+      await expect(
+        new ReplaceLearningPosts1791003600000().up(runner),
+      ).rejects.toThrow('injected card failure');
+      failingQuery.mockRestore();
+      await runner.rollbackTransaction();
+      expect(
+        await db.getRepository(LearningPost).find({ order: { id: 'ASC' } }),
+      ).toEqual(snapshot);
+      expect(
+        await db.getRepository(PostSegment).find({ order: { id: 'ASC' } }),
+      ).toEqual(snapshotCards);
+
+      await runner.startTransaction();
+      await new ReplaceLearningPosts1791003600000().up(runner);
+      await runner.commitTransaction();
+      const after = await db
+        .getRepository(LearningPost)
+        .find({ order: { id: 'ASC' } });
+      expect(after).toHaveLength(unrelatedPosts.length + 10);
+      for (const p of unrelatedPosts)
+        expect(after.find((row) => row.id === p.id)).toEqual(p);
+      for (const id of legacyIds) {
+        expect(after.some((p) => p.id === id)).toBe(false);
+        expect(
+          await db.getRepository(PostSegment).countBy({ postId: id }),
+        ).toBe(0);
+      }
+      for (const card of unrelatedCards)
+        expect(
+          await db.getRepository(PostSegment).findOneByOrFail({ id: card.id }),
+        ).toEqual(card);
+      expect(
+        await db.getRepository(Philosopher).find({ order: { id: 'ASC' } }),
+      ).toEqual(profiles);
+      expect(
+        await db.getRepository(Answer).find({ order: { id: 'ASC' } }),
+      ).toEqual(answers);
+      expect(await db.getRepository(UserPhilosopherCount).find()).toEqual(
+        counts,
+      );
+      const user = await newUser();
+      for (const post of learningPostsV2) {
+        const current = after.find((p) => p.title === post.title)!;
+        expect(current.status).toBe(ContentStatus.PUBLISHED);
+        expect(current.imageKey).toBe(articleImage(post).imageKey);
+        const result = await request(app.getHttpServer() as Server)
+          .get('/api/philosophers/post/' + current.id)
+          .set('Authorization', 'Bearer ' + user.token)
+          .expect(200);
+        const body = result.body as {
+          segments: Array<{
+            body: string | null;
+            imageKey: string | null;
+            sortOrder: number;
+          }>;
+        };
+        expect(body.segments).toHaveLength(8);
+        expect(body.segments.map((s) => s.sortOrder)).toEqual([
+          0, 1, 2, 3, 4, 5, 6, 7,
+        ]);
+        expect(body.segments[0].imageKey).toBe(articleImage(post).imageKey);
+        expect(body.segments.slice(1, 7).map((s) => s.body)).toEqual(
+          post.cards,
+        );
+        expect(body.segments[7].body).toBe(articleCredits(post));
+        await request(app.getHttpServer() as Server)
+          .get('/api/media/' + current.imageKey)
+          .expect(200);
+      }
+      for (const id of legacyIds)
+        await request(app.getHttpServer() as Server)
+          .get('/api/philosophers/post/' + id)
+          .set('Authorization', 'Bearer ' + user.token)
+          .expect(404);
+      await runner.startTransaction();
+      await expect(
+        new ReplaceLearningPosts1791003600000().up(runner),
+      ).rejects.toThrow('Legacy post missing');
+      await runner.rollbackTransaction();
+      expect(await db.getRepository(LearningPost).count()).toBe(after.length);
     } finally {
       if (runner.isTransactionActive) await runner.rollbackTransaction();
       await runner.release();
