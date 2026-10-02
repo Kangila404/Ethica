@@ -591,7 +591,7 @@ struct PreviewAccountView: View {
       .confirmationDialog("계정을 탈퇴할까요?", isPresented: $withdrawal, titleVisibility: .visible) {
         Button("계정 확인 후 탈퇴", role: .destructive) { notice = true }
       } message: {
-        Text("Apple 계정을 다시 확인합니다. 탈퇴하면 즉시 이용이 중단되고 소셜 연결 해제를 요청합니다. 보관 데이터는 2년 후 삭제됩니다")
+        Text("Apple 계정을 다시 확인합니다. 소셜 연결 해제가 완료되면 계정과 답변·분석·문의 기록이 삭제됩니다. 다시 가입하면 처음부터 시작합니다.")
       }
       .alert("디자인 미리보기", isPresented: $notice) {
         Button("확인", role: .cancel) {}
