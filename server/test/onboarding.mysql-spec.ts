@@ -880,7 +880,10 @@ describe('Server workflows with MySQL', () => {
       userDailyQuestion: 'pending',
       questionId: question.id,
     });
-    await db.getRepository(Question).update(question.id, { isActive: false });
+    await db.getRepository(Question).update(question.id, {
+      isActive: false,
+      status: ContentStatus.HELD,
+    });
   });
   it('rolls back onboarding completion and the first question if its storage fails', async () => {
     const { user, token } = await newUser();
