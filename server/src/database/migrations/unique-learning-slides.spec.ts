@@ -74,14 +74,16 @@ describe('unique learning slide replacement', () => {
 
   it('checks the whole batch before writing, preserves prose and only updates changed cards', async () => {
     const rows = originalRows();
-    const query = jest.fn(async (sql: string, params: unknown[]) => {
+    const query = jest.fn((sql: string, params: unknown[]) => {
       if (sql.includes('FROM post p'))
-        return [
+        return Promise.resolve([
           rows[learningPostsV2.findIndex((a) => a.title === params[0])].post,
-        ];
+        ]);
       if (sql.includes('FROM post_segment'))
-        return rows.find((r) => r.post.id === params[0])!.cards;
-      return [];
+        return Promise.resolve(
+          rows.find((r) => r.post.id === params[0])!.cards,
+        );
+      return Promise.resolve([]);
     });
     await new UniqueLearningSlideImages1791010800000().up({
       isTransactionActive: true,
@@ -116,10 +118,15 @@ describe('unique learning slide replacement', () => {
       const final = rows[rows.length - 1].cards[7];
       if (field === 'position') final.position = 999;
       else final[field] = 'operator edit';
-      const query = jest.fn(async (sql: string, params: unknown[]) =>
-        sql.includes('FROM post p')
-          ? [rows[learningPostsV2.findIndex((a) => a.title === params[0])].post]
-          : rows.find((r) => r.post.id === params[0])!.cards,
+      const query = jest.fn((sql: string, params: unknown[]) =>
+        Promise.resolve(
+          sql.includes('FROM post p')
+            ? [
+                rows[learningPostsV2.findIndex((a) => a.title === params[0])]
+                  .post,
+              ]
+            : rows.find((r) => r.post.id === params[0])!.cards,
+        ),
       );
       await expect(
         new UniqueLearningSlideImages1791010800000().up({
