@@ -2,6 +2,7 @@ import { IllustrateLearningSlides1791007200000 } from '../src/database/migration
 import { UniqueLearningSlideImages1791010800000 } from '../src/database/migrations/1791010800000-UniqueLearningSlideImages';
 import { ExpandLearningLibrary1791025200000 } from '../src/database/migrations/1791025200000-ExpandLearningLibrary';
 import { learningLibraryV5 } from '../src/database/migrations/content/learning-library-v5';
+import { dailyBoundary } from '../src/common/daily-clock';
 import { PublishPhilosopherStories1791028800000 } from '../src/database/migrations/1791028800000-PublishPhilosopherStories';
 import { learningStoriesV6 } from '../src/database/migrations/content/learning-stories-v6';
 import {
@@ -1103,6 +1104,12 @@ describe('Server workflows with MySQL', () => {
   it('keeps today when changing schedule and applies new time on the next local date', async () => {
     const { user, token } = await dailyUser();
     const first = await today(token).expect(200);
+    // This case models a next delivery on TOMORROW's local date. Before 08:00
+    // the first-question flow can otherwise schedule today's 08:00 boundary,
+    // which must remain unchanged and is a different valid production case.
+    await db.getRepository(User).update(user.id, {
+      nextDailyAt: dailyBoundary(new Date(), '08:00', 'Asia/Seoul', true),
+    });
     await request(app.getHttpServer() as Server)
       .patch('/api/users/me/daily-time')
       .set('Authorization', 'Bearer ' + token)
