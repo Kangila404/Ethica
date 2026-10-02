@@ -28,6 +28,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate and install iOS provider configuration
+        env:
+          IOS_CLIENT_CONFIG_JSON: ${{ secrets.IOS_CLIENT_CONFIG_JSON }}
+        run: python3 ios/ci/prepare-client-config.py
       - name: Install signing credentials and validate profiles
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -59,6 +63,10 @@ jobs:
             }
           codesign --verify --deep --strict "$RUNNER_TEMP/Ethica.xcarchive/Products/Applications/Ethica.app"
           echo "Signed archive completed: $BUILD_NUMBER"
+      - name: Verify provider settings in the signed archive
+        env:
+          IOS_CLIENT_CONFIG_JSON: ${{ secrets.IOS_CLIENT_CONFIG_JSON }}
+        run: python3 ios/ci/prepare-client-config.py --verify-app "$RUNNER_TEMP/Ethica.xcarchive/Products/Applications/Ethica.app"
       - name: Export installable distribution package
         shell: bash
         run: |

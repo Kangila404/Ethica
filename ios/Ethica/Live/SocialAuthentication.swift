@@ -18,7 +18,9 @@ final class SocialAuthentication: NSObject, ASAuthorizationControllerDelegate,
   static func configure() {
     let googleID = AppConfiguration.value("GIDClientID")
     if !googleID.isEmpty {
-      GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: googleID)
+      let serverID = AppConfiguration.value("GIDServerClientID")
+      GIDSignIn.sharedInstance.configuration = GIDConfiguration(
+        clientID: googleID, serverClientID: serverID.isEmpty ? nil : serverID)
     }
     let kakaoKey = AppConfiguration.value("KakaoNativeAppKey")
     if !kakaoKey.isEmpty { KakaoSDK.initSDK(appKey: kakaoKey) }

@@ -1,0 +1,6 @@
+{
+  "google_ios_client_id": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+  "google_server_client_id": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "kakao_native_app_key": "YOUR_NATIVE_APP_KEY",
+  "firebase_plist_base64": "BASE64_OF_GOOGLE_SERVICE_INFO_PLIST"
+}

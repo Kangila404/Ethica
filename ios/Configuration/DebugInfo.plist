@@ -21,6 +21,8 @@
 	<false/>
 	<key>GIDClientID</key>
 	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
+	<key>GIDServerClientID</key>
+	<string>$(GOOGLE_SERVER_CLIENT_ID)</string>
 	<key>KakaoNativeAppKey</key>
 	<string>$(KAKAO_NATIVE_APP_KEY)</string>
 	<key>LSApplicationQueriesSchemes</key>
