@@ -32,10 +32,11 @@ const assert=require("node:assert/strict");
 try {const [rows]=await db.query("SELECT `usage`, status, COUNT(*) AS count FROM question GROUP BY `usage`, status");
 assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),15);
 assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),15);
-const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),69);
-const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),434);
-const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),434);
-const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,28);assert.equal(perThinker.filter(p=>Number(p.count)===2).length,22);assert.equal(perThinker.filter(p=>Number(p.count)===4).length,5);assert.equal(perThinker.filter(p=>Number(p.count)===5).length,1);
+const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),81);
+const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),506);
+const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),506);
+const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,28);assert.equal(perThinker.filter(p=>Number(p.count)===2).length,18);assert.equal(perThinker.filter(p=>Number(p.count)===4).length,5);assert.equal(perThinker.filter(p=>Number(p.count)===5).length,5);
+for(const name of ["소크라테스","플라톤","에피쿠로스","마르쿠스 아우렐리우스"]){const [[row]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id = p.philosopher_id WHERE t.name = ? AND p.status = ?",[name,"published"]);assert.equal(Number(row.count),5);}
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 const [[thinkers]]=await db.query("SELECT COUNT(*) AS count FROM philosopher WHERE imageKey IS NOT NULL");assert.equal(Number(thinkers.count),28);
 const [[odysseus]]=await db.query("SELECT id, school FROM philosopher WHERE name = ?",["오디세우스"]);assert.equal(odysseus.school,"신화·문학 인물");

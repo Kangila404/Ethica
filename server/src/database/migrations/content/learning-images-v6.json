@@ -1,0 +1,110 @@
+[
+  {
+    "key": "ring",
+    "imageKey": "learning-v6-ring.jpg",
+    "sha256": "bf7da9b9f2e0fc797529e19af2e2bef4c0f2c40e6c73bc3ba2e5bdbfe008ae57",
+    "caption": "고대 그리스의 금반지와 방추 장식. 투명 반지의 실물이 아니라 이야기의 소재를 이해하기 위한 유물이다.",
+    "creator": "Dorieo",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ancient_Greek_gold_finger-rings_and_spindlewhorls_-_KAMA.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Ancient_Greek_gold_finger-rings_and_spindlewhorls_-_KAMA.jpg/960px-Ancient_Greek_gold_finger-rings_and_spindlewhorls_-_KAMA.jpg"
+  },
+  {
+    "key": "chariot",
+    "imageKey": "learning-v6-chariot.png",
+    "sha256": "10ee411936538cd94335c88e0ba5e6a68d24749d70586e8843453eabe526ca7b",
+    "caption": "델포이의 마부 청동상. 플라톤의 영혼 비유를 직접 묘사한 조각은 아니다.",
+    "creator": "Jebulon",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aurige._Mus%C3%A9e_Delphes._Gr%C3%A8ce.png",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Aurige._Mus%C3%A9e_Delphes._Gr%C3%A8ce.png/960px-Aurige._Mus%C3%A9e_Delphes._Gr%C3%A8ce.png"
+  },
+  {
+    "key": "papyrus",
+    "imageKey": "learning-v6-papyrus.jpg",
+    "sha256": "073e562b04b9397e270249096c2c0c6b56284cb9d1cb92d663b81784ec229c65",
+    "caption": "옥시링코스에서 발견된 2세기 《파이드로스》 파피루스 조각. 플라톤의 친필이 아니라 작품의 전승 자료이다.",
+    "creator": "Anonymous ancient scribe",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Papyrus_of_Plato_Phaedrus.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Papyrus_of_Plato_Phaedrus.jpg#Licensing",
+    "changes": "Commons 제공본은 조각을 재구성하고 배경을 흰색으로 변경한 이미지. 원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/49/Papyrus_of_Plato_Phaedrus.jpg"
+  },
+  {
+    "key": "purple",
+    "imageKey": "learning-v6-purple.jpg",
+    "sha256": "fc5a58893643c5ef5462061b1ba7e20bb7d6244c8a1f8293eb63b6f3837046d2",
+    "caption": "자주색 염료 생산에 이용된 고둥 종류인 Bolinus brandaris의 껍데기. 황제의 특정 의복에 쓰인 개체를 확인한 것은 아니다.",
+    "creator": "H. Zell",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bolinus_brandaris_01.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Bolinus_brandaris_01.jpg/960px-Bolinus_brandaris_01.jpg"
+  },
+  {
+    "key": "socrates-alcibiades",
+    "imageKey": "learning-v6-socrates-alcibiades.jpg",
+    "sha256": "5d6b72d7a406ac418a499a6b7442c5a78bf5b3c3f75ff1abca0b54f8c08070c1",
+    "caption": "표트르 바신의 1828년 회화, 포테이다이아에서 알키비아데스를 보호하는 소크라테스. 후대 재현화이며 실제 전투 기록화는 아니다.",
+    "creator": "P. V. Basin",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Socrates_in_Battle_of_Potidaea_protecting_Alcibiades_(Basin).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Socrates_in_Battle_of_Potidaea_protecting_Alcibiades_(Basin).jpg#Licensing",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Socrates_in_Battle_of_Potidaea_protecting_Alcibiades_%28Basin%29.jpg"
+  },
+  {
+    "key": "metrodorus",
+    "imageKey": "learning-v6-metrodorus.jpg",
+    "sha256": "54b2e1b34d3c9e63fe48ed579ecb1aad76538f2c1a5ca040050608034e98a938",
+    "caption": "에피쿠로스의 동료 메트로도로스의 초상 흉상. 헬레니즘 원작을 본뜬 로마 시대 조각이다.",
+    "creator": "Jebulon",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bust_Metrodoros_NAMA_368_Athens_Greece.jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Bust_Metrodoros_NAMA_368_Athens_Greece.jpg/960px-Bust_Metrodoros_NAMA_368_Athens_Greece.jpg"
+  },
+  {
+    "key": "theuth",
+    "imageKey": "learning-v6-theuth.jpg",
+    "sha256": "f9863f58b5e431c245cee6e5047e02d3cb7ef46ce27c577d884931d172f3a5ff",
+    "caption": "따오기로 표현된 이집트의 토트 신상. 《파이드로스》에서 테우트로 불리는 신의 도상이며 대화편의 장면을 재현한 것은 아니다.",
+    "creator": "Tangopaso",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ibis_couch%C3%A9,_le_dieu_Thot_(Louvre,_E_17380).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Ibis_couch%C3%A9,_le_dieu_Thot_(Louvre,_E_17380).jpg#Licensing",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Ibis_couch%C3%A9%2C_le_dieu_Thot_%28Louvre%2C_E_17380%29.jpg"
+  },
+  {
+    "key": "meditations",
+    "imageKey": "learning-v6-meditations.jpg",
+    "sha256": "c7d33a0d68715cf56c46a8672382c29a9b0ecbf8d40ece8ec3bb6588b236490e",
+    "caption": "《명상록》의 1558년 크실란더 판본 표제지. 황제의 자필 원고는 아니다.",
+    "creator": "Marcus Aurelius",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Marcus_Aurelius._De_seipso,_seu_vita_sua_(Xylander,_1558).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Marcus_Aurelius._De_seipso,_seu_vita_sua_(Xylander,_1558).jpg#Licensing",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Marcus_Aurelius._De_seipso%2C_seu_vita_sua_%28Xylander%2C_1558%29.jpg"
+  },
+  {
+    "key": "laertius",
+    "imageKey": "learning-v6-laertius.jpg",
+    "sha256": "81a44a805a57f88d7eb695546ced682cadcbb77b0042494454be7fa5a5093575",
+    "caption": "디오게네스 라에르티오스 저작의 1594년 판본 표제지. 에피쿠로스의 편지와 교설을 보존한 문헌의 전승 자료이다.",
+    "creator": "디오게네스 라에르티오스(저자), 1594년 판본; 표제지 제작자 미상",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Laertii_Diogenis_De_Vitis_Dogmatis_et_Apophthegmatis_Eorum_Qui_in_Philosophia_Claruerunt.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Laertii_Diogenis_De_Vitis_Dogmatis_et_Apophthegmatis_Eorum_Qui_in_Philosophia_Claruerunt.jpg#Licensing",
+    "changes": "원본 비율 유지. 필요한 경우 Wikimedia 제공 축소본 사용. 앱에서 화면 비율에 따라 표시 영역이 달라질 수 있음.",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Laertii_Diogenis_De_Vitis_Dogmatis_et_Apophthegmatis_Eorum_Qui_in_Philosophia_Claruerunt.jpg"
+  }
+]
