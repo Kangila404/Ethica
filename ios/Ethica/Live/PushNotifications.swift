@@ -77,20 +77,43 @@ final class PushNotifications: NSObject, MessagingDelegate, UNUserNotificationCe
     }
   }
   nonisolated func userNotificationCenter(
-    _ center: UNUserNotificationCenter, willPresent notification: UNNotification
-  ) async -> UNNotificationPresentationOptions {
-    let enabled = await MainActor.run {
-      UserDefaults.standard.bool(forKey: "ethica.dailyAlertsEnabled")
-    }
-    return enabled ? [.banner, .sound] : []
+    _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    finishPresentation(completionHandler: completionHandler)
   }
   nonisolated func userNotificationCenter(
-    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
-  ) async {
-    guard response.notification.request.content.userInfo["type"] as? String == "daily_question"
-    else { return }
-    await MainActor.run { NotificationCenter.default.post(name: .ethicaDailyOpened, object: nil) }
-    WidgetCenter.shared.reloadAllTimelines()
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    finishResponse(
+      isDailyQuestion: response.notification.request.content.userInfo["type"] as? String == "daily_question",
+      actionIdentifier: response.actionIdentifier, completionHandler: completionHandler)
+  }
+
+  // Use explicit completions: the async delegate bridge can finish on a cooperative
+  // executor, causing UIKit's launch/state-restoration assertion on notification taps.
+  // Even unrecognized diagnostic notifications must complete exactly once on main.
+  nonisolated func finishPresentation(
+    completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    Task { @MainActor in
+      let enabled = UserDefaults.standard.bool(forKey: "ethica.dailyAlertsEnabled")
+      completionHandler(enabled ? [.banner, .sound] : [])
+    }
+  }
+
+  nonisolated func finishResponse(
+    isDailyQuestion: Bool, actionIdentifier: String, completionHandler: @escaping () -> Void
+  ) {
+    Task { @MainActor in
+      defer { completionHandler() }
+      guard isDailyQuestion,
+        actionIdentifier == UNNotificationDefaultActionIdentifier || actionIdentifier == "OPEN_DAILY"
+      else { return }
+      NotificationCenter.default.post(name: .ethicaDailyOpened, object: nil)
+      WidgetCenter.shared.reloadAllTimelines()
+    }
   }
 }
 final class EthicaAppDelegate: NSObject, UIApplicationDelegate {
