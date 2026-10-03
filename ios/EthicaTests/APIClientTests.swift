@@ -2,12 +2,72 @@ import XCTest
 
 #if canImport(Ethica)
   import SwiftUI
+  import UserNotifications
   @testable import Ethica
 #else
   @testable import EthicaCore
 #endif
 
 #if canImport(Ethica)
+final class PushNotificationCallbackTests: XCTestCase {
+  @MainActor
+  func testResponsesFromBackgroundCompleteOnMainExactlyOnce() async {
+    let push = PushNotifications()
+    let cases: [(Bool, String, Bool)] = [
+      (false, UNNotificationDefaultActionIdentifier, false), // Diagnostic, no data payload.
+      (true, UNNotificationDefaultActionIdentifier, true),
+      (true, "OPEN_DAILY", true),
+      (true, UNNotificationDismissActionIdentifier, false),
+      (true, "UNKNOWN_ACTION", false),
+    ]
+    for (isDaily, action, shouldOpen) in cases {
+      let completed = expectation(description: "Completion for \(isDaily)/\(action)")
+      completed.assertForOverFulfill = true
+      var opened = 0
+      let observer = NotificationCenter.default.addObserver(
+        forName: .ethicaDailyOpened, object: nil, queue: nil
+      ) { _ in
+        XCTAssertTrue(Thread.isMainThread)
+        opened += 1
+      }
+      DispatchQueue.global(qos: .userInitiated).async {
+        XCTAssertFalse(Thread.isMainThread)
+        push.finishResponse(isDailyQuestion: isDaily, actionIdentifier: action) {
+          XCTAssertTrue(Thread.isMainThread)
+          XCTAssertEqual(opened, shouldOpen ? 1 : 0)
+          completed.fulfill()
+        }
+      }
+      await fulfillment(of: [completed], timeout: 5)
+      NotificationCenter.default.removeObserver(observer)
+    }
+  }
+
+  @MainActor
+  func testForegroundCompletionOnMainRespectsPreference() async {
+    let key = "ethica.dailyAlertsEnabled"
+    let previous = UserDefaults.standard.object(forKey: key)
+    defer {
+      if let previous { UserDefaults.standard.set(previous, forKey: key) }
+      else { UserDefaults.standard.removeObject(forKey: key) }
+    }
+    let push = PushNotifications()
+    for enabled in [false, true] {
+      push.setPreference(enabled)
+      let completed = expectation(description: "Presentation enabled=\(enabled)")
+      completed.assertForOverFulfill = true
+      DispatchQueue.global(qos: .userInitiated).async {
+        push.finishPresentation { options in
+          XCTAssertTrue(Thread.isMainThread)
+          XCTAssertEqual(options, enabled ? [.banner, .sound] : [])
+          completed.fulfill()
+        }
+      }
+      await fulfillment(of: [completed], timeout: 5)
+    }
+  }
+}
+
 final class AdminMixedCardTests: XCTestCase {
   func testTextAndImageCardsPreserveBothFieldsOnSave() {
     for kind in ["text", "image"] {

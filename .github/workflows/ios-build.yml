@@ -59,12 +59,33 @@ jobs:
             build 2>&1 | tee "$RUNNER_TEMP/ethica-ios-build.log"
       - name: Test compact attribution parsing
         run: swift test --package-path ios --filter ContentAttributionTests
+      - name: Test notification callbacks on iPhone simulator
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=[d for ds in json.load(sys.stdin)["devices"].values() for d in ds if "iPhone" in d["name"]]; preferred=[d for d in devices if d["name"] == "iPhone 16 Pro"]; print((preferred or devices)[0]["udid"])')
+          xcodebuild \
+            -project ios/Ethica.xcodeproj \
+            -scheme Ethica \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/ethica-ios-build" \
+            -resultBundlePath "$RUNNER_TEMP/notification-tests.xcresult" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -only-testing:EthicaTests/PushNotificationCallbackTests \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test 2>&1 | tee "$RUNNER_TEMP/notification-tests.log"
       - name: Save build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-diagnostics
-          path: ${{ runner.temp }}/ethica-ios-build.log
+          path: |
+            ${{ runner.temp }}/ethica-ios-build.log
+            ${{ runner.temp }}/notification-tests.log
+            ${{ runner.temp }}/notification-tests.xcresult
           retention-days: 7
           if-no-files-found: ignore
       - name: Record verification scope
