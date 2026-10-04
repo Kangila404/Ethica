@@ -19,7 +19,12 @@ export class ConceptQuestions1791079200000 implements MigrationInterface {
 
     const thinkers = new Map<ConceptThinker, string>();
     for (const [key, thinker] of Object.entries(conceptThinkers)) {
-      const rows = await this.named(runner, 'philosopher', thinker.name);
+      const rows = await this.named(
+        runner,
+        'philosopher',
+        thinker.name,
+        'aliases' in thinker ? thinker.aliases : [],
+      );
       if (rows.length !== 1)
         throw new Error(`Missing or ambiguous thinker: ${thinker.name}`);
       thinkers.set(key as ConceptThinker, rows[0].id);
@@ -106,10 +111,12 @@ export class ConceptQuestions1791079200000 implements MigrationInterface {
     runner: QueryRunner,
     table: 'category' | 'philosopher',
     name: string,
+    aliases: readonly string[] = [],
   ): Promise<Array<{ id: string }>> {
+    const names = [name, ...aliases];
     return runner.query(
-      `SELECT CAST(id AS CHAR) AS id FROM \`${table}\` WHERE name = ? LIMIT 2 FOR UPDATE`,
-      [name],
+      `SELECT CAST(id AS CHAR) AS id FROM \`${table}\` WHERE name IN (${names.map(() => '?').join(', ')}) LIMIT 2 FOR UPDATE`,
+      names,
     ) as Promise<Array<{ id: string }>>;
   }
   private async insertedId(runner: QueryRunner): Promise<string> {

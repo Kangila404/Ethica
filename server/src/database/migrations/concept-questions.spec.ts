@@ -88,12 +88,18 @@ describe('published concept questions', () => {
     expect(() => migration.down()).toThrow('Forward-only');
   });
 
-  it.each(['title', 'thinker', 'category'])(
+  it.each(['title', 'thinker', 'duplicate thinker', 'category'])(
     'refuses a %s conflict before any write',
     async (conflict) => {
       const query = jest.fn((sql: string): Promise<unknown> => {
         if (sql.includes('FROM `philosopher`'))
-          return Promise.resolve(conflict === 'thinker' ? [] : [{ id: '1' }]);
+          return Promise.resolve(
+            conflict === 'thinker'
+              ? []
+              : conflict === 'duplicate thinker'
+                ? [{ id: '1' }, { id: '2' }]
+                : [{ id: '1' }],
+          );
         if (sql.includes('FROM question'))
           return Promise.resolve(conflict === 'title' ? [{ id: '12' }] : []);
         if (sql.includes('FROM `category`'))
@@ -141,6 +147,10 @@ describe('published concept questions', () => {
       } as unknown as QueryRunner;
       await new ConceptQuestions1791079200000().up(runner);
       const calls = query.mock.calls as unknown as Array<[string, unknown[]]>;
+      expect(calls).toContainEqual([
+        'SELECT CAST(id AS CHAR) AS id FROM `philosopher` WHERE name IN (?, ?) LIMIT 2 FOR UPDATE',
+        ['이마누엘 칸트', '임마누엘 칸트'],
+      ]);
       expect(
         calls.filter(([s]) => s.startsWith('INSERT INTO category')),
       ).toHaveLength(7);

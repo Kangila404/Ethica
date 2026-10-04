@@ -2368,7 +2368,13 @@ describe('Server workflows with MySQL', () => {
   );
 
   it('publishes 49 concept questions atomically, preserves history, and serves each new onboarding category', async () => {
+    // Production retains the earlier Korean spelling; do not rename its row.
+    await db.query('UPDATE philosopher SET name = ? WHERE name = ?', [
+      '임마누엘 칸트',
+      '이마누엘 칸트',
+    ]);
     const tables = [
+      'philosopher',
       'category',
       'question',
       'answer',
