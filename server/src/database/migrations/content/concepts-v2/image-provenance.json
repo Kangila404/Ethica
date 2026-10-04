@@ -1,0 +1,453 @@
+{
+  "batch": "concept-questions-v2",
+  "createdDate": "2026-10-04",
+  "method": "OpenAI built-in image generation",
+  "sourceType": "Original AI-generated contemporary editorial illustrations, not reproductions of historical paintings",
+  "selectionNote": "Reviewed existing project assets and a limited Wikimedia Commons search for AI hiring/community scenes; no suitable image was selected for this batch.",
+  "commonPrompt": "Use case: illustration-story. A single original editorial painting for a contemporary Korean philosophy question, landscape 3:2 full bleed. Modern people, clothes, objects and settings; restrained classical figurative composition, natural anatomy, layered oil paint, soft chiaroscuro and visible subtle brush texture, readable at phone size. Depict the specified action concretely and neutrally, never imply a correct moral answer. No text, lettering, logos, signatures, watermark, collage, historical costumes, temples, mythology, generic pondering philosopher, decorative plants, fantasy robots or holograms. Scene: ",
+  "format": "JPEG quality 85 converted from generated PNG without cropping",
+  "assets": [
+    {
+      "file": "concept-v2-justice-01.jpg",
+      "bytes": 233503,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ce0e63de5d0dfff7c43082cfb95a3480a651fd0363caf8ebf58b10b854ce41cf",
+      "key": "justice-01",
+      "scenePrompt": "Contemporary public class registration counter with an adult holding an application form and a clerk checking a wall clock; empty classroom seats visible behind, no readable text."
+    },
+    {
+      "file": "concept-v2-justice-02.jpg",
+      "bytes": 251146,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "41c5a4da71e249fe78858905b7651120f595e3b455e19c92e0005de7c18a990c",
+      "key": "justice-02",
+      "scenePrompt": "Residents in modern casual clothes discussing repairs in front of a closed community-building elevator; one resident uses a wheelchair; repair technician holds a clipboard, dignified neutral depiction."
+    },
+    {
+      "file": "concept-v2-justice-03.jpg",
+      "bytes": 256621,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a432da5badf9a4e48d59024a66ea93fe8088738f3f47029b90bcdfddafbec754",
+      "key": "justice-03",
+      "scenePrompt": "A modern community tool library desk with one broken borrowed power drill; borrower and volunteer discuss a plain form and replacement parts, no money piles or accusing gestures."
+    },
+    {
+      "file": "concept-v2-justice-04.jpg",
+      "bytes": 237486,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "977eba12d92c2a19816c7caa69d525522cac7703dad712376ebb8d39719712c1",
+      "key": "justice-04",
+      "scenePrompt": "Two colleagues sit equally across a training selection desk, with matching plain folders and a small stack of workshop materials between them. Contemporary office, no visible scores or text."
+    },
+    {
+      "file": "concept-v2-justice-05.jpg",
+      "bytes": 250801,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "d1145eef9e55ec9769c0701197448e48cd4d623fcab64c98ee6d2934e6d374e7",
+      "key": "justice-05",
+      "scenePrompt": "Present-day shared music practice room booking desk, small bowl of folded lottery slips beside a blank weekly schedule, two musicians with instrument cases discussing access."
+    },
+    {
+      "file": "concept-v2-justice-06.jpg",
+      "bytes": 250640,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a3ee5f207679a006a774e7971024c8732430851fd58587e6f251eda7692a47ba",
+      "key": "justice-06",
+      "scenePrompt": "Modern neighborhood planning table with a street map and model of a small ordinary house; resident and road engineer discuss two route lines; no demolition, no readable labels."
+    },
+    {
+      "file": "concept-v2-justice-07.jpg",
+      "bytes": 274929,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2f655f8141a967f1193787ca0eeeb4819c6c714b76cdf18a504a4516230c4424",
+      "key": "justice-07",
+      "scenePrompt": "Contemporary employment information session, diverse adults reviewing qualification brochures at a plain table, an open laptop and certification workbook in foreground, no readable words."
+    },
+    {
+      "file": "concept-v2-freedom-01.jpg",
+      "bytes": 258271,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "2fe8fa1efcfae687dc3828e113795012869ed2f7d5ec3129ba423e3bd58bb3f6",
+      "key": "freedom-01",
+      "scenePrompt": "Modern book discussion circle, invited speaker and two listeners seated at equal height with books, one listener raising a hand calmly, no podium or dramatic conflict."
+    },
+    {
+      "file": "concept-v2-freedom-02.jpg",
+      "bytes": 266686,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "c46c1f21cf89d895bb71e80f990abfe905825139a7201d9361e781aaa076919b",
+      "key": "freedom-02",
+      "scenePrompt": "Two present-day friends inspecting climbing helmets, rope and harness indoors before an outing. Gear on a table, no cliff danger or rescue scene."
+    },
+    {
+      "file": "concept-v2-freedom-03.jpg",
+      "bytes": 242208,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "20d1ad27d06e135b03c68d4a2ef3fd09ecafeca42f116a8aad37119abedd7b8c",
+      "key": "freedom-03",
+      "scenePrompt": "Person on a modern sofa comparing a streaming tablet of abstract thumbnail tiles with a handwritten viewing notebook, remote in hand, no readable titles or branded characters."
+    },
+    {
+      "file": "concept-v2-freedom-04.jpg",
+      "bytes": 202931,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a2a6d1fdc09a1c84002f75525255ec5c46a6fa97ba36307657c314b348f3a3c0",
+      "key": "freedom-04",
+      "scenePrompt": "Close view of a modern work desk, phone showing a simple lock icon beside an open workbook, person pauses with one hand over phone and one over pencil, no text."
+    },
+    {
+      "file": "concept-v2-freedom-05.jpg",
+      "bytes": 273645,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "58453783137e61ca8805389d087671b009fafbf7257ad9643252093320cfcc98",
+      "key": "freedom-05",
+      "scenePrompt": "Present-day office team in different ordinary clothing styles sitting around a worktable, neutral discussion, no uniforms or historical costumes, nobody singled out as wrong."
+    },
+    {
+      "file": "concept-v2-freedom-06.jpg",
+      "bytes": 199765,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3557ec985cca4cde2b93786a7d9815521843b49a339e0fbf30f72a23df567c83",
+      "key": "freedom-06",
+      "scenePrompt": "Small acoustic performance in a modern residential public square seen from an apartment window; a resting night-shift worker near the window, no crowds or angry gestures."
+    },
+    {
+      "file": "concept-v2-freedom-07.jpg",
+      "bytes": 276783,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ac1560b613971e1878c49ca70b431ab43c243f2c45639677b7f1fd68fb6f9197",
+      "key": "freedom-07",
+      "scenePrompt": "Adult family members in a contemporary train-station cafe discuss a phone with a simple map and location pin before a trip, backpacks nearby, no readable map labels."
+    },
+    {
+      "file": "concept-v2-happiness-01.jpg",
+      "bytes": 280246,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "859217a947dc3bec0ec24ef351d63ec288dfdfb0940ee2f384f6221393712efe",
+      "key": "happiness-01",
+      "scenePrompt": "Modern home on a day off, adult near a comfortable armchair with a beginner woodworking kit and safety goggles on a side desk, quiet morning light."
+    },
+    {
+      "file": "concept-v2-happiness-02.jpg",
+      "bytes": 227764,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "a8951313da3a93dcb8cab01a4f0efc04492c947140eef41c7afb58705cd26859",
+      "key": "happiness-02",
+      "scenePrompt": "Two adults at a modest modern dining table with a simple homemade celebratory meal; nearby phone displays an unlabelled concert stage thumbnail, no lavish luxury."
+    },
+    {
+      "file": "concept-v2-happiness-03.jpg",
+      "bytes": 251770,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "096039700525f8136561c0f93fa6eb21ab1cbb3f2adf218d2e6a0877f876ac6d",
+      "key": "happiness-03",
+      "scenePrompt": "Top-down contemporary diary scene, adult compares a calendar with simple mood dots and a page of small personal project sketches, pencil resting in hand, no legible writing."
+    },
+    {
+      "file": "concept-v2-happiness-04.jpg",
+      "bytes": 215108,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bfb42eb2f629f0aa076ceb37a1d0790c834a310ae30585d133e03375eb977621",
+      "key": "happiness-04",
+      "scenePrompt": "Modern office worker after a promotion, closing a laptop with a small celebratory card beside practical work tools, reflective rather than sad; no readable text or trophy."
+    },
+    {
+      "file": "concept-v2-happiness-05.jpg",
+      "bytes": 293550,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "264028f0c6f8363e99dc7e3d4a65014fad049cda658fc24541ade29800c72088",
+      "key": "happiness-05",
+      "scenePrompt": "Three modern friends plan a trip at a table with a map, walking shoes and an open itinerary notebook, some activity cards and generous empty spaces, no readable text."
+    },
+    {
+      "file": "concept-v2-happiness-06.jpg",
+      "bytes": 227369,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "19799c7b46dd43845857f6418633091ef45857aa269123c3d4ede0d23554dd6e",
+      "key": "happiness-06",
+      "scenePrompt": "Modern living room with a VR headset resting on a table next to a packed small travel bag; adult weighs both options without wearing the headset, daylight and realistic contemporary setting."
+    },
+    {
+      "file": "concept-v2-happiness-07.jpg",
+      "bytes": 235399,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "59504b9919b59816fc5ad43e63b78baf66033bc89f4aa21aa446e2759906e934",
+      "key": "happiness-07",
+      "scenePrompt": "Amateur musician in a modern small rehearsal room, instrument resting across their lap, empty audience chairs beyond and a rehearsal calendar nearby, quiet thoughtful pause, no text."
+    },
+    {
+      "file": "concept-v2-self-01.jpg",
+      "bytes": 220847,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1749436852fd9cb82e300d6dee4f6d7fc434f61d3d51a31c7210dbc7433acb54",
+      "key": "self-01",
+      "scenePrompt": "Adult in a contemporary room reads an old handwritten diary next to a recent notebook, seen over shoulder with pages indistinct, ordinary modern clothes, no mirror fantasy."
+    },
+    {
+      "file": "concept-v2-self-02.jpg",
+      "bytes": 217154,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "67377f14985732a14c0ba580569b6ba353dfc30100fe8952f2f8075ac62c29a8",
+      "key": "self-02",
+      "scenePrompt": "Small contemporary meetup in a plain community room, one adult introduces themselves without a name badge while others listen; ordinary objects such as a sketchbook and bicycle helmet nearby."
+    },
+    {
+      "file": "concept-v2-self-03.jpg",
+      "bytes": 190583,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "7d1de0a6ce723d147d14506e9a56e2b58a17b1616ae970b6baa575c410709373",
+      "key": "self-03",
+      "scenePrompt": "An adult pauses in a modern hallway between a family dining room and a casual friends gathering, single continuous realistic scene, restrained gestures, no split panels or duplicate person."
+    },
+    {
+      "file": "concept-v2-self-04.jpg",
+      "bytes": 250796,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6fa650f64cec5dd1f2b8c9c3267098e8d0a1429ffbcdf72eab343055bc7c4e4f",
+      "key": "self-04",
+      "scenePrompt": "Modern adult signing up for a beginner pottery workshop, hand hovering over an unlabelled form, a friend beside them and clay tools visible, no historical costume."
+    },
+    {
+      "file": "concept-v2-self-05.jpg",
+      "bytes": 254777,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "41fe7661c1e79629dee2f372ec88f8a1edb8fc0a043fe9897014bee6a46e0ccb",
+      "key": "self-05",
+      "scenePrompt": "Two adult friends at a contemporary kitchen table reviewing an old shared project sketch and a current calendar, sincere calm conversation, no readable text."
+    },
+    {
+      "file": "concept-v2-self-06.jpg",
+      "bytes": 255832,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e99013e195878f6855e9a2d39974751aeaa35a7c0a0031b3338cce26a241505d",
+      "key": "self-06",
+      "scenePrompt": "Present-day adult edits a personal portfolio on a laptop, older printed photographs and current handmade work beside it, screen shows abstract blocks without readable text."
+    },
+    {
+      "file": "concept-v2-self-07.jpg",
+      "bytes": 245919,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f70927771cd27068861c84cbfbf1f1f1b6e20814c0b319c91f2f11675d0f198a",
+      "key": "self-07",
+      "scenePrompt": "Modern adult sets an old office identification lanyard into a small box beside a fresh notebook and beginner art materials, ordinary bright apartment, thoughtful hopeful mood."
+    },
+    {
+      "file": "concept-v2-desire-01.jpg",
+      "bytes": 222792,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3e963470b44538bc6d2b52ef452746f4b4e3569ecb20199ad1570f19f50b9411",
+      "key": "desire-01",
+      "scenePrompt": "Single continuous scene inside a contemporary electronics shop: one adult places their own working older tablet beside one new demo tablet on the same display counter, comparing the two with their hands. One person only, not a split screen, no home interior, no brands or prices."
+    },
+    {
+      "file": "concept-v2-desire-02.jpg",
+      "bytes": 256554,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "49d79a199e2029b6b6178caee8b2feb7c78e33c9ae74fec0d1375ffbc1921a34",
+      "key": "desire-02",
+      "scenePrompt": "Person in modern casual clothes looking from a phone travel photograph toward an open guidebook and a modest backpack, ordinary home, no famous landmark required, no text."
+    },
+    {
+      "file": "concept-v2-desire-03.jpg",
+      "bytes": 256143,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "3ebb34891fd95b4ad510df9385841dd4df8394b69249522ecb774350f6e28702",
+      "key": "desire-03",
+      "scenePrompt": "Amateur runner beside a modern park track studying a sports watch after a run, water bottle nearby, calm posture not exhaustion, no legible numbers."
+    },
+    {
+      "file": "concept-v2-desire-04.jpg",
+      "bytes": 227189,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ecac713bd400590dfa3e64f2d31fd48320dd3ac8b0c5b1e23088bc71f5aea3bb",
+      "key": "desire-04",
+      "scenePrompt": "Modern amateur ceramic artist holding a handmade cup beside a phone with a sparse abstract social feed, workshop table with clay tools, quiet balanced mood, no text or logos."
+    },
+    {
+      "file": "concept-v2-desire-05.jpg",
+      "bytes": 231847,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1f4db388399ae4d66d98c0eb0b3afaa46dea95d5fac504e64c5452bede547c90",
+      "key": "desire-05",
+      "scenePrompt": "Contemporary bedroom desk with a newly opened plain package and a laptop showing an unlabelled wish-list grid, adult pauses before clicking, no excessive clutter or brand names."
+    },
+    {
+      "file": "concept-v2-desire-06.jpg",
+      "bytes": 197991,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "740ffbf434191d70ed8385e76a4fd4ac38272576a4deb43c94124b4d53007bb7",
+      "key": "desire-06",
+      "scenePrompt": "Over-shoulder view of a person adjusting shopping recommendation controls on a tablet beside a short paper essentials list, modern kitchen table, abstract UI only."
+    },
+    {
+      "file": "concept-v2-desire-07.jpg",
+      "bytes": 196890,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "ea5d80db98ee2edb743c54268c65925b1ec44eb27167bf6ff5866d7a35971b24",
+      "key": "desire-07",
+      "scenePrompt": "Modern professional at home comparing a leadership offer folder with a family calendar; dinner table softly visible behind, no luxury mansion, no readable text.",
+      "editPrompt": "Edit the provided painting. Preserve its composition, contemporary home setting, lighting and oil-paint appearance. Correct the foreground woman's anatomy: she must have exactly TWO arms and TWO hands. Remove the extraneous middle hand and pen touching her chin entirely, showing a natural unobstructed chin and jacket instead. Keep her leftmost hand holding the folder and her rightmost hand holding the calendar. Do not add new hands, fingers, limbs, objects, or text."
+    },
+    {
+      "file": "concept-v2-power-01.jpg",
+      "bytes": 249089,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "6b6348969ced1ea870de4ea2c329013eb7e01ab9f9ad427ea2c8d20d74c28769",
+      "key": "power-01",
+      "scenePrompt": "Modern small team around a meeting table, leader explaining a simple project diagram on a whiteboard while a colleague raises a hand, no text or hierarchy caricature."
+    },
+    {
+      "file": "concept-v2-power-02.jpg",
+      "bytes": 222155,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b45503f644a3975010bdc27b7f6cd2e3d75b620ca3a3790951fa9977850996ba",
+      "key": "power-02",
+      "scenePrompt": "Architect and local residents examine a scale model of a modern community building, one resident points to an accessible entrance, plain public meeting room, no readable labels."
+    },
+    {
+      "file": "concept-v2-power-03.jpg",
+      "bytes": 190084,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "57e700793c0c7d43e70dfdafa92c221afcafb686cffd2e161d8bd53e6edd235f",
+      "key": "power-03",
+      "scenePrompt": "Present-day online community moderator at a laptop comparing abstract pending-post cards with a simple moderation checklist on paper, neutral domestic workspace, no readable text."
+    },
+    {
+      "file": "concept-v2-power-04.jpg",
+      "bytes": 262859,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "df608d0d683a8e0eca11a2e30496bfe3e3163a18c4b00f9b598ccd53d5197499",
+      "key": "power-04",
+      "scenePrompt": "Modern volunteer association meeting, experienced organizer hands a folder to a newer member while others consider a simple ballot box on the table, no lettering."
+    },
+    {
+      "file": "concept-v2-power-05.jpg",
+      "bytes": 216803,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "1bec8dcc471079ecce8ca7e0fc54502df3b5e01865ada25321f496704e1a7f0a",
+      "key": "power-05",
+      "scenePrompt": "Contemporary event organizer places their own registration form before another volunteer at a check-in desk, spare chairs visible, neither person dominant, no readable text."
+    },
+    {
+      "file": "concept-v2-power-06.jpg",
+      "bytes": 296207,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "b6bafc7991f8785675681bb646a377e1d7838748a9b98a31e8c7e60338853163",
+      "key": "power-06",
+      "scenePrompt": "Modern outdoor-event organizers shelter under a canopy looking at a weather-radar tablet and a folded indoor venue plan after rain, calm debrief rather than disaster, no text."
+    },
+    {
+      "file": "concept-v2-power-07.jpg",
+      "bytes": 254956,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f865f0e82af11e1b7e8128e225d7d0f237c57cf8e32cde513c743a7f6bbe054c",
+      "key": "power-07",
+      "scenePrompt": "Community finance oversight meeting in a modern room, residents compare a closed contract folder with a plain expense chart while an auditor explains, no money piles or readable writing."
+    },
+    {
+      "file": "concept-v2-ai-01.jpg",
+      "bytes": 237997,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "bdc5f578c4df4a31b005a36d2bbeae9b78e3959aaa6081388d022deb651a65d3",
+      "key": "ai-01",
+      "scenePrompt": "Modern hiring desk: two recruiters compare paper application folders with a laptop showing abstract ranking bars. No readable text or identifiable applicants; thoughtful neutral expressions."
+    },
+    {
+      "file": "concept-v2-ai-02.jpg",
+      "bytes": 279013,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "35eeb001abc681a29be0d486cae728cbe101dbd171ffb223ae2570236f21c469",
+      "key": "ai-02",
+      "scenePrompt": "Contemporary art jury table with a physical sketchbook and a pen-display tablet showing two different original abstract artworks; two jurors look at both with equal respect. No robot."
+    },
+    {
+      "file": "concept-v2-ai-03.jpg",
+      "bytes": 184301,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9d972f99bedbd91a714680883caad06e84452552aabead0a3ca0c64b19805fae",
+      "key": "ai-03",
+      "scenePrompt": "Adult using a learning app on a phone, paused at an unlabelled privacy toggle beside an open notebook on a plain home desk. Focus on the hand deciding, no readable interface text."
+    },
+    {
+      "file": "concept-v2-ai-04.jpg",
+      "bytes": 228487,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "aa39147d46d308ef48774b96b85c5701f05e0482636fd5dfe296c86a1bed11fd",
+      "key": "ai-04",
+      "scenePrompt": "Young adult comparing a career recommendation on a laptop with a hands-on design project and work notes on a contemporary desk. Screen has abstract charts only, no text."
+    },
+    {
+      "file": "concept-v2-ai-05.jpg",
+      "bytes": 256477,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "30aef6636a2ad9de040e0bd2fe5b1609c92161a5748d8d164f23f4dc495f73b5",
+      "key": "ai-05",
+      "scenePrompt": "Modern apartment evening: an adult sits beside a phone with abstract chat bubbles, looking toward a second empty chair across a small table. Calm not miserable, no holograms or robot."
+    },
+    {
+      "file": "concept-v2-ai-06.jpg",
+      "bytes": 229334,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4f21148f800effb9909896f8fce1f03132810f062ea285e1b31b2a0e04ddcc9b",
+      "key": "ai-06",
+      "scenePrompt": "Modern municipal service counter: a night-shift worker carrying a work bag discusses a booking with an official, computer shows a simple calendar of colored blocks, neutral atmosphere."
+    },
+    {
+      "file": "concept-v2-ai-07.jpg",
+      "bytes": 206270,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9928cbe007c6f6e45e8f587b93239c1fabfd0002c08f6c6b4efd2ca448f93066",
+      "key": "ai-07",
+      "scenePrompt": "Contemporary cafe: one adult hesitates before passing a handwritten apology note to a friend across the table; a phone with indistinct draft bubbles lies nearby. No readable words, neither person villainized."
+    }
+  ]
+}
