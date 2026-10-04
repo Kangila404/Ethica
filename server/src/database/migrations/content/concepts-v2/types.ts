@@ -2,6 +2,7 @@
 export const conceptThinkers = {
   kant: {
     name: '이마누엘 칸트',
+    aliases: ['임마누엘 칸트'],
     source: 'https://www.gutenberg.org/cache/epub/5682/pg5682-images.html',
     section: '도덕형이상학 정초 제2절: 보편화·인간성 정식',
   },
