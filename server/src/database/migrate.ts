@@ -2,6 +2,7 @@ import { IllustrateLearningSlides1791007200000 } from './migrations/179100720000
 import { ExpandLearningLibrary1791025200000 } from './migrations/1791025200000-ExpandLearningLibrary';
 import { PublishPhilosopherStories1791028800000 } from './migrations/1791028800000-PublishPhilosopherStories';
 import { ConceptQuestions1791079200000 } from './migrations/1791079200000-ConceptQuestions';
+import { PublishCamusWorks1791097200000 } from './migrations/1791097200000-PublishCamusWorks';
 import { ReplaceLearningPosts1791003600000 } from './migrations/1791003600000-ReplaceLearningPosts';
 import { ThinkerProfiles1791000000000 } from './migrations/1791000000000-ThinkerProfiles';
 import { PublishReviewedContent1790989200000 } from './migrations/1790989200000-PublishReviewedContent';
@@ -53,6 +54,7 @@ const db = new DataSource({
     ExpandLearningLibrary1791025200000,
     PublishPhilosopherStories1791028800000,
     ConceptQuestions1791079200000,
+    PublishCamusWorks1791097200000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

@@ -1,0 +1,19 @@
+{
+  "mode": "built-in image_gen",
+  "date": "2026-10-04",
+  "reason": "Re-use licensed relevant works first. Commercial Camus covers and film frames lack confirmed reuse permission; three original narrative covers generated. All other cards use licensed historical art/photos.",
+  "prompts": [
+    {
+      "key": "stranger-cover",
+      "prompt": "Use case: illustration-story. Asset type: original cover illustration for a Korean educational article about Albert Camus's The Stranger. Single landscape oil painting, 3:2. An ordinary man in a light 1930s shirt and trousers stands alone at a distance on a blazing empty Algerian Mediterranean beach, seen from behind, face not recognizable; white sun glare, blue sea, stark shadow, oppressive quiet and estrangement. Classical Renaissance painterly modeling and rich oil texture but absolutely 20th-century clothes and setting, no ancient Greece costume, no columns. This is an imagined literary illustration, not a portrait of Camus, not an existing movie scene or book cover. Restrained ochre and deep blue composition, no weapons, no bodies, no blood, no text, no letters, no logos, no border. Save final image for project use."
+    },
+    {
+      "key": "plague-cover",
+      "prompt": "Use case: illustration-story. Asset type: original cover for educational article on Camus La Peste. Single landscape 3:2 fine oil painting with classical Renaissance chiaroscuro and tangible brushwork; setting unmistakably 1940s coastal Algeria, not antiquity. In a modest makeshift hospital, two ordinary adult volunteers in 1940s shirts with rolled sleeves work together with a middle-aged physician in a plain white coat, carefully carrying a clean basin and folded linen beside a patient's quiet bed. Patient is covered and not visibly injured. Warm window light against muted blue and umber shadow, human solidarity, exhaustion and dignity, believable anatomy. Imagined literary scene, not a documentary or existing film/book artwork. No plague bird masks, no ancient robes, no modern electronic machines, no blood, no dead bodies, no text, no watermark."
+    },
+    {
+      "key": "fall-cover",
+      "prompt": "Use case: illustration-story. Asset type: original cover for an educational article about Albert Camus The Fall. Single 3:2 landscape oil painting. A middle-aged man in a 1950s dark business suit sits at a small worn wooden table in a modest Amsterdam bar at night, speaking toward an empty chair in the foreground. His expression is cordial but uneasy, beside his shoulder a dim old mirror reflects the room, outside the window a misty canal. Classical oil painting, Renaissance chiaroscuro, tactile canvas brushwork, deep browns and muted green with amber light. Must remain a 1950s northern European scene, not Renaissance period costumes. Imagined literary scene, not a real portrait, not a recreation of any movie or commercial book cover. No visible written labels, no logos, no watermark, no panels."
+    }
+  ]
+}

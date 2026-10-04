@@ -3,6 +3,12 @@ import { UniqueLearningSlideImages1791010800000 } from '../src/database/migratio
 import { ExpandLearningLibrary1791025200000 } from '../src/database/migrations/1791025200000-ExpandLearningLibrary';
 import { learningLibraryV5 } from '../src/database/migrations/content/learning-library-v5';
 import { ConceptQuestions1791079200000 } from '../src/database/migrations/1791079200000-ConceptQuestions';
+import { PublishCamusWorks1791097200000 } from '../src/database/migrations/1791097200000-PublishCamusWorks';
+import { camusWorksV7 } from '../src/database/migrations/content/camus-works-v7';
+import {
+  camusImages,
+  camusCredits,
+} from '../src/database/migrations/content/camus-images-v7';
 import {
   conceptCategoriesV2,
   conceptQuestionsV2,
@@ -2249,6 +2255,13 @@ describe('Server workflows with MySQL', () => {
       creditsFor: storyCredits,
       Migration: PublishPhilosopherStories1791028800000,
     },
+    {
+      batch: '5 Camus works with 70 slides',
+      articles: camusWorksV7,
+      imagesFor: camusImages,
+      creditsFor: camusCredits,
+      Migration: PublishCamusWorks1791097200000,
+    },
   ])(
     'appends $batch atomically and preserves every existing row',
     async ({ articles, imagesFor, creditsFor, Migration }) => {
@@ -2306,7 +2319,8 @@ describe('Server workflows with MySQL', () => {
           .find({ order: { id: 'ASC' } });
         expect(after).toHaveLength(before.length + articles.length);
         expect(afterCards).toHaveLength(
-          beforeCards.length + articles.length * 6,
+          beforeCards.length +
+            articles.reduce((sum, a) => sum + a.cards.length + 2, 0),
         );
         expect(after.filter((p) => before.some((b) => b.id === p.id))).toEqual(
           before,
@@ -2339,12 +2353,14 @@ describe('Server workflows with MySQL', () => {
               }>;
             }
           ).segments;
-          expect(segments.map((s) => s.sortOrder)).toEqual([0, 1, 2, 3, 4, 5]);
+          expect(segments.map((s) => s.sortOrder)).toEqual(
+            Array.from({ length: a.cards.length + 2 }, (_, i) => i),
+          );
           expect(segments.map((s) => s.imageKey)).toEqual(
             imagesFor(a).map((i) => i.imageKey),
           );
-          expect(segments.slice(1, 5).map((s) => s.body)).toEqual(a.cards);
-          expect(segments[5].body).toBe(creditsFor(a));
+          expect(segments.slice(1, -1).map((s) => s.body)).toEqual(a.cards);
+          expect(segments.at(-1)!.body).toBe(creditsFor(a));
         }
         for (const key of new Set(
           articles.flatMap(imagesFor).map((i) => i.imageKey),
