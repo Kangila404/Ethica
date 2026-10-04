@@ -30,8 +30,19 @@ docker run --rm --network "$network" "${env_args[@]}" "$image" node -e '
 const assert=require("node:assert/strict");
 (async()=>{const db=await require("mysql2/promise").createConnection({host:"mysql",user:"root",password:"verification-only",database:"ethica_verify_deploy"});
 try {const [rows]=await db.query("SELECT `usage`, status, COUNT(*) AS count FROM question GROUP BY `usage`, status");
-assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),15);
-assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),15);
+assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),50);
+assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),29);
+const catalog=require("./dist/database/migrations/content/concepts-v2");
+const [[categoryCount]]=await db.query("SELECT COUNT(*) AS count FROM category");assert.equal(Number(categoryCount.count),10);
+for(const category of catalog.conceptCategoriesV2){
+ const [counts]=await db.query("SELECT q.usage, COUNT(*) AS count FROM question q JOIN question_category qc ON qc.questionId=q.id JOIN category c ON c.id=qc.categoryId WHERE c.name=? AND q.status=? AND q.isActive=1 GROUP BY q.usage",[category.name,"published"]);
+ assert.equal(Number(counts.find(r=>r.usage==="onboarding")?.count),5);assert.equal(Number(counts.find(r=>r.usage==="daily")?.count),2);
+}
+for(const question of catalog.conceptQuestionsV2){
+ const [[q]]=await db.query("SELECT id,type FROM question WHERE title=?",[question.title]);assert.equal(q.type,question.type);
+ const [[answers]]=await db.query("SELECT COUNT(*) AS count FROM answer WHERE questionId=?",[q.id]);assert.equal(Number(answers.count),2);
+ const [[followups]]=await db.query("SELECT COUNT(*) AS count FROM followup_answer WHERE questionId=?",[q.id]);assert.equal(Number(followups.count),question.followup?2:0);
+}
 const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),81);
 const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),506);
 const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),506);
@@ -52,6 +63,7 @@ done
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/editorial-v1-accuracy.jpg").then(async r=>{if(r.status!==200||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/thinker-v1-odysseus.jpg").then(async r=>{if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/learning-v3-harvard.jpg").then(async r=>{if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
+docker exec "$api" node -e 'const {conceptQuestionsV2}=require("./dist/database/migrations/content/concepts-v2");(async()=>{for(const q of conceptQuestionsV2){const r=await fetch("http://127.0.0.1:3000/api/media/"+q.imageKey);if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)throw Error("Missing concept image: "+q.key)}})().catch(e=>{console.error(e);process.exit(1)})'
 
 docker stop "$db" >/dev/null
 if docker exec "$api" node /app/healthcheck.cjs; then echo 'Health check ignored DB outage' >&2; exit 1; fi

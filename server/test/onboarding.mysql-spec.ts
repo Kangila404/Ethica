@@ -2,7 +2,11 @@ import { IllustrateLearningSlides1791007200000 } from '../src/database/migration
 import { UniqueLearningSlideImages1791010800000 } from '../src/database/migrations/1791010800000-UniqueLearningSlideImages';
 import { ExpandLearningLibrary1791025200000 } from '../src/database/migrations/1791025200000-ExpandLearningLibrary';
 import { learningLibraryV5 } from '../src/database/migrations/content/learning-library-v5';
-import { dailyBoundary } from '../src/common/daily-clock';
+import { ConceptQuestions1791079200000 } from '../src/database/migrations/1791079200000-ConceptQuestions';
+import {
+  conceptCategoriesV2,
+  conceptQuestionsV2,
+} from '../src/database/migrations/content/concepts-v2';
 import { PublishPhilosopherStories1791028800000 } from '../src/database/migrations/1791028800000-PublishPhilosopherStories';
 import { learningStoriesV6 } from '../src/database/migrations/content/learning-stories-v6';
 import {
@@ -2362,6 +2366,127 @@ describe('Server workflows with MySQL', () => {
       }
     },
   );
+
+  it('publishes 49 concept questions atomically, preserves history, and serves each new onboarding category', async () => {
+    const tables = [
+      'category',
+      'question',
+      'answer',
+      'followup_answer',
+      'users',
+      'user_answer',
+      'user_daily_question',
+      'user_philosopher_count',
+    ];
+    const before = new Map<string, Array<{ id: string }>>();
+    for (const table of tables)
+      before.set(
+        table,
+        await db.query<Array<{ id: string }>>(
+          `SELECT * FROM \`${table}\` ORDER BY id`,
+        ),
+      );
+    const runner = db.createQueryRunner();
+    await runner.connect();
+    try {
+      await runner.startTransaction();
+      const original = runner.query.bind(runner) as (
+        sql: string,
+        params?: unknown[],
+      ) => Promise<unknown>;
+      let insertedAnswers = 0;
+      const spy = jest
+        .spyOn(runner, 'query')
+        .mockImplementation((sql: string, params?: unknown[]) => {
+          if (sql.startsWith('INSERT INTO answer ') && ++insertedAnswers === 20)
+            return Promise.reject(new Error('injected concept failure'));
+          return original(sql, params);
+        });
+      await expect(
+        new ConceptQuestions1791079200000().up(runner),
+      ).rejects.toThrow('injected concept failure');
+      spy.mockRestore();
+      await runner.rollbackTransaction();
+      for (const table of tables)
+        expect(
+          await db.query(`SELECT * FROM \`${table}\` ORDER BY id`),
+        ).toEqual(before.get(table));
+
+      await runner.startTransaction();
+      await new ConceptQuestions1791079200000().up(runner);
+      await runner.commitTransaction();
+      for (const table of tables) {
+        const rows = await db.query<Array<{ id: string }>>(
+          `SELECT * FROM \`${table}\` ORDER BY id`,
+        );
+        const oldIds = new Set(before.get(table)!.map((r) => String(r.id)));
+        expect(rows.filter((r) => oldIds.has(String(r.id)))).toEqual(
+          before.get(table),
+        );
+      }
+      expect(await db.getRepository(Question).count()).toBe(
+        before.get('question')!.length + 49,
+      );
+      expect(await db.getRepository(Answer).count()).toBe(
+        before.get('answer')!.length + 98,
+      );
+      expect(await db.getRepository(FollowupAnswer).count()).toBe(
+        before.get('followup_answer')!.length + 28,
+      );
+      const user = await newUser();
+      const response = await request(app.getHttpServer() as Server)
+        .get('/api/categories')
+        .set('Authorization', 'Bearer ' + user.token)
+        .expect(200);
+      expect(JSON.stringify(response.body)).toContain('AI');
+      for (const content of conceptCategoriesV2) {
+        const category = await db
+          .getRepository(Category)
+          .findOneByOrFail({ name: content.name });
+        const { token } = await newUser();
+        await post('onboarding/question', token, {
+          categoryId: category.id,
+        }).expect(201);
+        const response = await request(app.getHttpServer() as Server)
+          .get('/api/onboarding/questions')
+          .set('Authorization', 'Bearer ' + token)
+          .expect(200);
+        const payload = response.body as {
+          items: Array<{ stage1Body: string }>;
+        };
+        expect(payload.items).toHaveLength(5);
+        expect(payload.items.map((q) => q.stage1Body).sort()).toEqual(
+          content.questions
+            .filter((q) => q.usage === 'onboarding')
+            .map((q) => q.body)
+            .sort(),
+        );
+      }
+      for (const q of conceptQuestionsV2) {
+        const stored = await db
+          .getRepository(Question)
+          .findOneByOrFail({ title: q.title });
+        expect(stored.status).toBe(ContentStatus.PUBLISHED);
+        expect(stored.isActive).toBe(true);
+        await request(app.getHttpServer() as Server)
+          .get('/api/media/' + q.imageKey)
+          .expect('Content-Type', /^image\//)
+          .expect(200);
+      }
+      await runner.startTransaction();
+      await expect(
+        new ConceptQuestions1791079200000().up(runner),
+      ).rejects.toThrow('title conflict');
+      await runner.rollbackTransaction();
+      expect(await db.getRepository(Question).count()).toBe(
+        before.get('question')!.length + 49,
+      );
+    } finally {
+      jest.restoreAllMocks();
+      if (runner.isTransactionActive) await runner.rollbackTransaction();
+      await runner.release();
+    }
+  });
 
   it('purges legacy withdrawn accounts after unlink, preserving accounts with pending unlink', async () => {
     const old = await newUser(),
