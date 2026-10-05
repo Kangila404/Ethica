@@ -1,0 +1,155 @@
+{
+  "batchKey": "ethica-nietzsche-2026-10-05-v10",
+  "deployment": "not-requested-do-not-deploy",
+  "postCount": 18,
+  "slideCount": 324,
+  "bodySlideCount": 288,
+  "distinctImages": 61,
+  "aiGeneratedImages": 0,
+  "posts": [
+    {
+      "key": "nietzsche-introduction",
+      "title": "니체는 왜 우리가 믿는 가치를 의심했을까",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6729
+    },
+    {
+      "key": "nietzsche-tragedy-1",
+      "title": "비극의 탄생 ① 아폴론과 디오니소스",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6137
+    },
+    {
+      "key": "nietzsche-tragedy-2",
+      "title": "비극의 탄생 ② 고통과 삶의 긍정",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6184
+    },
+    {
+      "key": "nietzsche-human",
+      "title": "인간적인 너무나 인간적인: 이상의 기원",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6790
+    },
+    {
+      "key": "nietzsche-gay-science-1",
+      "title": "즐거운 학문 ① 신이 죽었다는 사건",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6730
+    },
+    {
+      "key": "nietzsche-gay-science-2",
+      "title": "즐거운 학문 ② 우리는 왜 진리를 원할까",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6777
+    },
+    {
+      "key": "nietzsche-gay-science-3",
+      "title": "즐거운 학문 ③ 이 삶이 끝없이 반복된다면",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6783
+    },
+    {
+      "key": "nietzsche-zarathustra-1",
+      "title": "차라투스트라 ① 낙타·사자·어린아이",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6936
+    },
+    {
+      "key": "nietzsche-zarathustra-2",
+      "title": "차라투스트라 ② 초인과 마지막 인간",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6549
+    },
+    {
+      "key": "nietzsche-zarathustra-3",
+      "title": "차라투스트라 ③ 자기극복과 힘에의 의지",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6876
+    },
+    {
+      "key": "nietzsche-zarathustra-4",
+      "title": "차라투스트라 ④ 영원회귀를 견디는 일",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6617
+    },
+    {
+      "key": "nietzsche-beyond-1",
+      "title": "선악의 저편 ① 철학자의 진리 뒤에는",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6690
+    },
+    {
+      "key": "nietzsche-beyond-2",
+      "title": "선악의 저편 ② 도덕은 하나뿐인가",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6536
+    },
+    {
+      "key": "nietzsche-genealogy-1",
+      "title": "도덕의 계보 ① 좋음과 나쁨, 선과 악",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6959
+    },
+    {
+      "key": "nietzsche-genealogy-2",
+      "title": "도덕의 계보 ② 빚은 어떻게 죄책감이 되었나",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6835
+    },
+    {
+      "key": "nietzsche-genealogy-3",
+      "title": "도덕의 계보 ③ 금욕적 이상은 무엇을 주는가",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6370
+    },
+    {
+      "key": "nietzsche-twilight-1",
+      "title": "우상의 황혼 ① 망치로 철학한다는 것",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6533
+    },
+    {
+      "key": "nietzsche-twilight-2",
+      "title": "우상의 황혼 ② 참된 세계 이후",
+      "philosopherKey": "nietzsche",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6753
+    }
+  ]
+}
