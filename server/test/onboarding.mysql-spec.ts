@@ -4,6 +4,12 @@ import { ExpandLearningLibrary1791025200000 } from '../src/database/migrations/1
 import { learningLibraryV5 } from '../src/database/migrations/content/learning-library-v5';
 import { ConceptQuestions1791079200000 } from '../src/database/migrations/1791079200000-ConceptQuestions';
 import { PublishCamusWorks1791097200000 } from '../src/database/migrations/1791097200000-PublishCamusWorks';
+import { PublishAnalects1791158400000 } from '../src/database/migrations/1791158400000-PublishAnalects';
+import { analectsArticlesV8 } from '../src/database/migrations/content/analects-v8';
+import {
+  analectsImages,
+  analectsCredits,
+} from '../src/database/migrations/content/analects-images-v8';
 import { camusWorksV7 } from '../src/database/migrations/content/camus-works-v7';
 import {
   camusImages,
@@ -2261,6 +2267,13 @@ describe('Server workflows with MySQL', () => {
       imagesFor: camusImages,
       creditsFor: camusCredits,
       Migration: PublishCamusWorks1791097200000,
+    },
+    {
+      batch: '10 Analects articles with 160 slides',
+      articles: analectsArticlesV8,
+      imagesFor: analectsImages,
+      creditsFor: analectsCredits,
+      Migration: PublishAnalects1791158400000,
     },
   ])(
     'appends $batch atomically and preserves every existing row',
