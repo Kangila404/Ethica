@@ -43,13 +43,13 @@ for(const question of catalog.conceptQuestionsV2){
  const [[answers]]=await db.query("SELECT COUNT(*) AS count FROM answer WHERE questionId=?",[q.id]);assert.equal(Number(answers.count),2);
  const [[followups]]=await db.query("SELECT COUNT(*) AS count FROM followup_answer WHERE questionId=?",[q.id]);assert.equal(Number(followups.count),question.followup?2:0);
 }
-const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),96);
-const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),736);
-const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),736);
-const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,28);assert.equal(perThinker.filter(p=>Number(p.count)===2).length,16);assert.equal(perThinker.filter(p=>Number(p.count)===4).length,5);assert.equal(perThinker.filter(p=>Number(p.count)===5).length,5);assert.equal(perThinker.filter(p=>Number(p.count)===7).length,1);assert.equal(perThinker.filter(p=>Number(p.count)===12).length,1);
+const [[posts]]=await db.query("SELECT COUNT(*) AS count FROM post WHERE status = ?",["published"]);assert.equal(Number(posts.count),138);
+const [[cards]]=await db.query("SELECT COUNT(*) AS count FROM post_segment");assert.equal(Number(cards.count),1468);
+const [[illustrated]]=await db.query("SELECT COUNT(*) AS count FROM post_segment WHERE image_key IS NOT NULL AND image_key <> ?",[""]);assert.equal(Number(illustrated.count),1468);
+const [perThinker]=await db.query("SELECT philosopher_id, COUNT(*) AS count FROM post GROUP BY philosopher_id");assert.equal(perThinker.length,28);assert.equal(perThinker.filter(p=>Number(p.count)===2).length,14);assert.equal(perThinker.filter(p=>Number(p.count)===4).length,4);assert.equal(perThinker.filter(p=>Number(p.count)===5).length,4);assert.equal(perThinker.filter(p=>Number(p.count)===7).length,1);assert.equal(perThinker.filter(p=>Number(p.count)===22).length,1);
 const [[camus]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id=p.philosopher_id WHERE t.name=? AND p.status=?",["알베르 카뮈","published"]);assert.equal(Number(camus.count),7);
-const [[confucius]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id=p.philosopher_id WHERE t.name=? AND p.status=?",["공자","published"]);assert.equal(Number(confucius.count),12);
-for(const name of ["소크라테스","플라톤","에피쿠로스","마르쿠스 아우렐리우스"]){const [[row]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id = p.philosopher_id WHERE t.name = ? AND p.status = ?",[name,"published"]);assert.equal(Number(row.count),5);}
+const [[confucius]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id=p.philosopher_id WHERE t.name=? AND p.status=?",["공자","published"]);assert.equal(Number(confucius.count),22);
+for(const name of ["소크라테스","플라톤","에피쿠로스","마르쿠스 아우렐리우스"]){const [[row]]=await db.query("SELECT COUNT(*) AS count FROM post p JOIN philosopher t ON t.id = p.philosopher_id WHERE t.name = ? AND p.status = ?",[name,"published"]);assert.equal(Number(row.count),name==="플라톤"?10:5);}
 const [[users]]=await db.query("SELECT COUNT(*) AS count FROM users");assert.equal(Number(users.count),0);
 const [[thinkers]]=await db.query("SELECT COUNT(*) AS count FROM philosopher WHERE imageKey IS NOT NULL");assert.equal(Number(thinkers.count),28);
 const [[odysseus]]=await db.query("SELECT id, school FROM philosopher WHERE name = ?",["오디세우스"]);assert.equal(odysseus.school,"신화·문학 인물");

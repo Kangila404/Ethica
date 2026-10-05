@@ -1,0 +1,123 @@
+{
+  "batchKey": "ethica-major-works-2026-10-05-v9",
+  "deployment": "not-requested-do-not-deploy",
+  "postCount": 14,
+  "slideCount": 248,
+  "bodySlideCount": 220,
+  "distinctImages": 74,
+  "aiGeneratedImages": 0,
+  "posts": [
+    {
+      "key": "kant-pure-1",
+      "title": "순수이성비판 ① 경험을 가능하게 하는 것",
+      "philosopherKey": "kant",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 5676
+    },
+    {
+      "key": "kant-pure-2",
+      "title": "순수이성비판 ② 이성은 왜 한계를 넘는가",
+      "philosopherKey": "kant",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 5484
+    },
+    {
+      "key": "kant-practical",
+      "title": "실천이성비판 · 자유와 도덕법칙",
+      "philosopherKey": "kant",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 5710
+    },
+    {
+      "key": "kant-judgment-1",
+      "title": "판단력비판 ① 아름다움의 보편성",
+      "philosopherKey": "kant",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 6040
+    },
+    {
+      "key": "kant-judgment-2",
+      "title": "판단력비판 ② 숭고와 생명의 목적",
+      "philosopherKey": "kant",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 5669
+    },
+    {
+      "key": "rawls-justice-1",
+      "title": "정의론 ① 공정한 출발점은 가능한가",
+      "philosopherKey": "rawls",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 6313
+    },
+    {
+      "key": "rawls-justice-2",
+      "title": "정의론 ② 불평등은 언제 정당한가",
+      "philosopherKey": "rawls",
+      "status": "draft",
+      "slides": 16,
+      "creditsCharacters": 6276
+    },
+    {
+      "key": "plato-republic-1",
+      "title": "국가 ① 들키지 않아도 정의로울까",
+      "philosopherKey": "plato",
+      "status": "draft",
+      "slides": 20,
+      "creditsCharacters": 7166
+    },
+    {
+      "key": "plato-republic-2",
+      "title": "국가 ② 도시와 영혼의 질서",
+      "philosopherKey": "plato",
+      "status": "draft",
+      "slides": 20,
+      "creditsCharacters": 7044
+    },
+    {
+      "key": "plato-republic-3",
+      "title": "국가 ③ 철학자와 동굴 밖의 빛",
+      "philosopherKey": "plato",
+      "status": "draft",
+      "slides": 20,
+      "creditsCharacters": 7479
+    },
+    {
+      "key": "plato-republic-4",
+      "title": "국가 ④ 자유는 어떻게 지배로 뒤집히는가",
+      "philosopherKey": "plato",
+      "status": "draft",
+      "slides": 20,
+      "creditsCharacters": 7304
+    },
+    {
+      "key": "plato-republic-5",
+      "title": "국가 ⑤ 시의 힘과 마지막 선택",
+      "philosopherKey": "plato",
+      "status": "draft",
+      "slides": 20,
+      "creditsCharacters": 7197
+    },
+    {
+      "key": "schopenhauer-world-1",
+      "title": "의지와 표상으로서의 세계 ① 두 얼굴의 세계",
+      "philosopherKey": "schopenhauer",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6496
+    },
+    {
+      "key": "schopenhauer-world-2",
+      "title": "의지와 표상으로서의 세계 ② 예술과 연민",
+      "philosopherKey": "schopenhauer",
+      "status": "draft",
+      "slides": 18,
+      "creditsCharacters": 6534
+    }
+  ]
+}

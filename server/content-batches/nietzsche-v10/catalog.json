@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "batchKey": "ethica-nietzsche-2026-10-05-v10",
+  "categories": [],
+  "philosophers": [
+    {
+      "key": "nietzsche",
+      "name": "프리드리히 니체",
+      "existing": true
+    }
+  ],
+  "note": "existing은 소스 카탈로그 기준. 운영 DB는 이번 작업에서 조회하지 않았으며 등록 시 이름/별칭을 검증해야 한다."
+}

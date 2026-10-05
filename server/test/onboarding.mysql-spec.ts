@@ -5,6 +5,12 @@ import { learningLibraryV5 } from '../src/database/migrations/content/learning-l
 import { ConceptQuestions1791079200000 } from '../src/database/migrations/1791079200000-ConceptQuestions';
 import { PublishCamusWorks1791097200000 } from '../src/database/migrations/1791097200000-PublishCamusWorks';
 import { PublishAnalects1791158400000 } from '../src/database/migrations/1791158400000-PublishAnalects';
+import { PublishCollectedWorks1791172800000 } from '../src/database/migrations/1791172800000-PublishCollectedWorks';
+import {
+  collectedWorksV11,
+  collectedImages,
+  collectedCredits,
+} from '../src/database/migrations/content/collected-works-v11';
 import { analectsArticlesV8 } from '../src/database/migrations/content/analects-v8';
 import {
   analectsImages,
@@ -2274,6 +2280,13 @@ describe('Server workflows with MySQL', () => {
       imagesFor: analectsImages,
       creditsFor: analectsCredits,
       Migration: PublishAnalects1791158400000,
+    },
+    {
+      batch: '42 collected works with 732 slides',
+      articles: collectedWorksV11,
+      imagesFor: collectedImages,
+      creditsFor: collectedCredits,
+      Migration: PublishCollectedWorks1791172800000,
     },
   ])(
     'appends $batch atomically and preserves every existing row',
