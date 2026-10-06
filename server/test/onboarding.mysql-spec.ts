@@ -6,6 +6,13 @@ import { ConceptQuestions1791079200000 } from '../src/database/migrations/179107
 import { PublishCamusWorks1791097200000 } from '../src/database/migrations/1791097200000-PublishCamusWorks';
 import { PublishAnalects1791158400000 } from '../src/database/migrations/1791158400000-PublishAnalects';
 import { PublishCollectedWorks1791172800000 } from '../src/database/migrations/1791172800000-PublishCollectedWorks';
+import { MultiDevicePush1791266400000 } from '../src/database/migrations/1791266400000-MultiDevicePush';
+import { PushDevice } from '../src/user/domain/model/push-device.entity';
+import {
+  PUSH_DEVICE_REPOSITORY,
+  type PushDeviceRepository,
+} from '../src/user/domain/repository/push-device.repository';
+import { randomUUID, createHash } from 'node:crypto';
 import {
   collectedWorksV11,
   collectedImages,
@@ -63,7 +70,6 @@ import { ContentStatus } from '../src/common/content-status';
 import { Post as LearningPost } from '../src/philosopher/domain/model/post.entity';
 import { PostSegment } from '../src/philosopher/domain/model/post-segment.entity';
 import { AnalysisQuota1790812800000 } from '../src/database/migrations/1790812800000-AnalysisQuota';
-import { randomUUID } from 'node:crypto';
 import { OnboardingContent1790740800000 } from '../src/database/migrations/1790740800000-OnboardingContent';
 import {
   onboardingV1,
@@ -156,9 +162,9 @@ describe('Server workflows with MySQL', () => {
     Object.assign(process.env, {
       DB_DATABASE: database,
       DB_HOST: '127.0.0.1',
-      DB_PORT: '3308',
-      DB_USERNAME: 'ethica',
-      DB_PASSWORD: 'ethica',
+      DB_PORT: process.env.ETHICA_TEST_PORT ?? '3308',
+      DB_USERNAME: process.env.ETHICA_TEST_USER ?? 'ethica',
+      DB_PASSWORD: process.env.ETHICA_TEST_PASSWORD ?? 'ethica',
       DB_SYNCHRONIZE: 'false',
       SOCIAL_TOKEN_ENCRYPTION_KEY: 'a'.repeat(64),
       JWT_SECRET: 'integration-only-secret-not-a-real-credential',
@@ -167,9 +173,9 @@ describe('Server workflows with MySQL', () => {
     const baseline = new DataSource({
       type: 'mysql',
       host: '127.0.0.1',
-      port: 3308,
-      username: 'ethica',
-      password: 'ethica',
+      port: Number(process.env.ETHICA_TEST_PORT ?? 3308),
+      username: process.env.ETHICA_TEST_USER ?? 'ethica',
+      password: process.env.ETHICA_TEST_PASSWORD ?? 'ethica',
       database,
       entities: [__dirname + '/../src/**/*.entity.ts'],
       synchronize: false,
@@ -243,6 +249,9 @@ describe('Server workflows with MySQL', () => {
       const dailyMigration = new DailyCycles1790730000000();
       await dailyMigration.up(runner);
       await dailyMigration.up(runner);
+      await runner.dropTable('push_devices');
+      await new MultiDevicePush1791266400000().up(runner);
+      await new MultiDevicePush1791266400000().up(runner);
       for (const table of [
         'inquiry',
         'notice',
@@ -336,6 +345,115 @@ describe('Server workflows with MySQL', () => {
   afterAll(async () => {
     if (app) await app.close();
   });
+  it('preserves legacy iOS and isolates device rotation, logout and account switching on MySQL', async () => {
+    const owner = await newUser(),
+      other = await newUser();
+    const http = app.getHttpServer() as Server;
+    const id = randomUUID(),
+      secondId = randomUUID();
+    const endpoint = '/api/users/me/push-devices/' + id;
+    const body = {
+      platform: 'android',
+      fcmToken: 'android-first',
+      enabled: true,
+    };
+    await request(http).put(endpoint).send(body).expect(401);
+    await request(http)
+      .put(endpoint)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ ...body, platform: 'web' })
+      .expect(400);
+    await request(http)
+      .put('/api/users/me/push-devices/not-a-uuid')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send(body)
+      .expect(400);
+    await request(http)
+      .patch('/api/users/me/fcm-token')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ fcmToken: 'legacy-ios' })
+      .expect(200);
+    await request(http)
+      .put(endpoint)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ ...body, userId: other.user.userId })
+      .expect(200);
+    expect(
+      (await db.getRepository(User).findOneByOrFail({ id: owner.user.id }))
+        .fcmToken,
+    ).toBe('legacy-ios');
+    await request(http)
+      .patch('/api/users/me/notification')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ notificationEnabled: false })
+      .expect(200);
+    const devices = app.get<PushDeviceRepository>(PUSH_DEVICE_REPOSITORY);
+    expect((await devices.enabled(owner.user.id)).map((d) => d.token)).toEqual([
+      'android-first',
+    ]);
+    await request(http)
+      .delete(endpoint)
+      .set('Authorization', 'Bearer ' + other.token)
+      .expect(204);
+    expect(await devices.find(owner.user.id, id)).not.toBeNull();
+    await request(http)
+      .put(endpoint)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ ...body, fcmToken: 'android-rotated' })
+      .expect(200);
+    await devices.retire(owner.user.id, 'android-first');
+    expect((await devices.enabled(owner.user.id))[0].token).toBe(
+      'android-rotated',
+    );
+    const state = await request(http)
+      .get(endpoint)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .expect(200);
+    expect(state.body).toMatchObject({ registered: true, enabled: true });
+    expect(state.body).not.toHaveProperty('token');
+    expect(state.body).not.toHaveProperty('fcmToken');
+    await request(http)
+      .put('/api/users/me/push-devices/' + secondId)
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({ ...body, platform: 'ios', fcmToken: 'modern-ios' })
+      .expect(200);
+    await request(http)
+      .put(endpoint)
+      .set('Authorization', 'Bearer ' + other.token)
+      .send({ ...body, fcmToken: 'android-rotated' })
+      .expect(200);
+    expect((await devices.enabled(owner.user.id)).map((d) => d.token)).toEqual([
+      'modern-ios',
+    ]);
+    expect((await devices.enabled(other.user.id)).map((d) => d.token)).toEqual([
+      'android-rotated',
+    ]);
+    await request(http)
+      .delete(endpoint)
+      .set('Authorization', 'Bearer ' + other.token)
+      .expect(204);
+    await request(http)
+      .delete(endpoint)
+      .set('Authorization', 'Bearer ' + other.token)
+      .expect(204);
+    expect(await devices.enabled(other.user.id)).toHaveLength(0);
+    expect(await devices.enabled(owner.user.id)).toHaveLength(1);
+    const cycle = await db.getRepository(UserDailyQuestion).save({
+      userId: owner.user.id,
+      serviceDate: '2026-10-06',
+      questionId: questions[0].id,
+    });
+    const hash = createHash('sha256').update('modern-ios').digest('hex');
+    await devices.recordDelivery(cycle.id, hash);
+    await devices.recordDelivery(cycle.id, hash);
+    expect(await devices.delivered(cycle.id)).toEqual([hash]);
+    await db.getRepository(UserDailyQuestion).delete(cycle.id);
+    expect(await devices.delivered(cycle.id)).toEqual([]);
+    await db.getRepository(User).delete(owner.user.id);
+    expect(
+      await db.getRepository(PushDevice).countBy({ userId: owner.user.id }),
+    ).toBe(0);
+  });
   it('migrates production onboarding content atomically, preserves edits, and serves all three five-question flows', async () => {
     const existingThinker = await db.getRepository(Philosopher).save({
       ...philosophersV1.kant,
@@ -347,9 +465,9 @@ describe('Server workflows with MySQL', () => {
     const migrationDb = new DataSource({
       type: 'mysql',
       host: '127.0.0.1',
-      port: 3308,
-      username: 'ethica',
-      password: 'ethica',
+      port: Number(process.env.ETHICA_TEST_PORT ?? 3308),
+      username: process.env.ETHICA_TEST_USER ?? 'ethica',
+      password: process.env.ETHICA_TEST_PASSWORD ?? 'ethica',
       database: process.env.ETHICA_TEST_DB,
       migrations: [OnboardingContent1790740800000],
       migrationsTransactionMode: 'none',
