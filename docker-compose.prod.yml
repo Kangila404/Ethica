@@ -1,0 +1,130 @@
+name: ethica
+
+x-api: &api
+  image: ${SERVER_IMAGE:?Set SERVER_IMAGE to a published immutable image}
+  env_file:
+    - path: ./server.env
+      format: raw
+  environment:
+    NODE_ENV: production
+    NODE_OPTIONS: --max-old-space-size=160
+    PORT: '3000'
+    DB_HOST: mysql
+    DB_PORT: '3306'
+    DB_USERNAME: ${MYSQL_USER:-ethica}
+    DB_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+    DB_DATABASE: ${MYSQL_DATABASE:-ethica}
+    DB_SYNCHRONIZE: 'false'
+    MEDIA_UPLOAD_DIRECTORY: /data/media
+    MEDIA_CONTENT_DIRECTORY: /app/server/content-media
+    TZ: Asia/Seoul
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=32m,mode=1777
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: '10m'
+      max-file: '3'
+
+services:
+  server:
+    <<: *api
+    mem_limit: 384m
+    memswap_limit: 384m
+    restart: unless-stopped
+    ports:
+      - '${API_BIND_ADDRESS:-127.0.0.1}:${API_PORT:-30002}:3000'
+    volumes:
+      - type: bind
+        source: ${ETHICA_DATA_DIR:?Set an absolute persistent data directory}/media
+        target: /data/media
+        bind:
+          create_host_path: false
+    depends_on:
+      mysql:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      app:
+      proxy:
+        aliases: [ethica-server]
+    stop_grace_period: 30s
+
+  migrate:
+    <<: *api
+    mem_limit: 256m
+    memswap_limit: 256m
+    command: [node, dist/database/migrate.js]
+    restart: 'no'
+    healthcheck:
+      disable: true
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [app]
+
+  mysql:
+    mem_limit: 640m
+    memswap_limit: 640m
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ethica}
+      MYSQL_USER: ${MYSQL_USER:-ethica}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci]
+    volumes:
+      - type: bind
+        source: ${ETHICA_DATA_DIR:?Set an absolute persistent data directory}/mysql
+        target: /var/lib/mysql
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP -h 127.0.0.1 -u "$${MYSQL_USER}" "$${MYSQL_DATABASE}" -Nse "SELECT 1" >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+    networks: [app]
+    logging: *logging
+
+  backup:
+    mem_limit: 128m
+    memswap_limit: 128m
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ethica}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD}
+    entrypoint: [bash, /opt/ethica/backup.sh]
+    volumes:
+      - ./infra/backup.sh:/opt/ethica/backup.sh:ro
+      - type: bind
+        source: ${ETHICA_BACKUP_DIR:?Set an absolute backup directory}
+        target: /backups
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ETHICA_DATA_DIR}/media
+        target: /media
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [app]
+    logging: *logging
+
+networks:
+  app:
+  proxy:
+    name: ${PROXY_NETWORK:-proxy}
+    external: true

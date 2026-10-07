@@ -1,0 +1,15 @@
+**
+!package.json
+!package-lock.json
+!server/
+!server/package.json
+!server/nest-cli.json
+!server/tsconfig.json
+!server/tsconfig.build.json
+!server/src/
+!server/src/**
+!server/content-media/
+!server/content-media/**
+!infra/
+!infra/healthcheck.cjs
+!infra/backup.sh

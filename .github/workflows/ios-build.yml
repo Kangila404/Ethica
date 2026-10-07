@@ -1,0 +1,100 @@
+name: Verify iOS Release build
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+      - '.github/workflows/ios-testflight.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+      - '.github/workflows/ios-testflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode and SDK
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+      - name: Validate release tooling and privacy manifests
+        run: |
+          python3 -m py_compile ios/ci/prepare-signing.py ios/ci/cleanup-signing.py
+          python3 -m unittest discover -s ios/ci -p 'test_*.py'
+          node --check ios/ci/asc.cjs
+          plutil -lint ios/Ethica.xcodeproj/project.pbxproj
+          plutil -lint ios/Ethica/Resources/PrivacyInfo.xcprivacy ios/EthicaWidget/PrivacyInfo.xcprivacy
+      - name: Build app and widget without signing
+        # Keep the editorial parser independently testable without signing or a simulator.
+        # Full UI visual checks still require an iPhone or Simulator.
+        # The following build verifies SwiftUI integration.
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project ios/Ethica.xcodeproj \
+            -scheme Ethica \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/ethica-ios-build" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee "$RUNNER_TEMP/ethica-ios-build.log"
+      - name: Test transport, guest catalog and attribution parsing
+        run: swift test --package-path ios
+      - name: Test notification callbacks on iPhone simulator
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=[d for ds in json.load(sys.stdin)["devices"].values() for d in ds if "iPhone" in d["name"]]; preferred=[d for d in devices if d["name"] == "iPhone 16 Pro"]; print((preferred or devices)[0]["udid"])')
+          xcodebuild \
+            -project ios/Ethica.xcodeproj \
+            -scheme Ethica \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/ethica-ios-build" \
+            -resultBundlePath "$RUNNER_TEMP/notification-tests.xcresult" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -only-testing:EthicaTests/PushNotificationCallbackTests \
+            -only-testing:EthicaTests/APIClientTests/testSignedOutRootRequiresExplicitGuestEntry \
+            -only-testing:EthicaTests/APIClientTests/testGuestTabsRequireLoginWithoutLeavingLearning \
+            -only-testing:EthicaTests/APIClientTests/testBookReaderBoundariesAndCancelledTurn \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test 2>&1 | tee "$RUNNER_TEMP/notification-tests.log"
+      - name: Save build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-diagnostics
+          path: |
+            ${{ runner.temp }}/ethica-ios-build.log
+            ${{ runner.temp }}/notification-tests.log
+            ${{ runner.temp }}/notification-tests.xcresult
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Record verification scope
+        run: |
+          printf '%s\n' \
+            'Release app and widget compiled on a hosted Mac.' \
+            'This is an unsigned build, not an installable IPA or TestFlight upload.' \
+            'Signing, provider configuration, app icon and real-device testing remain separate.' \
+            >> "$GITHUB_STEP_SUMMARY"

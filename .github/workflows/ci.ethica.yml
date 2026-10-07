@@ -1,0 +1,74 @@
+name: ci.ethica.yml
+
+# 트리거
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - 'main'
+      - 'develop'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: 3. Install Dependencies
+        run: npm ci
+
+      - name: 4. Lint
+        run: npm run lint --workspace=server
+
+      - name: 5. Test
+        run: npm run test --workspace=server
+
+      - name: 6. Build
+        run: npm run build --workspace=server
+
+  account-integration:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: integration-only
+          MYSQL_DATABASE: ethica_verify_ci
+          MYSQL_USER: ethica
+          MYSQL_PASSWORD: ethica
+        ports: ['3308:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - name: Verify withdrawal, clean re-registration and account workflows on disposable MySQL
+        env:
+          ETHICA_TEST_DB: ethica_verify_ci
+        run: npm run test:mysql --workspace=server
+
+  deployment-smoke:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f server/Dockerfile -t ethica-server:verify .
+      - name: Verify clean database and production runtime
+        run: bash infra/smoke.sh ethica-server:verify
