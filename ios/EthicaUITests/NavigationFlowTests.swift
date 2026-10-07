@@ -132,15 +132,22 @@ final class NavigationFlowTests: XCTestCase {
     let app = enterGuest(apiURL: "https://ethica.kro.kr/api/")
     for (id, name) in [("1", "임마누엘 칸트"), ("2", "존 스튜어트 밀"), ("3", "아리스토텔레스"), ("4", "존 롤스"), ("5", "에픽테토스"), ("6", "소크라테스")] {
       let person = app.buttons["learning.person.\(id)"]
-      for _ in 0..<8 {
-        // isHittable can be true for a row partially behind the floating tab bar.
-        if person.isHittable && person.frame.midY < app.tabBars.firstMatch.frame.minY - 8 { break }
-        app.swipeUp()
+      for _ in 0..<16 {
+        // Keep the full hit point between the sticky header and floating tab bar.
+        if person.exists && person.isHittable && person.frame.midY > app.navigationBars.firstMatch.frame.maxY + 8 && person.frame.midY < app.tabBars.firstMatch.frame.minY - 8 { break }
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+          .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55)))
       }
       XCTAssertTrue(person.isHittable)
       XCTAssertLessThan(person.frame.midY, app.tabBars.firstMatch.frame.minY - 8)
-      person.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
-      XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 20), name)
+      print("Live row \(id): \(person.frame), navigation: \(app.navigationBars.firstMatch.frame), tabs: \(app.tabBars.firstMatch.frame)")
+      capture(app, "live-row-before-\(id)")
+      person.tap() // Use the visible hit point rather than a potentially clipped row center.
+      guard app.navigationBars[name].waitForExistence(timeout: 20) else {
+        capture(app, "live-row-failed-\(id)")
+        XCTFail("Single tap did not open \(name)")
+        return
+      }
       capture(app, "live-profile-\(id)")
       app.navigationBars.buttons.element(boundBy: 0).tap()
       XCTAssertTrue(app.navigationBars["학습"].waitForExistence(timeout: 10))
