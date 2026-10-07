@@ -1,0 +1,39 @@
+[
+  {
+    "key": "eleusis-well",
+    "caption": "엘레우시스 우물가의 데메테르 · 상상 삽화",
+    "reason": "엘레우시스의 우물가에서 정체를 감춘 데메테르가 켈레오스의 딸들을 만나는 장면의 재사용 가능한 기존 그림을 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Original landscape Renaissance oil painting for a Greek mythology reading card. An elderly woman in a dark modest cloak sits exhausted beside an ancient stone well beneath an olive tree. Four adult young women in modest Greek drapery carrying bronze water jars respectfully approach her. Warm early morning light, empathetic encounter in Eleusis. The elderly visitor is Demeter in disguise, not a crowned goddess. No text, nudity, halos, modern objects, or frame. An imagined myth scene, not a historical reconstruction."
+  },
+  {
+    "key": "kykeon",
+    "caption": "보리·물·박하의 퀴케온 · 상상 삽화",
+    "reason": "찬가의 음료 조합과 포도주 거절을 설명할 정확한 기존 정물 자료 부족. 비밀 의례의 복원도처럼 만들지 않음.",
+    "prompt": "Use case: illustration-story. Landscape educational still life in Renaissance oil painting technique. On a simple ancient wooden table a modest ceramic cup of pale barley-water drink, a small dish of barley meal and a few fresh mint leaves; a dark wine jug remains untouched off to the side. Warm light, quiet spare composition, tactile earthenware. Illustrate Demeter's requested water, barley meal and pennyroyal drink, not a modern cocktail. No grapes in the drink, no ritual symbols, no text, no frame."
+  },
+  {
+    "key": "demophoon",
+    "caption": "데모폰을 돌보는 데메테르 · 상상 삽화",
+    "reason": "데모폰 양육과 불멸 시도의 적합한 기존 이미지 검색에서 자료를 확보하지 못함. 위험한 행위를 직접 보여주지 않고 직전 양육 장면을 표현.",
+    "prompt": "Use case: illustration-story. Greek myth landscape original Renaissance oil painting. Demeter disguised as an elderly woman in a dark robe safely cradles a fully swaddled healthy infant Demophoon in the house of Metaneira. Mother Metaneira watches from a distant doorway. A small household hearth is well separated from the infant in the far background; absolutely do not put the child in or near flames. Gentle lamplight, emotional distance, modest full clothing, no text, no nudity, no violence, no frame. Symbolic scene before the myth's interrupted immortality ritual, not literal depiction of that ritual."
+  },
+  {
+    "key": "hermes-tracks",
+    "caption": "뒤집힌 소의 발자국 · 상상 삽화",
+    "reason": "헤르메스의 소 도둑질 그림은 확보했으나 뒤로 걷는 소와 나뭇가지 신발의 속임수를 별도 장면으로 보여주는 자료 부족.",
+    "prompt": "Use case: illustration-story. Landscape original Renaissance-style oil painting, Greek myth educational scene. In a moonlit sandy path several cattle are walking backwards toward distant shadowy hills. In the foreground a youthful mythic Hermes wearing a short modest tunic ties thick bundles of tamarisk and myrtle twigs beneath his sandals to hide his tracks. Focus on hoofprints and twig soles, clear deliberate concealment, no modern shoes or logos. Do not copy an existing artwork. No text or frame."
+  },
+  {
+    "key": "hermes-portions",
+    "caption": "제물을 나누기 시작하는 헤르메스 · 상상 삽화",
+    "reason": "헤르메스 찬가의 열두 몫 제사 장면을 그린 사용 가능한 기존 작품을 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Landscape original Renaissance oil painting, educational Greek myth. A youthful Hermes in a modest ivory tunic pauses before a broad flat stone with exactly twelve small portions of roasted food neatly laid out, nearby dying embers, two cattle hides folded in shadow without blood or carcasses. He is tempted but does not eat. Distant cattle in a rustic enclosure, predawn blue and amber. This illustrates the Homeric Hymn to Hermes, not a modern feast. No text, gore, nudity or border.",
+    "reviewNote": "수량 재현을 요구했으나 결과가 정확하지 않아 완성 전 준비 장면으로만 사용. 열두 몫의 증거 이미지로 설명하지 않음. 재편집 결과도 미채택."
+  },
+  {
+    "key": "mekone",
+    "caption": "메코네에서 나눈 제물 · 상상 삽화",
+    "reason": "프로메테우스 불·결박 그림은 풍부하지만 헤시오도스의 두 제물 묶음을 정확하게 보여주는 기존 자료는 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Original landscape Renaissance oil painting for Greek myth teaching. Prometheus, a thoughtful fully robed adult, stands beside a stone sacrificial table preparing two covered bundles: one with white fat covering clean dry ox bones, the other ox hide concealing cooked-looking meat. No blood, no slaughter, no exposed organs. Zeus in dignified white drapery observes at the other side. The visual subject is misleading appearance in the division at Mekone, not the theft of fire. Restrained chiaroscuro and ochre tones, no text or border."
+  }
+]
