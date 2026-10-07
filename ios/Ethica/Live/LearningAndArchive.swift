@@ -1,6 +1,15 @@
 import SwiftUI
 import UIKit
 
+private struct LearningProfileRoute: Hashable {
+  let id: String
+  let name: String
+}
+private struct LearningPostRoute: Hashable {
+  let id: String
+  let author: String
+}
+
 struct LearningCatalogView: View {
   @EnvironmentObject private var session: AppSession
   @State private var search = ""
@@ -28,6 +37,10 @@ struct LearningCatalogView: View {
         }
       }.listStyle(.plain)
     }.navigationTitle("학습")
+      // Register destinations outside lazy rows; constructing the catalog cannot mount a reader.
+      .navigationDestination(for: LearningProfileRoute.self) { route in
+        LivePhilosopherView(id: route.id, name: route.name)
+      }
       .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "이름, 시대, 학파")
       .safeAreaInset(edge: .top, spacing: 0) {
         Picker("학습 분류", selection: $category) {
@@ -44,9 +57,7 @@ struct LearningCatalogView: View {
       && (search.isEmpty || (person.name + person.school + person.era).localizedCaseInsensitiveContains(search))
   }
   private func personRow(_ person: Philosopher) -> some View {
-    NavigationLink {
-      LivePhilosopherView(id: person.id)
-    } label: {
+    NavigationLink(value: LearningProfileRoute(id: person.id, name: person.name)) {
       HStack(spacing: 16) {
         ContentPortrait(imageKey: person.imageKey, name: person.name).frame(width: 58, height: 58)
           .clipShape(Circle())
@@ -55,16 +66,17 @@ struct LearningCatalogView: View {
           Text("\(person.school) · \(person.era)").font(.subheadline).foregroundStyle(.secondary)
           Text("\(person.postCount)개의 글").font(.caption).foregroundStyle(.secondary)
         }
-      }.padding(.vertical, 8)
-    }
+      }.padding(.vertical, 8).contentShape(Rectangle())
+    }.accessibilityIdentifier("learning.person.\(person.id)")
   }
 }
 struct LivePhilosopherView: View {
   @EnvironmentObject private var session: AppSession
   @Environment(\.dynamicTypeSize) private var typeSize
   let id: String
+  var name: String? = nil
   var body: some View {
-    LoadView(load: { () -> PhilosopherProfile in
+    LoadView(loadingMessage: "프로필을 불러오고 있어요", loadingIdentifier: "learning.profile.loading", load: { () -> PhilosopherProfile in
       try await session.api.get("philosophers/\(id)", authenticated: session.user != nil)
     })
     { person in
@@ -98,9 +110,7 @@ struct LivePhilosopherView: View {
             count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 3
         ) {
           ForEach(person.posts) { post in
-            NavigationLink {
-              LiveReaderView(id: post.id, author: person.name)
-            } label: {
+            NavigationLink(value: LearningPostRoute(id: post.id, author: person.name)) {
               VStack(alignment: .leading, spacing: 14) {
                 if AppConfiguration.imageURL(post.imageKey) != nil {
                   ContentPortrait(imageKey: post.imageKey, name: post.title).frame(height: 145)
@@ -111,7 +121,8 @@ struct LivePhilosopherView: View {
                 Spacer(minLength: 0)
               }.frame(maxWidth: .infinity, minHeight: 190, alignment: .topLeading).background(
                 Color(uiColor: .secondarySystemBackground))
-            }.buttonStyle(.plain)
+                .contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityIdentifier("learning.post.\(post.id)")
           }
         }.padding(.horizontal, 4)
         if person.posts.isEmpty {
@@ -119,7 +130,11 @@ struct LivePhilosopherView: View {
             title: "첫 글을 준비하고 있어요", symbol: "text.book.closed",
             detail: "위의 소개에서 이 사람의 생각과 삶을 읽어보세요")
         }
-      }.navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
+      }.navigationTitle(person.name)
+    }
+    .navigationTitle(name ?? "프로필").navigationBarTitleDisplayMode(.inline)
+    .navigationDestination(for: LearningPostRoute.self) { route in
+      LiveReaderView(id: route.id, author: route.author)
     }
   }
 }
@@ -129,8 +144,9 @@ struct LiveReaderView: View {
   let id: String
   let author: String
   @State private var page = 0
+  @State private var pageRequestRevision = 0
   var body: some View {
-    LoadView(load: { () -> PostDetail in
+    LoadView(loadingMessage: "글을 불러오고 있어요", load: { () -> PostDetail in
       try await session.api.get("philosophers/post/\(id)", authenticated: session.user != nil)
     }) {
       post in
@@ -144,7 +160,8 @@ struct LiveReaderView: View {
         if post.segments.isEmpty {
           EmptyMessage(title: "글을 준비하고 있어요", symbol: "book.closed", detail: "새 글이 등록되면 여기서 읽을 수 있어요")
         } else {
-          BookPageReader(count: post.segments.count, selection: $page, reduceMotion: reduceMotion) { index in
+          BookPageReader(count: post.segments.count, selection: $page, reduceMotion: reduceMotion,
+            requestRevision: $pageRequestRevision) { index in
             let card = post.segments[index]
             ScrollView {
               VStack(alignment: .leading, spacing: 26) {
@@ -167,20 +184,21 @@ struct LiveReaderView: View {
           HStack {
             Button {
               page = max(0, page - 1)
+              pageRequestRevision += 1
             } label: {
               Label("이전", systemImage: "chevron.left")
             }.disabled(page == 0)
             Spacer()
             Button {
               page = min(post.segments.count - 1, page + 1)
+              pageRequestRevision += 1
             } label: {
               Label("다음", systemImage: "chevron.right")
             }.disabled(page >= post.segments.count - 1)
           }.padding(24)
         }
-      }.navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { PostLikeButton(postID: id) } }
-    }
+      }.toolbar { ToolbarItem(placement: .navigationBarTrailing) { PostLikeButton(postID: id) } }
+    }.navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
   }
 }
 /// UIKit's public book-turn transition, not a simulated blur or a private Apple API.
@@ -189,6 +207,7 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
   let count: Int
   @Binding var selection: Int
   let reduceMotion: Bool
+  var requestRevision: Binding<Int> = .constant(0)
   @ViewBuilder let content: (Int) -> Content
 
   func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -198,6 +217,7 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
       options: [.spineLocation: UIPageViewController.SpineLocation.min.rawValue])
     controller.isDoubleSided = false
     controller.view.backgroundColor = .systemBackground
+    controller.view.accessibilityIdentifier = "book.reader"
     controller.delegate = context.coordinator
     controller.dataSource = reduceMotion ? nil : context.coordinator
     if let first = context.coordinator.page(at: selection) {
@@ -212,14 +232,21 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
     context.coordinator.displaySelection(in: controller)
   }
   static func dismantleUIViewController(_ controller: UIPageViewController, coordinator: Coordinator) {
+    coordinator.active = false
+    coordinator.interactiveStartSelection = nil
+    coordinator.pages.removeAll()
     controller.dataSource = nil
     controller.delegate = nil
+    controller.view.isUserInteractionEnabled = true
   }
 
   @MainActor final class Coordinator: NSObject, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
     var parent: BookPageReader
     var pages: [Int: UIHostingController<Content>] = [:]
     var transitioning = false
+    var interactiveStartSelection: Int?
+    var interactiveStartRequestRevision = 0
+    var active = true
     init(_ parent: BookPageReader) { self.parent = parent }
     func page(at index: Int) -> UIHostingController<Content>? {
       guard index >= 0, index < parent.count else { return nil }
@@ -236,7 +263,7 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
       pages = pages.filter { abs($0.key - index) <= 1 }
     }
     func displaySelection(in controller: UIPageViewController) {
-      guard !transitioning, parent.count > 0,
+      guard active, !transitioning, parent.count > 0,
         let current = controller.viewControllers?.first.flatMap({ index(of: $0) }) else { return }
       let target = min(max(0, parent.selection), parent.count - 1)
       guard target != current, let next = page(at: target) else { return }
@@ -244,7 +271,7 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
       controller.view.isUserInteractionEnabled = false
       controller.setViewControllers([next], direction: target > current ? .forward : .reverse,
         animated: !parent.reduceMotion) { [weak self, weak controller] _ in
-          guard let self, let controller else { return }
+          guard let self, self.active, let controller else { return }
           self.transitioning = false
           controller.view.isUserInteractionEnabled = true
           self.prune(around: target)
@@ -263,13 +290,25 @@ struct BookPageReader<Content: View>: UIViewControllerRepresentable {
       return page(at: index + 1)
     }
     func pageViewController(_ controller: UIPageViewController,
-      willTransitionTo pendingViewControllers: [UIViewController]) { transitioning = true }
+      willTransitionTo pendingViewControllers: [UIViewController]) {
+      guard active else { return }
+      interactiveStartSelection = parent.selection
+      interactiveStartRequestRevision = parent.requestRevision.wrappedValue
+      transitioning = true
+    }
     func pageViewController(_ controller: UIPageViewController, didFinishAnimating finished: Bool,
       previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+      guard active else { return }
       transitioning = false
       guard let visible = controller.viewControllers?.first, let current = index(of: visible) else { return }
-      parent.selection = current
+      // A button request made during a gesture wins even when that gesture is cancelled.
+      let requested = parent.selection
+      let buttonWasPressed = parent.requestRevision.wrappedValue != interactiveStartRequestRevision
+        || (interactiveStartSelection.map { requested != $0 } ?? false)
+      interactiveStartSelection = nil
+      parent.selection = buttonWasPressed ? requested : current
       prune(around: current)
+      displaySelection(in: controller)
     }
   }
 }
@@ -284,7 +323,7 @@ private struct PostLikeButton: View {
   @State private var failed = false
   var body: some View {
     Button {
-      guard session.user != nil else { session.showLogin = true; return }
+      guard session.user != nil else { session.requireLogin(for: .like); return }
       Task { await update() }
     } label: {
       Label(state.map { "\($0.count)" } ?? "좋아요", systemImage: state?.liked == true ? "heart.fill" : "heart")
