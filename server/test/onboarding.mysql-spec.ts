@@ -7,6 +7,9 @@ import { PublishCamusWorks1791097200000 } from '../src/database/migrations/17910
 import { PublishAnalects1791158400000 } from '../src/database/migrations/1791158400000-PublishAnalects';
 import { PublishCollectedWorks1791172800000 } from '../src/database/migrations/1791172800000-PublishCollectedWorks';
 import { MultiDevicePush1791266400000 } from '../src/database/migrations/1791266400000-MultiDevicePush';
+import { LearningAccessAndLikes1791331200000 } from '../src/database/migrations/1791331200000-LearningAccessAndLikes';
+import { PostLike } from '../src/philosopher/domain/model/post-like.entity';
+import { LearningProfileCategory } from '../src/philosopher/domain/model/learning-profile-category.entity';
 import { PushDevice } from '../src/user/domain/model/push-device.entity';
 import {
   PUSH_DEVICE_REPOSITORY,
@@ -252,6 +255,10 @@ describe('Server workflows with MySQL', () => {
       await runner.dropTable('push_devices');
       await new MultiDevicePush1791266400000().up(runner);
       await new MultiDevicePush1791266400000().up(runner);
+      await runner.dropTable('post_like');
+      await runner.dropTable('learning_profile_category');
+      await new LearningAccessAndLikes1791331200000().up(runner);
+      await new LearningAccessAndLikes1791331200000().up(runner);
       for (const table of [
         'inquiry',
         'notice',
@@ -344,6 +351,125 @@ describe('Server workflows with MySQL', () => {
   });
   afterAll(async () => {
     if (app) await app.close();
+  });
+  it('permits guest reading, isolates likes and supports writer categories without changing scores', async () => {
+    const http = app.getHttpServer() as Server;
+    const owner = await newUser(),
+      other = await newUser();
+    await db
+      .getRepository(User)
+      .update(owner.user.id, { userRole: UserRole.ADMIN });
+    const created = await request(http)
+      .post('/api/admin/philosophers')
+      .set('Authorization', 'Bearer ' + owner.token)
+      .send({
+        name: '문학 작가 테스트',
+        era: '현대',
+        school: '소설',
+        coreThought: '작품 소개',
+        lifeRoots: '생애',
+        categories: ['literature', 'philosophy'],
+      })
+      .expect(201);
+    const person = created.body as { id: string };
+    const post = await db.getRepository(LearningPost).save({
+      philosopherId: person.id,
+      title: '공개 글',
+      status: ContentStatus.PUBLISHED,
+    });
+    const draft = await db.getRepository(LearningPost).save({
+      philosopherId: person.id,
+      title: '비공개 글',
+      status: ContentStatus.DRAFT,
+    });
+    try {
+      const catalog = await request(http).get('/api/philosophers').expect(200);
+      const catalogBody = catalog.body as {
+        nearest: unknown[];
+        all: { id: string; postCount: number; categories: string[] }[];
+      };
+      expect(catalogBody.nearest).toEqual([]);
+      const listed = catalogBody.all.find((item) => item.id === person.id);
+      expect(listed?.postCount).toBe(1);
+      expect(listed?.categories.slice().sort()).toEqual([
+        'literature',
+        'philosophy',
+      ]);
+      const profile = await request(http)
+        .get('/api/philosophers/' + person.id)
+        .expect(200);
+      expect((profile.body as { posts: unknown[] }).posts).toHaveLength(1);
+      await request(http)
+        .get('/api/philosophers/post/' + post.id)
+        .expect(200);
+      await request(http)
+        .get('/api/philosophers/post/' + draft.id)
+        .expect(404);
+      await request(http)
+        .get('/api/philosophers')
+        .set('Authorization', 'Bearer invalid')
+        .expect(401);
+      await request(http).get('/api/users/me').expect(401);
+      await request(http).get('/api/admin/philosophers').expect(401);
+      const endpoint = '/api/philosophers/post/' + post.id + '/like';
+      await request(http).put(endpoint).expect(401);
+      await request(http).delete(endpoint).expect(401);
+      await request(http)
+        .put('/api/philosophers/post/' + draft.id + '/like')
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(404);
+      await Promise.all(
+        Array.from({ length: 4 }, () =>
+          request(http)
+            .put(endpoint)
+            .set('Authorization', 'Bearer ' + owner.token)
+            .expect(200),
+        ),
+      );
+      await request(http).get(endpoint).expect(200, { count: 1, liked: false });
+      await request(http)
+        .get(endpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200, { count: 1, liked: true });
+      await request(http)
+        .delete(endpoint)
+        .set('Authorization', 'Bearer ' + other.token)
+        .expect(200, { count: 1, liked: false });
+      await request(http)
+        .delete(endpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200, { count: 0, liked: false });
+      await request(http)
+        .delete(endpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200, { count: 0, liked: false });
+      await request(http)
+        .put(endpoint)
+        .set('Authorization', 'Bearer ' + other.token)
+        .expect(200);
+      await db.getRepository(User).delete(other.user.id);
+      expect(
+        await db.getRepository(PostLike).countBy({ postId: post.id }),
+      ).toBe(0);
+      const migration = new LearningAccessAndLikes1791331200000();
+      const runner = db.createQueryRunner();
+      await migration.up(runner);
+      await migration.up(runner);
+      await runner.release();
+      expect(
+        await db
+          .getRepository(LearningProfileCategory)
+          .countBy({ philosopherId: person.id }),
+      ).toBe(2);
+      expect(
+        await db
+          .getRepository(UserPhilosopherCount)
+          .countBy({ philosopherId: person.id }),
+      ).toBe(0);
+    } finally {
+      await db.getRepository(LearningPost).delete([post.id, draft.id]);
+      await db.getRepository(Philosopher).delete(person.id);
+    }
   });
   it('preserves legacy iOS and isolates device rotation, logout and account switching on MySQL', async () => {
     const owner = await newUser(),

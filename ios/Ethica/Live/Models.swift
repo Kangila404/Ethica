@@ -189,6 +189,7 @@ struct PhilosopherCatalog: Decodable {
   let all: [Philosopher]
 }
 struct Philosopher: Decodable, Identifiable {
+  let categories: [String]?
   let id: String
   let name: String
   let school: String

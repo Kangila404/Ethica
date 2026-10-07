@@ -9,3 +9,8 @@ export const CurrentUserId = createParamDecorator(
     return request.user.userId;
   },
 );
+
+export const OptionalUserId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | undefined =>
+    ctx.switchToHttp().getRequest<{ user?: { userId: string } }>().user?.userId,
+);

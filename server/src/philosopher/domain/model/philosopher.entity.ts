@@ -6,9 +6,18 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Post } from './post.entity';
+import { LearningProfileCategory } from './learning-profile-category.entity';
 
 @Entity('philosopher')
 export class Philosopher extends BaseEntity {
+  // The legacy name/ID stays stable for old clients and answer history.
+  @OneToMany(
+    () => LearningProfileCategory,
+    (category) => category.philosopher,
+    { eager: true },
+  )
+  learningCategories!: LearningProfileCategory[];
+
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 

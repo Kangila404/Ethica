@@ -45,13 +45,13 @@ export class PhilosopherService {
     private readonly userPhilosopherCountRepository: UserPhilosopherCountRepository,
   ) {}
 
-  async getPhilosophers(userId: string): Promise<PhilosophersResponse> {
-    const user = await this.getUserOrThrow(userId);
-    this.validateUserStatus(user);
+  async getPhilosophers(userId?: string): Promise<PhilosophersResponse> {
+    const user = userId ? await this.getUserOrThrow(userId) : undefined;
+    if (user) this.validateUserStatus(user);
     const philosophers = await this.philosopherRepository.findAll();
-    const counts = await this.userPhilosopherCountRepository.findByUserId(
-      user.id,
-    );
+    const counts = user
+      ? await this.userPhilosopherCountRepository.findByUserId(user.id)
+      : [];
     const totalCount = counts.reduce((sum, item) => sum + item.count, 0);
     const countById = new Map(
       counts.map((item) => [item.philosopherId, item.count]),
@@ -86,9 +86,8 @@ export class PhilosopherService {
     return PhilosophersResponse.of(nearest, all);
   }
 
-  async getPhilosopher(id: string, userId: string): Promise<PostsResponse> {
-    const user = await this.getUserOrThrow(userId);
-    this.validateUserStatus(user);
+  async getPhilosopher(id: string, userId?: string): Promise<PostsResponse> {
+    if (userId) this.validateUserStatus(await this.getUserOrThrow(userId));
     const philosopher = await this.philosopherRepository.findById(id);
     if (!philosopher) {
       throw new NotFoundException('철학자를 찾을 수 없습니다.');
@@ -99,9 +98,8 @@ export class PhilosopherService {
     return PostsResponse.of(philosopher, posts);
   }
 
-  async getPost(id: string, userId: string): Promise<PostResponse> {
-    const user = await this.getUserOrThrow(userId);
-    this.validateUserStatus(user);
+  async getPost(id: string, userId?: string): Promise<PostResponse> {
+    if (userId) this.validateUserStatus(await this.getUserOrThrow(userId));
     const post = await this.postRepository.findById(id);
     if (!post) {
       throw new NotFoundException('해당 게시글을 찾을 수 없습니다');

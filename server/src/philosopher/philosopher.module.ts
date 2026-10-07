@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
+import { LearningProfileCategory } from './domain/model/learning-profile-category.entity';
+import { PostLike } from './domain/model/post-like.entity';
+import { PostLikeService } from './application/post-like.service';
+import { PostLikeController } from './presentation/controller/post-like.controller';
+import { POST_LIKE_REPOSITORY } from './domain/repository/post-like.repository';
+import { PostLikeRepositoryImpl } from './infrastructure/persistence/repository/post-like.repository.impl';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Philosopher } from './domain/model/philosopher.entity';
 import { UserPhilosopherCount } from './domain/model/user-philosopher-count.entity';
@@ -24,12 +30,16 @@ import { PostSegmentRepositoryImpl } from './infrastructure/persistence/reposito
       UserPhilosopherCount,
       Post,
       PostSegment,
+      LearningProfileCategory,
+      PostLike,
     ]),
     UserModule,
   ],
-  controllers: [PhilosopherController, CourceController],
+  controllers: [PhilosopherController, CourceController, PostLikeController],
   providers: [
     PhilosopherService,
+    PostLikeService,
+    { provide: POST_LIKE_REPOSITORY, useClass: PostLikeRepositoryImpl },
     {
       provide: PHILOSOPHER_REPOSITORY,
       useClass: PhilosopherRepositoryImpl,

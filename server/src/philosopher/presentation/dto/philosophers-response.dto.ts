@@ -33,6 +33,7 @@ export class PhilosophersResponse {
 }
 
 class PhilosopherInfo {
+  categories!: string[];
   id!: string;
   name!: string;
   school!: string;
@@ -46,6 +47,8 @@ class PhilosopherInfo {
   ): PhilosopherInfo {
     const dto = new PhilosopherInfo();
     dto.id = philosopher.id;
+    dto.categories =
+      philosopher.learningCategories?.map((item) => item.category) ?? [];
     dto.name = philosopher.name;
     dto.school = philosopher.school;
     dto.era = philosopher.era;

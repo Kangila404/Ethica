@@ -220,6 +220,49 @@ final class APIClientTests: XCTestCase {
     let retried: [String: String] = try await api.get("users/me")
     XCTAssertEqual(retried["state"], "ready")
   }
+  func testGuestLearningDoesNotSendCredentialsOrCreateSession() async throws {
+    await api.clear()
+    StubURLProtocol.handler = { request in
+      XCTAssertEqual(request.url?.path, "/api/philosophers")
+      XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+      return (200, Data(#"{"nearest":[],"all":[{"id":"1","name":"카뮈","era":"20세기","school":"부조리","postCount":5,"categories":["philosophy","literature"]}]}"#.utf8), 0)
+    }
+    let catalog: PhilosopherCatalog = try await api.get("philosophers", authenticated: false)
+    XCTAssertEqual(catalog.all.first?.categories, ["philosophy", "literature"])
+    let stored = await api.currentSession()
+    XCTAssertNil(stored)
+  }
+
+  #if canImport(Ethica)
+  @MainActor func testSignedOutRootLoadsPublicLearningWithoutAccount() async throws {
+    await api.clear()
+    let counts = LockedCounter()
+    StubURLProtocol.handler = { request in
+      let path = request.url!.path
+      counts.increment(path)
+      XCTAssertEqual(path, "/api/philosophers")
+      XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+      return (200, Data(#"{"nearest":[],"all":[]}"#.utf8), 0)
+    }
+    let session = AppSession(api: api)
+    session.phase = .signedOut
+    guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
+      XCTFail("No window scene")
+      return
+    }
+    let window = UIWindow(windowScene: scene)
+    window.rootViewController = UIHostingController(rootView: LiveRootView().environmentObject(session))
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    for _ in 0..<100 {
+      if counts.count("/api/philosophers") > 0 { break }
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
+    XCTAssertGreaterThan(counts.count("/api/philosophers"), 0)
+    XCTAssertEqual(session.phase, .signedOut)
+    XCTAssertNil(session.user)
+  }
+  #endif
   func testImageUploadRetainsMultipartWhenRefreshingSession() async throws {
     let refreshed = try JSONEncoder().encode(tokens("new-access"))
     let counts = LockedCounter()

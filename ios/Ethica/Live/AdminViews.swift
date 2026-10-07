@@ -8,7 +8,7 @@ enum AdminResource: String, CaseIterable, Identifiable {
   var title: String {
     switch self {
     case .categories: return "카테고리"
-    case .philosophers: return "사상가"
+    case .philosophers: return "인물 · 작가"
     case .posts: return "게시글"
     case .segments: return "학습 카드"
     case .questions: return "질문"
@@ -299,13 +299,18 @@ struct AdminEditor: View {
     case .philosophers:
       text("이름", "name")
       text("시대", "era")
-      text("학파", "school")
-      longText("핵심 사상", "coreThought")
-      longText("생애 · 사상의 뿌리", "lifeRoots")
+      text("학파 · 문학 사조", "school")
+      Section("학습 분류 · 복수 선택") {
+        learningCategory("철학", "philosophy")
+        learningCategory("문학", "literature")
+        learningCategory("신화", "mythology")
+      }
+      longText("사상 · 작품 소개", "coreThought")
+      longText("생애 · 배경", "lifeRoots")
       imageField
     case .posts:
       Section("게시글") {
-        reference("사상가", key: "philosopherId", rows: philosophers)
+        reference("인물 · 작가", key: "philosopherId", rows: philosophers)
         text("제목", "title")
         reviewPicker
       }
@@ -394,6 +399,16 @@ struct AdminEditor: View {
   private func string(_ key: String) -> Binding<String> {
     Binding(get: { fields[key]?.text ?? "" }, set: { fields[key] = .string($0) })
   }
+  private func learningCategory(_ title: String, _ value: String) -> some View {
+    Toggle(title, isOn: Binding(
+      get: { fields["categories"]?.array.contains(.string(value)) == true },
+      set: { selected in
+        var values = fields["categories"]?.array ?? []
+        values.removeAll { $0 == .string(value) }
+        if selected { values.append(.string(value)) }
+        fields["categories"] = .array(values)
+      }))
+  }
   private func flag(_ key: String) -> Binding<Bool> {
     Binding(get: { fields[key]?.flag ?? false }, set: { fields[key] = .bool($0) })
   }
@@ -455,6 +470,10 @@ struct AdminEditor: View {
           resource == .notices
           ? initial : try await session.api.get("admin/\(resource.rawValue)/\(id)")
         fields = loaded
+        if resource == .philosophers {
+          let values = loaded["learningCategories"]?.array.compactMap { $0.object["category"] } ?? []
+          fields["categories"] = .array(values.isEmpty ? [.string("philosophy")] : values)
+        }
         if resource == .posts { cards = loaded["segments"]?.array.map { AdminCardDraft(value: $0.object) } ?? [] }
         if resource == .questions {
           fields["categoryIds"] = .array(
@@ -465,6 +484,7 @@ struct AdminEditor: View {
           "sortOrder": .number(0), "type": .string("single"), "usage": .string("daily"),
           "segmentType": .string("text"), "status": .string("draft"), "isActive": .bool(false), "isPublished": .bool(false),
           "categoryIds": .array([]),
+          "categories": .array([.string("philosophy")]),
         ]
       }
       ready = true
@@ -475,7 +495,7 @@ struct AdminEditor: View {
       let keys: [String]
       switch resource {
       case .categories: keys = ["name", "sortOrder"]
-      case .philosophers: keys = ["name", "era", "school", "coreThought", "lifeRoots", "imageKey"]
+      case .philosophers: keys = ["name", "era", "school", "coreThought", "lifeRoots", "imageKey", "categories"]
       case .posts: keys = ["philosopherId", "title", "imageKey", "status"]
       case .segments: keys = ["postId", "segmentType", "body", "imageKey", "sortOrder"]
       case .notices: keys = ["title", "content", "isPublished"]

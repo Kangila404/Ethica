@@ -18,6 +18,10 @@ import type {
 } from '../domain/content-store';
 import { Category } from 'src/category/domain/model/category.entity';
 import { Philosopher } from 'src/philosopher/domain/model/philosopher.entity';
+import {
+  LearningCategory,
+  LearningProfileCategory,
+} from 'src/philosopher/domain/model/learning-profile-category.entity';
 import { Post } from 'src/philosopher/domain/model/post.entity';
 import {
   PostSegment,
@@ -74,6 +78,24 @@ export class SqlContentStore implements ContentStore {
   @Transactional()
   async save(kind: ContentKind, input: Partial<Content>, id?: string) {
     const item = id ? await this.get(kind, id, true) : this.repo(kind).create();
+    if (kind === 'philosophers') {
+      const { categories, ...profile } = input as Partial<Philosopher> & {
+        categories?: LearningCategory[];
+      };
+      Object.assign(item, profile);
+      await this.repo(kind).save(item);
+      if (categories || !id) {
+        const repository = this.db.getRepository(LearningProfileCategory);
+        await repository.delete({ philosopherId: item.id });
+        await repository.insert(
+          (categories ?? [LearningCategory.PHILOSOPHY]).map((category) => ({
+            philosopherId: item.id,
+            category,
+          })),
+        );
+      }
+      return this.get(kind, item.id);
+    }
     if (kind === 'posts') {
       const post = input as Partial<Post>;
       await this.get('philosophers', post.philosopherId!, true);

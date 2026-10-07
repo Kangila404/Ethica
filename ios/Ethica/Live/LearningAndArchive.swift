@@ -3,28 +3,44 @@ import SwiftUI
 struct LearningCatalogView: View {
   @EnvironmentObject private var session: AppSession
   @State private var search = ""
+  @State private var category = "all"
   var body: some View {
-    LoadView(load: { () -> PhilosopherCatalog in try await session.api.get("philosophers") }) {
+    LoadView(load: { () -> PhilosopherCatalog in
+      try await session.api.get("philosophers", authenticated: session.user != nil)
+    }) {
       catalog in
       List {
-        if search.isEmpty && !catalog.nearest.isEmpty {
+        if search.isEmpty && category == "all" && !catalog.nearest.isEmpty {
           Section("가까운 철학자") { ForEach(catalog.nearest) { person in personRow(person) } }
         }
-        Section("철학자 둘러보기") {
+        Section("인물 둘러보기") {
           ForEach(
             catalog.all.filter {
-              search.isEmpty
-                || ($0.name + $0.school + $0.era).localizedCaseInsensitiveContains(search)
+              matches($0)
             }
           ) { person in personRow(person) }
           if catalog.all.isEmpty {
-            Text("철학자의 글을 준비하고 있어요").foregroundStyle(.secondary)
-          } else if !search.isEmpty && !catalog.all.contains(where: { ($0.name + $0.school + $0.era).localizedCaseInsensitiveContains(search) }) {
-            Text("검색 결과가 없어요. 다른 이름이나 학파로 찾아보세요").foregroundStyle(.secondary)
+            Text("새로운 인물의 글을 준비하고 있어요").foregroundStyle(.secondary)
+          } else if !catalog.all.contains(where: matches) {
+            Text("결과가 없어요. 다른 분류나 이름으로 찾아보세요").foregroundStyle(.secondary)
           }
         }
       }.listStyle(.plain)
-    }.navigationTitle("학습").searchable(text: $search, prompt: "이름, 시대, 학파")
+    }.navigationTitle("학습")
+      .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "이름, 시대, 학파")
+      .safeAreaInset(edge: .top, spacing: 0) {
+        Picker("학습 분류", selection: $category) {
+          Text("전체").tag("all")
+          Text("철학").tag("philosophy")
+          Text("문학").tag("literature")
+          Text("신화").tag("mythology")
+        }.pickerStyle(.segmented).padding(.horizontal, 16).padding(.vertical, 10)
+          .background(.bar)
+      }
+  }
+  private func matches(_ person: Philosopher) -> Bool {
+    (category == "all" || (person.categories ?? ["philosophy"]).contains(category))
+      && (search.isEmpty || (person.name + person.school + person.era).localizedCaseInsensitiveContains(search))
   }
   private func personRow(_ person: Philosopher) -> some View {
     NavigationLink {
@@ -47,7 +63,9 @@ struct LivePhilosopherView: View {
   @Environment(\.dynamicTypeSize) private var typeSize
   let id: String
   var body: some View {
-    LoadView(load: { () -> PhilosopherProfile in try await session.api.get("philosophers/\(id)") })
+    LoadView(load: { () -> PhilosopherProfile in
+      try await session.api.get("philosophers/\(id)", authenticated: session.user != nil)
+    })
     { person in
       ScrollView {
         VStack(alignment: .leading, spacing: 24) {
@@ -106,11 +124,14 @@ struct LivePhilosopherView: View {
 }
 struct LiveReaderView: View {
   @EnvironmentObject private var session: AppSession
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   let id: String
   let author: String
   @State private var page = 0
   var body: some View {
-    LoadView(load: { () -> PostDetail in try await session.api.get("philosophers/post/\(id)") }) {
+    LoadView(load: { () -> PostDetail in
+      try await session.api.get("philosophers/post/\(id)", authenticated: session.user != nil)
+    }) {
       post in
       VStack(spacing: 0) {
         HStack {
@@ -124,6 +145,8 @@ struct LiveReaderView: View {
         } else {
           TabView(selection: $page) {
             ForEach(Array(post.segments.enumerated()), id: \.element.id) { index, card in
+              GeometryReader { geometry in
+              let distance = min(1, abs(geometry.frame(in: .named("readerPages")).minX) / max(1, geometry.size.width))
               ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                   if index == 0 {
@@ -141,25 +164,72 @@ struct LiveReaderView: View {
                     ).padding(.top, 32)
                   }
                 }.readingPage()
+              }
+              .blur(radius: reduceMotion ? 0 : distance * 7)
+              .overlay {
+                if !reduceMotion {
+                  Color.black.opacity(distance * 0.12).allowsHitTesting(false).accessibilityHidden(true)
+                }
+              }
+              .scaleEffect(reduceMotion ? 1 : 1 - distance * 0.025)
               }.tag(index)
             }
-          }.tabViewStyle(.page(indexDisplayMode: .never))
+          }.tabViewStyle(.page(indexDisplayMode: .never)).coordinateSpace(name: "readerPages")
           HStack {
             Button {
-              page = max(0, page - 1)
+              withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { page = max(0, page - 1) }
             } label: {
               Label("이전", systemImage: "chevron.left")
             }.disabled(page == 0)
             Spacer()
             Button {
-              page = min(post.segments.count - 1, page + 1)
+              withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { page = min(post.segments.count - 1, page + 1) }
             } label: {
               Label("다음", systemImage: "chevron.right")
             }.disabled(page >= post.segments.count - 1)
           }.padding(24)
         }
       }.navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { PostLikeButton(postID: id) } }
     }
+  }
+}
+private struct PostLikeState: Decodable { let count: Int; let liked: Bool }
+
+private struct PostLikeButton: View {
+  @EnvironmentObject private var session: AppSession
+  let postID: String
+  @State private var state: PostLikeState?
+  @State private var busy = false
+  @State private var failed = false
+  var body: some View {
+    Button {
+      guard session.user != nil else { session.showLogin = true; return }
+      Task { await update() }
+    } label: {
+      Label(state.map { "\($0.count)" } ?? "좋아요", systemImage: state?.liked == true ? "heart.fill" : "heart")
+    }.disabled(busy)
+      .accessibilityLabel(state?.liked == true ? "좋아요 취소" : "좋아요")
+      .accessibilityValue(state.map { "\($0.count)개" } ?? "")
+      .task { await load() }
+      .alert("좋아요를 변경하지 못했어요", isPresented: $failed) {
+        Button("확인", role: .cancel) {}
+      } message: { Text("네트워크 상태를 확인하고 다시 눌러주세요.") }
+  }
+  private func load() async {
+    do {
+      state = try await session.api.get("philosophers/post/\(postID)/like", authenticated: session.user != nil)
+    } catch { /* Reading remains available even if like counts cannot be loaded. */ }
+  }
+  private func update() async {
+    guard !busy else { return }
+    busy = true
+    defer { busy = false }
+    do {
+      // Fetch before a retry when the previous response was lost; never infer success.
+      let current: PostLikeState = try await session.api.get("philosophers/post/\(postID)/like")
+      state = try await session.api.send("philosophers/post/\(postID)/like", method: current.liked ? "DELETE" : "PUT")
+    } catch { failed = true }
   }
 }
 // Preserve complete book pages and diagrams. A light backing keeps transparent

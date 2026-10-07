@@ -8,6 +8,7 @@ import WidgetKit
   @Published var provider: SocialProvider?
   @Published var errorMessage: String?
   @Published var busy = false
+  @Published var showLogin = false
   @Published var selectedTab = 0
   @Published var analysisSection = 0
   @Published var analysisPeriod = 1
@@ -45,6 +46,7 @@ import WidgetKit
   func reloadProfile() async throws {
     let profile: UserProfile = try await api.get("users/me")
     user = profile
+    showLogin = false
     PushNotifications.shared.setPreference(profile.notificationEnabled)
     phase = profile.onboardingStatus == "complete" ? .ready : .onboarding
     if profile.userRole != "admin" && selectedTab == 4 { selectedTab = 0 }
@@ -124,6 +126,7 @@ import WidgetKit
     SocialAuthentication.signOut()
     WidgetSnapshot.clear()
     user = nil
+    showLogin = false
     provider = nil
     selectedTab = 0
     generation = UUID()
