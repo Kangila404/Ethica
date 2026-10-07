@@ -1,0 +1,32 @@
+[
+  {
+    "key": "void",
+    "caption": "긴눙가가프 — 세계 이전의 틈을 상상한 AI 삽화",
+    "reason": "확인한 공개 삽화에서 인물 없는 태초의 틈 자체를 적절히 보여주는 독립 이미지를 찾지 못함.",
+    "prompt": "Use case: illustration-story. Asset: a single standalone editorial illustration for a Korean Norse mythology learning card. Depict Ginnungagap before a formed world: a vast dim abyss, distant pale frost and a faint warm glow on opposing horizons, almost-empty depth, no formed earth, no people or gods or buildings or vegetation. Refined old-master oil painting technique, subtle layered glazes, chiaroscuro, visible restrained brushwork, not glossy fantasy game art. The painting technique may evoke Renaissance painting but absolutely no Greco-Roman architecture, costumes or religious symbols. Landscape composition 3:2, edge-to-edge full painting. No letters, watermark, border, split panel or collage. This is a modern imaginative illustration, not a copy of an existing painting."
+  },
+  {
+    "key": "frost",
+    "caption": "니플헤임의 서리와 물줄기를 상상한 AI 삽화",
+    "reason": "얼어 가는 원초의 물줄기에 직접 대응하는 이용 가능한 옛 삽화가 부족함.",
+    "prompt": "Use case: illustration-story. Asset: one standalone Norse mythology educational painting. Depict Niflheim, a primordial misty realm of ice: frozen streams spread outward from a dark spring through thick pale blue rime, low cold fog, no sun, no humans, no buildings, no animals. Focus on intricate frozen water and deep mist, not a modern travel photograph. Classical old-master oil technique with restrained impasto and transparent glazes, balanced monumental landscape, cold blue-gray and ivory. Use painterly Renaissance-quality craft without Renaissance subject matter or Greco-Roman objects. Landscape 3:2, full image, no text, logo, watermark, borders or panels."
+  },
+  {
+    "key": "fire",
+    "caption": "무스펠의 열기와 빛을 상상한 AI 삽화",
+    "reason": "시작의 불의 영역만을 보여 주는 장면이 부족해 종말 전투 그림을 그대로 대체하지 않음.",
+    "prompt": "Use case: illustration-story. Asset: one independent painting for a Norse myth learning slide. Depict the primordial realm Muspell as a vast field of glowing ember-red heat and ascending golden flame, distant dark forms dissolving in incandescent haze. No people, no fighting, no cities, no finished world. Old-master oil painting, luminous layered glazes, convincing painted smoke and atmospheric depth, solemn and expansive rather than action fantasy. Renaissance painterly craftsmanship only, not Renaissance history, no Greek or Roman architecture. Landscape 3:2 full-bleed composition. No writing, logos, watermarks, frames, collage or panels."
+  },
+  {
+    "key": "thaw",
+    "caption": "불과 서리가 만나 녹는 순간을 상상한 AI 삽화",
+    "reason": "열과 서리의 접촉으로 생명이 시작되는 장면에 대응하는 독립 공개 삽화가 부족함.",
+    "prompt": "Use case: illustration-story. Asset: a single Norse mythology educational painting. Close landscape view of primordial frost melting where warm amber vapor meets blue-white ice, clear drops suspended along a melting ridge, deep mist beyond. Suggest the birth of life through light and water only, no embryo or body, no people or animals, no buildings. Classic old-master oil painting with richly observed droplets, translucent glazes, warm/cold tension and quiet dramatic light; painterly not photorealistic, not fantasy-game render. Technique inspired by classical painting, absolutely no Greek or Renaissance objects. Landscape 3:2, edge-to-edge single image, no text, watermark or panels."
+  },
+  {
+    "key": "forge",
+    "caption": "난쟁이 장인의 풀무 작업을 상상한 AI 삽화",
+    "reason": "보물 제작의 풀무 작업 자체에 대응하는 충분한 독립 공개 이미지를 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Asset: one independent illustration for the Edda story of dwarven craftsmanship. In a rocky Norse myth workshop, two adult short-statured craftsmen in plain wool tunics and leather aprons concentrate on a glowing forge: one keeps a hand-powered leather bellows working while the other tends a heated iron billet with tongs. Clear physical actions, ordinary unhorned heads, no modern machinery or electric equipment, no battle or gore. Classical oil painting with warm furnace chiaroscuro and natural anatomy, serious craft not cartoon or game armor. Renaissance-level painterly technique without Renaissance costumes or Greco-Roman architecture. Landscape 3:2, no text, symbols, signature, watermark, borders or collage."
+  }
+]

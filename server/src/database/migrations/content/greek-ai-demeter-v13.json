@@ -1,0 +1,20 @@
+[
+  {
+    "key": "metaneira-offer",
+    "caption": "메타네이라가 아이를 맡기는 순간 · 상상 삽화",
+    "reason": "데모폰을 맡기는 구체적인 장면에 맞는 재사용 가능한 기존 그림을 확보하지 못함.",
+    "prompt": "Original landscape Renaissance oil painting illustrating the Homeric Hymn to Demeter. In an ancient modest domestic hall, adult mother Metaneira gently entrusts her healthy fully swaddled baby to an elderly stranger Demeter in a dark cloak. Both women stand facing one another, hands supporting the baby securely between them. Tender but cautious trust, warm daylight, fully clothed people, no fire, no text, no frame. Imagined literary scene, not archaeological reconstruction."
+  },
+  {
+    "key": "iambe",
+    "caption": "이암베의 농담에 웃는 데메테르 · 상상 삽화",
+    "reason": "이암베의 농담과 데메테르의 웃음을 보여주는 적합한 기존 작품을 확보하지 못함.",
+    "prompt": "Original landscape Renaissance oil painting illustrating the Homeric Hymn to Demeter. In a simple ancient Greek domestic courtyard, an expressive adult woman Iambe makes an amusing theatrical gesture as she speaks to an elderly woman Demeter in a dark cloak seated on a low stool. Demeter's exhausted face breaks into a small involuntary smile. Quiet humane comedy, no sexual gestures, no nudity, no caricature, no modern objects, no text or frame. Warm ochre and deep blue, natural hands and faces. Original imagined scene."
+  },
+  {
+    "key": "metaneira-alarm",
+    "caption": "양육을 중단시키는 메타네이라 · 상상 삽화",
+    "reason": "데모폰의 불멸 의식이 중단되는 장면을 안전하고 적합하게 보여주는 기존 자료를 확보하지 못함.",
+    "prompt": "Original landscape Renaissance oil painting illustrating the interruption in the Homeric Hymn to Demeter. Mother Metaneira has suddenly entered through a doorway, one hand raised in alarm. Across the room elderly Demeter stands holding a fully swaddled healthy infant securely against her chest. The baby is completely safe, far away from a tiny domestic hearth in the distant background. An interrupted secret, emotional disagreement between adults, no child injury or danger, no flames near people. Modest ancient drapery, dramatic lamplight, no text, no frame. Symbolic aftermath, not a literal depiction of the fire ritual."
+  }
+]

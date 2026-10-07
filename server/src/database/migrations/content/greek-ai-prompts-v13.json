@@ -1,0 +1,38 @@
+[
+  {
+    "key": "hidden-children",
+    "caption": "대지 아래 갇힌 자식들 · 상상 삽화",
+    "reason": "가이아가 자식들을 내부에 숨겨져 있게 하는 우라노스의 압박을 겪는 장면에 맞는 사용 가능한 기존 자료를 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Asset: Greek mythology educational card, landscape oil painting. Show a vast primordial earth cavern under a low oppressive starlit sky, distant fully clothed titan silhouettes confined in the cavern, their mother symbolized by a rocky earth profile outside. Renaissance chiaroscuro and mineral pigments, solemn restrained composition, no gore, no nudity, no text, no frames. This is an original symbolic illustration of Hesiod's Gaia and Uranus, not an archaeological reconstruction. Do not imitate an existing painting."
+  },
+  {
+    "key": "rhea-plan",
+    "caption": "레아의 피신 계획 · 상상 삽화",
+    "reason": "레아가 가이아에게 도움을 구하는 계획 단계의 관련 기존 삽화를 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Greek mythology card, landscape original Renaissance-style oil painting. A pregnant Rhea in a modest deep-red draped robe consults Gaia, an older woman in ochre robes beside a rocky hillside at dusk; Gaia quietly points toward the distant sea and a mountainous island. No baby yet, no violence, no nudity, no lettering, no border. Patient conspiratorial maternal solidarity, warm lamplight, restrained earthy palette. Imagined myth scene, not historical evidence."
+  },
+  {
+    "key": "metis-cup",
+    "caption": "메티스가 준비한 약 · 상상 삽화",
+    "reason": "《도서관》 1.2.1의 메티스와 구토제 장면에 맞는 공개 자료를 확보하지 못함.",
+    "prompt": "Use case: illustration-story. Educational Greek myth landscape illustration in Renaissance oil-painting technique. Metis, a wise fully clothed adult woman in blue drapery, prepares a small ceramic cup of herbal medicine on a stone table. A youthful adult Zeus in ivory drapery listens at a respectful distance. Mortar, a few herbs and clay vessel only. The subject is planning Cronus's release of swallowed siblings, do not show vomiting or swallowed people. No text, gore, nudity, modern items or frame. Distinct quiet triangular composition and natural light."
+  },
+  {
+    "key": "hundred-hands",
+    "caption": "해방된 헤카톤케이레스의 전투 · 상상 삽화",
+    "reason": "티탄 전쟁의 백수거인 동맹을 직접 보여주며 이용 조건을 확인할 수 있는 기존 이미지 부족.",
+    "prompt": "Use case: illustration-story. Greek myth educational landscape oil painting, grand Renaissance fresco composition. Three immense many-armed primordial beings on a distant rocky ridge hurl boulders toward a storm-shrouded mountain, lightning beyond. Show their multiplicity of arms as layered flowing silhouettes rather than a grotesque anatomical close-up. Cloth and stone conceal bodies, no wounds, no blood, no monsters from modern franchises. They are the Hecatoncheires allies in the Titanomachy, not the Giants fighting Olympus later. Monumental scale, muted bronze and slate, no text or border."
+  },
+  {
+    "key": "tartarus-gates",
+    "caption": "타르타로스의 청동 문 · 상상 삽화",
+    "reason": "헤시오도스의 깊은 감금처와 청동 문을 설명할 직접 관련 기존 이미지가 부족함. 기독교 최후심판·행성 사진은 부적합하여 제외.",
+    "prompt": "Use case: illustration-story. Original landscape oil painting for Greek mythology lesson. Immense closed bronze gates deep beneath the earth, bronze threshold, roots of dark cliffs vanishing into mist, a faint distant silhouette of a many-armed guardian. No lava demons, no Christian hell imagery, no suffering prisoners, no modern objects, no text, no frame. Renaissance atmospheric perspective, aged green bronze, heavy mineral blacks and faint amber light. Symbolic imagined Tartarus, not a literal ancient map."
+  },
+  {
+    "key": "stone-swaddle",
+    "caption": "포대기에 싸인 돌 · 상상 삽화",
+    "reason": "크로노스 기만을 돌이라는 물건에 집중해 보여주는 별도 기존 작품을 확보하지 못함. 기존 레아 도기·삽화와 동일 원본 재사용을 피함.",
+    "prompt": "Use case: illustration-story. Landscape close-up oil painting in restrained Renaissance still-life technique. Rhea's fully clothed forearms carefully wrap one rough grey stone in ivory swaddling cloth on a low wooden table, with a dark palace doorway in the background. Show unmistakably a stone, NOT a baby; no faces necessary, no violence or nudity. Warm directional light, tactile linen and rough stone, original composition, no writing, no frame. Mythological deception preparing to save Zeus."
+  }
+]

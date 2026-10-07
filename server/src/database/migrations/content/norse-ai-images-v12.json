@@ -1,0 +1,22 @@
+[
+  {
+    "key": "void",
+    "sha256": "7b2092e08cf6f9d2382b44cbae87f4afe802c7a8aa1994e4134946f995be9e6a"
+  },
+  {
+    "key": "frost",
+    "sha256": "12b920ccd7e1c290b2966e4c475f077333bfbdf381172253d83dbceb339fb000"
+  },
+  {
+    "key": "fire",
+    "sha256": "f1aa02c4ff9bbc6c3ed60357744703c3555eba5f330a8b025daffa58f1148322"
+  },
+  {
+    "key": "thaw",
+    "sha256": "f32d0e95d9119ae3158c004097cde325cad1f15412e509a3f98271c0ca633a16"
+  },
+  {
+    "key": "forge",
+    "sha256": "be43634d5c35d5bbedb9f2539266bd12062dc56faf8473dbf024175663930435"
+  }
+]
