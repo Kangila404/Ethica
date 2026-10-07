@@ -373,8 +373,57 @@ struct LearningSlideImage: View {
 }
 
 struct LiveArchiveView: View {
-  @EnvironmentObject private var session: AppSession
+  @State private var section = 0
   @State private var search = ""
+  var body: some View {
+    VStack(spacing: 0) {
+      Picker("보관함 분류", selection: $section) {
+        Text("답변한 질문").tag(0)
+        Text("좋아요한 글").tag(1)
+      }.pickerStyle(.segmented).padding(.horizontal, 16).padding(.vertical, 10)
+      if section == 0 { AnswerArchiveList(search: search) }
+      else { LikedPostArchiveList(search: search) }
+    }.navigationTitle("보관함").searchable(text: $search, prompt: "질문, 글 제목, 작가 검색")
+  }
+}
+
+struct LikedPostArchiveList: View {
+  @EnvironmentObject private var session: AppSession
+  let search: String
+  var body: some View {
+    LoadView(load: { () -> LikedPostPage in try await session.api.get("archive/liked-posts") }) { page in
+      if page.items.isEmpty {
+        EmptyMessage(title: "좋아하는 글을 모아보세요", symbol: "heart",
+          detail: "학습에서 글에 좋아요를 누르면 여기에서 다시 읽을 수 있어요")
+      } else {
+        let filtered = page.items.filter {
+          search.isEmpty || ($0.title + " " + $0.philosopherName).localizedCaseInsensitiveContains(search)
+        }
+        List {
+          ForEach(filtered) { post in
+            NavigationLink {
+              LiveReaderView(id: post.id, author: post.philosopherName)
+            } label: {
+              HStack(spacing: 14) {
+                QuestionArtwork(imageKey: post.imageKey).frame(width: 68, height: 76)
+                  .clipShape(RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 6) {
+                  Text(post.philosopherName).font(.caption).foregroundStyle(.secondary)
+                  Text(post.title).font(.headline).lineLimit(3)
+                }.padding(.vertical, 5)
+              }.padding(.vertical, 6).contentShape(Rectangle())
+            }.accessibilityIdentifier("archive.post.\(post.id)")
+          }
+          if filtered.isEmpty { Text("검색 결과가 없어요").foregroundStyle(.secondary) }
+        }.listStyle(.plain)
+      }
+    }
+  }
+}
+
+private struct AnswerArchiveList: View {
+  @EnvironmentObject private var session: AppSession
+  let search: String
   var body: some View {
     LoadView(load: { () -> ArchivePage in try await session.api.get("archive") }) { page in
       if page.items.isEmpty {
@@ -408,7 +457,7 @@ struct LiveArchiveView: View {
           if filtered.isEmpty { Text("검색 결과가 없어요").foregroundStyle(.secondary) }
         }.listStyle(.plain)
       }
-    }.navigationTitle("보관함").searchable(text: $search, prompt: "지난 질문 검색")
+    }
   }
 }
 struct LiveArchiveDetailView: View {

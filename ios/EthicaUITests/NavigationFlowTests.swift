@@ -192,6 +192,48 @@ final class NavigationFlowTests: XCTestCase {
     assertPage(app, 2)
   }
 
+  // Native editor gestures in the explicit design fixture; no social account or network writes.
+  func testAccountHeaderEditingAndEmptyAnalysisExplanation() {
+    let app = XCUIApplication()
+    app.launchArguments = ["-design-analysis"]
+    app.launch()
+    XCTAssertTrue(app.descendants(matching: .any)["analysis.introduction"].waitForExistence(timeout: 15))
+    capture(app, "analysis-empty-explanation")
+    app.buttons["내 계정"].tap()
+    let avatar = app.buttons["account.editAvatar"]
+    let nickname = app.buttons["account.editNickname"]
+    XCTAssertTrue(avatar.waitForExistence(timeout: 5))
+    XCTAssertTrue(nickname.exists)
+    XCTAssertFalse(app.buttons["프로필 이미지"].exists)
+    capture(app, "account-direct-edit-header")
+    avatar.tap()
+    XCTAssertTrue(app.navigationBars["프로필 이미지"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.navigationBars["닉네임 변경"].exists)
+    app.buttons["책"].tap()
+    capture(app, "account-avatar-editor")
+    app.buttons["저장"].tap()
+    XCTAssertTrue(nickname.waitForExistence(timeout: 5))
+    let originalName = nickname.label
+    nickname.tap()
+    XCTAssertTrue(app.navigationBars["닉네임 변경"].waitForExistence(timeout: 5))
+    app.buttons["취소"].tap()
+    XCTAssertEqual(nickname.label, originalName)
+    nickname.tap()
+    let field = app.textFields["닉네임"]
+    XCTAssertTrue(field.waitForExistence(timeout: 5))
+    field.tap()
+    field.typeText(" 테스트")
+    app.buttons["저장"].tap()
+    XCTAssertTrue(nickname.waitForExistence(timeout: 5))
+    XCTAssertTrue(nickname.label.contains("테스트"))
+    capture(app, "account-edited-header")
+    app.buttons["완료"].tap()
+    XCTAssertTrue(app.descendants(matching: .any)["analysis.introduction"].waitForExistence(timeout: 5))
+    app.buttons["AI 분석하기"].tap()
+    XCTAssertTrue(app.staticTexts["해석 완료"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.descendants(matching: .any)["analysis.introduction"].exists)
+  }
+
   private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
     for _ in 0..<8 {
       if element.isHittable { break }

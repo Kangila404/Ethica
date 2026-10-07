@@ -682,6 +682,8 @@ final class APIClientTests: XCTestCase {
           #"{"nearest":[],"all":[{"id":"1","name":"이마누엘 칸트","school":"의무론","era":"18세기","postCount":2}]}"#,
         "/api/philosophers/1":
           #"{"id":"1","name":"이마누엘 칸트","school":"의무론","era":"1724–1804","coreThought":"무엇을 해야 하는가. 결과를 넘어, 선택의 이유를 묻습니다.","lifeRoots":"스스로 생각하고 원칙을 세우는 삶에 관하여.","posts":[{"id":"1","title":"좋은 의도만으로 충분할까"},{"id":"2","title":"다른 사람을 대하는 방식"}]}"#,
+        "/api/archive/liked-posts":
+          #"{"items":[{"id":"1","title":"좋은 의도만으로 충분할까","imageKey":null,"philosopherId":"1","philosopherName":"이마누엘 칸트"}]}"#,
         "/api/archive":
           #"{"items":[{"userAnswerId":"1","serviceDate":"2026-09-30","questionPreview":"친구를 위한 거짓말도 옳지 않을까요?"}],"nextCursor":null}"#,
         "/api/onboarding/status":
@@ -744,6 +746,12 @@ final class APIClientTests: XCTestCase {
         requiredPath: "/api/philosophers/1")
       try await capture(
         "archive", view: NavigationStack { LiveArchiveView() }, requiredPath: "/api/archive")
+      try await capture(
+        "liked-posts", view: NavigationStack { LikedPostArchiveList(search: "") },
+        requiredPath: "/api/archive/liked-posts")
+      let pending = try JSONDecoder().decode(ThoughtSummary.self, from: Data(
+        #"{"overallSummaries":[],"contradictions":[],"status":"pending","canRetry":true}"#.utf8))
+      try await capture("analysis-introduction", view: ScrollView { SummarySection(initial: pending).padding() })
       try await capture(
         "onboarding", view: NavigationStack { OnboardingFlow() },
         requiredPath: "/api/onboarding/questions")

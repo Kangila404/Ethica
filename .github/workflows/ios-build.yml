@@ -104,6 +104,7 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestSingleTapNavigationAndReaderLifecycle \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestConfirmationPreservesReaderAndLoginDismissal \
+            -only-testing:EthicaUITests/NavigationFlowTests/testAccountHeaderEditingAndEmptyAnalysisExplanation \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             test 2>&1 | tee "$RUNNER_TEMP/navigation-tests.log"

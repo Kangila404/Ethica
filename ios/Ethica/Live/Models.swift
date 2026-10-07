@@ -226,6 +226,16 @@ struct LearningSegment: Decodable, Identifiable {
   let imageKey: String?
   let sortOrder: Int
 }
+struct LikedPostPage: Decodable {
+  let items: [LikedPost]
+}
+struct LikedPost: Decodable, Identifiable {
+  let id: String
+  let title: String
+  let imageKey: String?
+  let philosopherId: String
+  let philosopherName: String
+}
 struct ArchivePage: Decodable {
   let items: [ArchiveEntry]
   let nextCursor: String?
