@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import Vision
 
 final class NavigationFlowTests: XCTestCase {
   private let postTitle = "칸트의 생애: 쾨니히스베르크에서 시작된 비판"
@@ -92,6 +93,33 @@ final class NavigationFlowTests: XCTestCase {
     openProfile(app, id: "2", name: "존 스튜어트 밀")
     openPost(app, id: "8")
     capture(app, "other-author-reader")
+  }
+
+  func testLearningRefreshKeepsHeaderAndNavigation() throws {
+    let app = enterGuest()
+    let title = app.navigationBars["학습"].staticTexts["학습"]
+    let search = app.searchFields.firstMatch
+    let categories = app.segmentedControls.firstMatch
+    capture(app, "refresh-before")
+    try assertLearningTitleIsDrawn(app)
+    let initialCategoriesY = categories.frame.minY
+    for turn in 0..<4 {
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.38))
+        .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.83)))
+      XCTAssertTrue(title.waitForExistence(timeout: 5))
+      print("Refresh \(turn): title=\(title.frame), search=\(search.frame), categories=\(categories.frame)")
+      XCTAssertTrue(title.isHittable, "Learning title must remain visible after refresh")
+      XCTAssertLessThanOrEqual(title.frame.maxY, search.frame.minY + 1)
+      XCTAssertEqual(categories.frame.minY, initialCategoriesY, accuracy: 1)
+      capture(app, "refresh-after-\(turn)")
+      try assertLearningTitleIsDrawn(app)
+    }
+    // A short pull that does not trigger refresh must preserve the same header too.
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+      .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42)))
+    try assertLearningTitleIsDrawn(app)
+    XCTAssertEqual(categories.frame.minY, initialCategoriesY, accuracy: 1)
+    openProfile(app, id: "1", name: "임마누엘 칸트")
   }
 
   func testLearningContentStartsBelowNavigationAndEndsAboveTabs() {
@@ -272,6 +300,48 @@ final class NavigationFlowTests: XCTestCase {
     app.buttons["AI 분석하기"].tap()
     XCTAssertTrue(app.staticTexts["해석 완료"].waitForExistence(timeout: 10))
     XCTAssertFalse(app.descendants(matching: .any)["analysis.introduction"].exists)
+  }
+
+  private func assertLearningTitleIsDrawn(_ app: XCUIApplication) throws {
+    let frame = app.navigationBars["학습"].staticTexts["학습"].frame
+    let screen = app.frame
+    let request = VNRecognizeTextRequest()
+    request.recognitionLanguages = ["ko-KR"]
+    request.usesLanguageCorrection = false
+    request.minimumTextHeight = 0
+    let region = frame.insetBy(dx: -4, dy: -4).intersection(screen)
+    request.regionOfInterest = CGRect(x: region.minX / screen.width,
+      y: 1 - region.maxY / screen.height, width: region.width / screen.width, height: region.height / screen.height)
+    let image = try XCTUnwrap(app.screenshot().image.cgImage)
+    try VNImageRequestHandler(cgImage: image).perform([request])
+    let drawn = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined()
+    XCTAssertTrue(drawn.contains("학습"), "The accessibility title existed while its pixels were clipped: \(drawn)")
+  }
+
+  func testProfilePortraitOpensZoomsAndReturnsToSameProfile() {
+    let app = enterGuest()
+    openProfile(app, id: "1", name: "임마누엘 칸트")
+    let portrait = app.buttons["learning.profile.portrait"]
+    XCTAssertTrue(portrait.waitForExistence(timeout: 5))
+    let originalFrame = portrait.frame
+    portrait.tap()
+    let zoom = app.scrollViews["learning.portrait.zoom"]
+    XCTAssertTrue(zoom.waitForExistence(timeout: 10))
+    XCTAssertEqual(zoom.value as? String, "1.0배")
+    capture(app, "portrait-fullscreen")
+    zoom.doubleTap()
+    XCTAssertEqual(zoom.value as? String, "2.5배")
+    capture(app, "portrait-zoomed")
+    zoom.doubleTap()
+    XCTAssertEqual(zoom.value as? String, "1.0배")
+    zoom.pinch(withScale: 2, velocity: 1)
+    XCTAssertNotEqual(zoom.value as? String, "1.0배")
+    zoom.swipeLeft()
+    app.buttons["learning.portrait.close"].tap()
+    XCTAssertTrue(portrait.waitForExistence(timeout: 5))
+    XCTAssertEqual(portrait.frame.minY, originalFrame.minY, accuracy: 1)
+    openPost(app, id: "6")
+    assertPage(app, 1)
   }
 
   private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
