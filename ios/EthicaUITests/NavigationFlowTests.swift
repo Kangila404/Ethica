@@ -94,6 +94,46 @@ final class NavigationFlowTests: XCTestCase {
     capture(app, "other-author-reader")
   }
 
+  func testLearningContentStartsBelowNavigationAndEndsAboveTabs() {
+    let app = enterGuest()
+    let catalogBar = app.navigationBars["학습"]
+    XCTAssertTrue(catalogBar.exists)
+    let search = app.searchFields.firstMatch
+    XCTAssertTrue(search.waitForExistence(timeout: 5))
+    let categories = app.segmentedControls.firstMatch
+    XCTAssertTrue(categories.exists)
+    XCTAssertGreaterThanOrEqual(categories.frame.minY, search.frame.maxY)
+    let person = app.buttons["learning.person.1"]
+    XCTAssertGreaterThanOrEqual(person.frame.minY, categories.frame.maxY)
+    capture(app, "safe-area-catalog-top")
+
+    openProfile(app, id: "1", name: "임마누엘 칸트")
+    let name = app.staticTexts["learning.profile.name"]
+    XCTAssertTrue(name.waitForExistence(timeout: 5))
+    XCTAssertGreaterThanOrEqual(name.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+    capture(app, "safe-area-profile-top")
+
+    openPost(app, id: "6")
+    let counter = app.staticTexts["learning.reader.pageCount"]
+    let title = app.staticTexts["learning.reader.title"]
+    XCTAssertTrue(counter.exists)
+    XCTAssertTrue(title.waitForExistence(timeout: 5))
+    XCTAssertGreaterThanOrEqual(counter.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+    XCTAssertGreaterThanOrEqual(title.frame.minY, counter.frame.maxY)
+    for label in ["이전", "다음"] {
+      XCTAssertLessThanOrEqual(app.buttons[label].frame.maxY, app.tabBars.firstMatch.frame.minY)
+    }
+    capture(app, "safe-area-reader-top")
+    app.buttons["다음"].tap()
+    assertPage(app, 2)
+    app.buttons["이전"].tap()
+    assertPage(app, 1)
+    XCTAssertGreaterThanOrEqual(title.frame.minY, counter.frame.maxY)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    XCTAssertTrue(name.waitForExistence(timeout: 5))
+    XCTAssertGreaterThanOrEqual(name.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+  }
+
   func testGuestConfirmationPreservesReaderAndLoginDismissal() {
     let app = enterGuest()
     openProfile(app, id: "1", name: "임마누엘 칸트")
