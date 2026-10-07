@@ -77,9 +77,51 @@ jobs:
             -only-testing:EthicaTests/APIClientTests/testSignedOutRootRequiresExplicitGuestEntry \
             -only-testing:EthicaTests/APIClientTests/testGuestTabsRequireLoginWithoutLeavingLearning \
             -only-testing:EthicaTests/APIClientTests/testBookReaderBoundariesAndCancelledTurn \
+            -only-testing:EthicaTests/APIClientTests/testBookReaderPreservesButtonRequestDuringCancelledGesture \
+            -only-testing:EthicaTests/APIClientTests/testBookReaderPreservesLatestBackAndForthButtonRequest \
+            -only-testing:EthicaTests/APIClientTests/testGuestProtectedActionsNeverRequestPersonalAPIsOrCreateSession \
+            -only-testing:EthicaTests/APIClientTests/testSuccessfulProfileReloadRespectsExistingOnboardingStatus \
+            -only-testing:EthicaTests/APIClientTests/testAuthenticatedLearningProfileLoadsWithoutMountingBookReader \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             test 2>&1 | tee "$RUNNER_TEMP/notification-tests.log"
+      - name: Test guest navigation, reader gestures and login confirmation
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ios/ci/ui_fixture_server.py > "$RUNNER_TEMP/navigation-fixture.log" 2>&1 &
+          FIXTURE_PID=$!
+          trap 'kill "$FIXTURE_PID" 2>/dev/null || true' EXIT
+          SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=[d for ds in json.load(sys.stdin)["devices"].values() for d in ds if "iPhone" in d["name"]]; preferred=[d for d in devices if d["name"] == "iPhone 16 Pro"]; print((preferred or devices)[0]["udid"])')
+          xcodebuild \
+            -project ios/Ethica.xcodeproj \
+            -scheme Ethica \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/ethica-ios-build" \
+            -resultBundlePath "$RUNNER_TEMP/navigation-tests.xcresult" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -only-testing:EthicaUITests/NavigationFlowTests/testGuestSingleTapNavigationAndReaderLifecycle \
+            -only-testing:EthicaUITests/NavigationFlowTests/testGuestConfirmationPreservesReaderAndLoginDismissal \
+            -only-testing:EthicaUITests/NavigationFlowTests/testAccountHeaderEditingAndEmptyAnalysisExplanation \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test 2>&1 | tee "$RUNNER_TEMP/navigation-tests.log"
+          if rg '" (403|404|405|500|501)' "$RUNNER_TEMP/navigation-fixture.log"; then
+            exit 1
+          fi
+      - name: Save navigation screenshots and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-navigation-tests
+          path: |
+            ${{ runner.temp }}/navigation-tests.xcresult
+            ${{ runner.temp }}/navigation-tests.log
+            ${{ runner.temp }}/navigation-fixture.log
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Save build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

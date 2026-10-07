@@ -27,7 +27,9 @@ final class SocialAuthentication: NSObject, ASAuthorizationControllerDelegate,
   }
   static func handle(_ url: URL) -> Bool {
     if GIDSignIn.sharedInstance.handle(url) { return true }
-    if AuthApi.isKakaoTalkLoginUrl(url) { return AuthController.handleOpenUrl(url: url) }
+    if !AppConfiguration.value("KakaoNativeAppKey").isEmpty, AuthApi.isKakaoTalkLoginUrl(url) {
+      return AuthController.handleOpenUrl(url: url)
+    }
     return false
   }
   static func signOut() {

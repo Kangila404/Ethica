@@ -354,6 +354,18 @@ private struct AnalysisActionSurface: ViewModifier {
   }
 }
 
+struct AIInterpretationIntroduction: View {
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("내 답변에 담긴 생각을 읽어요").font(.title3.bold())
+      Text("지금까지 고른 답변을 바탕으로 중요하게 여기는 가치와 상황에 따라 달라지는 선택을 정리해드려요.")
+        .font(.subheadline).foregroundStyle(.secondary).lineSpacing(4)
+      Text("정답이나 성격 진단이 아닌, 내 생각을 돌아보는 참고 자료예요.")
+        .font(.footnote).foregroundStyle(.secondary)
+    }.accessibilityElement(children: .combine).accessibilityIdentifier("analysis.introduction")
+  }
+}
+
 struct SummarySection: View {
   enum Part { case all, overview, contradictions }
   var part: Part = .all
@@ -367,6 +379,7 @@ struct SummarySection: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 22) {
       if part == .all { Text("생각 요약").font(.title2.bold()) }
+      if summary.status != "ready" { AIInterpretationIntroduction() }
       AIAnalysisControl(
         status: summary.status, canRetry: summary.canRetry,
         busy: generating, quota: summary.quota, generate: { Task { await generate() } },

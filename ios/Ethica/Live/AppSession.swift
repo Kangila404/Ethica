@@ -9,6 +9,22 @@ import WidgetKit
   @Published var errorMessage: String?
   @Published var busy = false
   @Published var showLogin = false
+  enum LoginRequirement: Equatable {
+    case personalFeatures, like
+    var conciseMessage: String {
+      switch self {
+      case .personalFeatures: return "질문·답변 저장과 분석에 로그인이 필요해요."
+      case .like: return "좋아요를 남기려면 로그인해주세요."
+      }
+    }
+    var message: String {
+      switch self {
+      case .personalFeatures: return "로그인하면 나의 질문과 답변을 저장하고 분석을 확인할 수 있어요."
+      case .like: return "로그인하면 마음에 드는 글에 좋아요를 남길 수 있어요."
+      }
+    }
+  }
+  @Published var loginRequirement: LoginRequirement?
   @Published var browsingAsGuest = false
   @Published var selectedTab = 0
   @Published var analysisSection = 0
@@ -24,11 +40,28 @@ import WidgetKit
     guard phase == .signedOut else { return }
     browsingAsGuest = true
     showLogin = false
+    loginRequirement = nil
     selectedTab = 2
   }
   func selectGuestTab(_ tab: Int) {
     guard phase == .signedOut, browsingAsGuest else { return }
-    if tab != 2 { showLogin = true }
+    if [0, 1, 3].contains(tab) { requireLogin(for: .personalFeatures) }
+  }
+  func requireLogin(for requirement: LoginRequirement) {
+    guard phase == .signedOut, browsingAsGuest, user == nil,
+      !showLogin, loginRequirement == nil else { return }
+    loginRequirement = requirement
+  }
+  func cancelLoginRequirement() { loginRequirement = nil }
+  func confirmLoginRequirement(_ requirement: LoginRequirement) {
+    // The system dismisses the alert binding before invoking its button action.
+    guard phase == .signedOut, browsingAsGuest, user == nil, !showLogin else { return }
+    loginRequirement = nil
+    showLogin = true
+  }
+  func presentLogin() {
+    guard phase == .signedOut, !showLogin, loginRequirement == nil else { return }
+    showLogin = true
   }
   func restore() async {
     #if DEBUG
@@ -58,6 +91,7 @@ import WidgetKit
     let profile: UserProfile = try await api.get("users/me")
     user = profile
     showLogin = false
+    loginRequirement = nil
     browsingAsGuest = false
     PushNotifications.shared.setPreference(profile.notificationEnabled)
     phase = profile.onboardingStatus == "complete" ? .ready : .onboarding
@@ -139,6 +173,7 @@ import WidgetKit
     WidgetSnapshot.clear()
     user = nil
     showLogin = false
+    loginRequirement = nil
     browsingAsGuest = false
     provider = nil
     selectedTab = 0
@@ -162,6 +197,10 @@ import WidgetKit
   func open(_ url: URL) {
     if SocialAuthentication.handle(url) { return }
     guard url.scheme == "ethica", url.host == "daily" else { return }
+    guard user != nil else {
+      if browsingAsGuest { requireLogin(for: .personalFeatures) }
+      return
+    }
     selectedTab = 0
     NotificationCenter.default.post(name: .ethicaDailyOpened, object: nil)
   }

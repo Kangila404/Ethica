@@ -4,7 +4,7 @@ import type { PostRepository } from '../domain/repository/post.repository';
 import type { UserRepository } from 'src/user/domain/repository/user.repository';
 
 describe('Learning likes', () => {
-  const likes = { state: jest.fn(), set: jest.fn() };
+  const likes = { state: jest.fn(), set: jest.fn(), listForUser: jest.fn() };
   const posts = { findById: jest.fn() };
   const users = { findByUserId: jest.fn() };
   const service = new PostLikeService(
@@ -17,6 +17,18 @@ describe('Learning likes', () => {
     posts.findById.mockResolvedValue({ id: '2' });
     users.findByUserId.mockResolvedValue({ id: '9', userStatus: 'active' });
     likes.state.mockResolvedValue({ count: 3, liked: false });
+  });
+  it('lists only the authenticated active user’s saved posts', async () => {
+    likes.listForUser.mockResolvedValue([{ id: '2', title: 'Saved' }]);
+    await expect(service.list('owner-uuid')).resolves.toEqual({
+      items: [{ id: '2', title: 'Saved' }],
+    });
+    expect(likes.listForUser).toHaveBeenCalledWith('9');
+    users.findByUserId.mockResolvedValue(null);
+    await expect(service.list('missing')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+    expect(likes.listForUser).toHaveBeenCalledTimes(1);
   });
   it('exposes counts without looking up an anonymous user', async () => {
     await expect(service.state('2')).resolves.toEqual({

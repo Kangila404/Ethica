@@ -426,6 +426,41 @@ describe('Server workflows with MySQL', () => {
             .expect(200),
         ),
       );
+      const archiveEndpoint = '/api/archive/liked-posts';
+      await request(http).get(archiveEndpoint).expect(401);
+      await request(http)
+        .get(archiveEndpoint)
+        .set('Authorization', 'Bearer invalid')
+        .expect(401);
+      const saved = await request(http)
+        .get(archiveEndpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200);
+      expect(saved.body).toEqual({
+        items: [
+          {
+            id: post.id,
+            title: '공개 글',
+            imageKey: null,
+            philosopherId: person.id,
+            philosopherName: '문학 작가 테스트',
+          },
+        ],
+      });
+      await request(http)
+        .get(archiveEndpoint)
+        .set('Authorization', 'Bearer ' + other.token)
+        .expect(200, { items: [] });
+      await db
+        .getRepository(LearningPost)
+        .update(post.id, { status: ContentStatus.DRAFT });
+      await request(http)
+        .get(archiveEndpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200, { items: [] });
+      await db
+        .getRepository(LearningPost)
+        .update(post.id, { status: ContentStatus.PUBLISHED });
       await request(http).get(endpoint).expect(200, { count: 1, liked: false });
       await request(http)
         .get(endpoint)
@@ -443,6 +478,10 @@ describe('Server workflows with MySQL', () => {
         .delete(endpoint)
         .set('Authorization', 'Bearer ' + owner.token)
         .expect(200, { count: 0, liked: false });
+      await request(http)
+        .get(archiveEndpoint)
+        .set('Authorization', 'Bearer ' + owner.token)
+        .expect(200, { items: [] });
       await request(http)
         .put(endpoint)
         .set('Authorization', 'Bearer ' + other.token)

@@ -265,27 +265,171 @@ final class APIClientTests: XCTestCase {
     XCTAssertGreaterThan(counts.count("/api/philosophers"), 0)
     XCTAssertEqual(session.phase, .signedOut)
     XCTAssertNil(session.user)
+    NotificationCenter.default.post(name: .ethicaDailyOpened, object: nil)
+    XCTAssertEqual(session.selectedTab, 2, "Old daily notifications must preserve guest learning")
   }
 
   @MainActor func testGuestTabsRequireLoginWithoutLeavingLearning() {
     let session = AppSession(api: api)
     session.phase = .signedOut
     session.browseWithoutLogin()
-    XCTAssertTrue(session.browsingAsGuest)
-    XCTAssertEqual(session.selectedTab, 2)
+    let generation = session.generation
     for tab in [0, 1, 3] {
-      session.showLogin = false
       session.selectGuestTab(tab)
-      XCTAssertTrue(session.showLogin)
-      XCTAssertEqual(session.selectedTab, 2)
-      session.browseWithoutLogin()
+      XCTAssertEqual(session.loginRequirement, .personalFeatures)
       XCTAssertFalse(session.showLogin)
+      XCTAssertEqual(session.selectedTab, 2)
+      session.requireLogin(for: .like) // Ignore repeated/different actions while alert is open.
+      XCTAssertEqual(session.loginRequirement, .personalFeatures)
+      session.cancelLoginRequirement()
+      XCTAssertFalse(session.showLogin)
+      XCTAssertEqual(session.generation, generation)
     }
     session.selectGuestTab(2)
-    XCTAssertFalse(session.showLogin)
+    XCTAssertNil(session.loginRequirement)
+    session.open(URL(string: "ethica://daily")!)
+    XCTAssertEqual(session.selectedTab, 2)
+    XCTAssertEqual(session.loginRequirement, .personalFeatures)
+    session.cancelLoginRequirement()
+    session.requireLogin(for: .like)
+    XCTAssertEqual(session.loginRequirement, .like)
+    session.presentLogin()
+    XCTAssertFalse(session.showLogin) // Do not overlap alert and sheet.
+    session.cancelLoginRequirement() // Simulate the system dismissing its alert first.
+    session.confirmLoginRequirement(.like)
+    XCTAssertTrue(session.showLogin)
+    XCTAssertNil(session.loginRequirement)
+    session.selectGuestTab(0)
+    XCTAssertNil(session.loginRequirement)
+    session.showLogin = false
+    XCTAssertEqual(session.selectedTab, 2)
+    XCTAssertEqual(session.generation, generation)
+    session.presentLogin() // Explicit account button bypasses the confirmation.
+    XCTAssertTrue(session.showLogin)
     session.phase = .onboarding
     session.browseWithoutLogin()
     XCTAssertEqual(session.phase, .onboarding)
+  }
+
+  @MainActor func testGuestProtectedActionsNeverRequestPersonalAPIsOrCreateSession() async throws {
+    await api.clear()
+    let session = AppSession(api: api)
+    session.phase = .signedOut
+    session.browseWithoutLogin()
+    StubURLProtocol.handler = { request in
+      XCTFail("Protected guest action sent a request: \(request.url!.path)")
+      return (500, Data(), 0)
+    }
+    for tab in [0, 1, 3] {
+      session.selectGuestTab(tab)
+      session.cancelLoginRequirement()
+    }
+    session.requireLogin(for: .like)
+    session.confirmLoginRequirement(.like)
+    let stored = await api.currentSession()
+    XCTAssertNil(stored)
+    XCTAssertNil(session.user)
+    XCTAssertEqual(session.phase, .signedOut)
+  }
+
+  @MainActor func testSuccessfulProfileReloadRespectsExistingOnboardingStatus() async throws {
+    for status in ["complete", "pending"] {
+      let session = AppSession(api: api)
+      session.phase = .signedOut
+      session.browseWithoutLogin()
+      session.requireLogin(for: .personalFeatures)
+      StubURLProtocol.handler = { request in
+        XCTAssertEqual(request.url?.path, "/api/users/me")
+        return (200, Data("{\"userId\":\"test-user\",\"name\":\"테스트\",\"userRole\":\"user\",\"onboardingStatus\":\"\(status)\",\"notificationEnabled\":false}".utf8), 0)
+      }
+      try await session.reloadProfile()
+      XCTAssertEqual(session.phase, status == "complete" ? .ready : .onboarding)
+      XCTAssertFalse(session.browsingAsGuest)
+      XCTAssertFalse(session.showLogin)
+      XCTAssertNil(session.loginRequirement)
+    }
+  }
+
+  @MainActor func testAuthenticatedLearningProfileLoadsWithoutMountingBookReader() async throws {
+    let counts = LockedCounter()
+    StubURLProtocol.handler = { request in
+      counts.increment(request.url!.path)
+      XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer old-access")
+      XCTAssertEqual(request.url?.path, "/api/philosophers/1")
+      return (200, Data(#"{"id":"1","name":"칸트","era":"18세기","school":"의무론","coreThought":"소개","lifeRoots":"생애","posts":[{"id":"6","title":"공개 글"}]}"#.utf8), 0)
+    }
+    let session = AppSession(api: api)
+    session.user = try JSONDecoder().decode(UserProfile.self, from: Data(#"{"userId":"test-user","name":"테스트","userRole":"user","onboardingStatus":"complete","notificationEnabled":false}"#.utf8))
+    session.phase = .ready
+    guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
+      return XCTFail("No window scene")
+    }
+    let window = UIWindow(windowScene: scene)
+    let host = UIHostingController(rootView: NavigationStack {
+      LivePhilosopherView(id: "1", name: "칸트")
+    }.environmentObject(session))
+    window.rootViewController = host
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    for _ in 0..<100 {
+      if counts.count("/api/philosophers/1") > 0 { break }
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
+    XCTAssertEqual(counts.count("/api/philosophers/1"), 1)
+    func containsBook(_ controller: UIViewController) -> Bool {
+      controller is UIPageViewController || controller.children.contains(where: containsBook)
+    }
+    XCTAssertFalse(containsBook(host), "A philosopher profile must not instantiate a book controller")
+    XCTAssertEqual(counts.count("/api/philosophers/post/6"), 0)
+  }
+
+  @MainActor func testBookReaderPreservesButtonRequestDuringCancelledGesture() {
+    var selected = 0
+    let reader = BookPageReader(count: 4,
+      selection: Binding(get: { selected }, set: { selected = $0 }), reduceMotion: true) { index in
+        Text("Page \(index)")
+      }
+    let coordinator = reader.makeCoordinator()
+    let first = coordinator.page(at: 0)!
+    let controller = UIPageViewController(transitionStyle: .pageCurl, navigationOrientation: .horizontal)
+    controller.setViewControllers([first], direction: .forward, animated: false)
+    coordinator.pageViewController(controller, willTransitionTo: [coordinator.page(at: 1)!])
+    selected = 2 // Previous/Next is tapped while an interactive turn is in progress.
+    coordinator.displaySelection(in: controller)
+    coordinator.pageViewController(controller, didFinishAnimating: true,
+      previousViewControllers: [first], transitionCompleted: false)
+    XCTAssertEqual(selected, 2, "Cancelling a gesture must not discard the explicit button request")
+    XCTAssertEqual(coordinator.index(of: controller.viewControllers!.first!), 2)
+  }
+
+  @MainActor func testBookReaderPreservesLatestBackAndForthButtonRequest() {
+    var selected = 0
+    var revision = 0
+    let reader = BookPageReader(count: 4,
+      selection: Binding(get: { selected }, set: { selected = $0 }), reduceMotion: true,
+      requestRevision: Binding(get: { revision }, set: { revision = $0 })) { index in
+        Text("Page \(index)")
+      }
+    let coordinator = reader.makeCoordinator()
+    let first = coordinator.page(at: 0)!
+    let next = coordinator.page(at: 1)!
+    let controller = UIPageViewController(transitionStyle: .pageCurl, navigationOrientation: .horizontal)
+    controller.setViewControllers([first], direction: .forward, animated: false)
+    coordinator.pageViewController(controller, willTransitionTo: [next])
+    selected = 1; revision += 1
+    selected = 0; revision += 1 // Latest request equals the page at gesture start.
+    controller.setViewControllers([next], direction: .forward, animated: false)
+    coordinator.pageViewController(controller, didFinishAnimating: true,
+      previousViewControllers: [first], transitionCompleted: true)
+    XCTAssertEqual(selected, 0)
+    XCTAssertEqual(coordinator.index(of: controller.viewControllers!.first!), 0)
+    BookPageReader<Text>.dismantleUIViewController(controller, coordinator: coordinator)
+    XCTAssertNil(controller.dataSource)
+    XCTAssertNil(controller.delegate)
+    XCTAssertTrue(coordinator.pages.isEmpty)
+    coordinator.pageViewController(controller, didFinishAnimating: true,
+      previousViewControllers: [next], transitionCompleted: true)
+    XCTAssertEqual(selected, 0, "A dismantled reader must ignore late callbacks")
   }
 
   @MainActor func testBookReaderBoundariesAndCancelledTurn() {
@@ -538,6 +682,8 @@ final class APIClientTests: XCTestCase {
           #"{"nearest":[],"all":[{"id":"1","name":"이마누엘 칸트","school":"의무론","era":"18세기","postCount":2}]}"#,
         "/api/philosophers/1":
           #"{"id":"1","name":"이마누엘 칸트","school":"의무론","era":"1724–1804","coreThought":"무엇을 해야 하는가. 결과를 넘어, 선택의 이유를 묻습니다.","lifeRoots":"스스로 생각하고 원칙을 세우는 삶에 관하여.","posts":[{"id":"1","title":"좋은 의도만으로 충분할까"},{"id":"2","title":"다른 사람을 대하는 방식"}]}"#,
+        "/api/archive/liked-posts":
+          #"{"items":[{"id":"1","title":"좋은 의도만으로 충분할까","imageKey":null,"philosopherId":"1","philosopherName":"이마누엘 칸트"}]}"#,
         "/api/archive":
           #"{"items":[{"userAnswerId":"1","serviceDate":"2026-09-30","questionPreview":"친구를 위한 거짓말도 옳지 않을까요?"}],"nextCursor":null}"#,
         "/api/onboarding/status":
@@ -589,12 +735,23 @@ final class APIClientTests: XCTestCase {
         "today", view: NavigationStack { LiveTodayView() }, requiredPath: "/api/daily/today")
       try await capture(
         "analysis", view: NavigationStack { LiveAnalysisView() },
+        requiredPath: "/api/analysis/contradictions")
+      session.analysisSection = 1
+      try await capture(
+        "analysis-statistics", view: NavigationStack { LiveAnalysisView() },
         requiredPath: "/api/analysis/summary")
+      session.analysisSection = 0
       try await capture(
         "philosopher", view: NavigationStack { LivePhilosopherView(id: "1") },
         requiredPath: "/api/philosophers/1")
       try await capture(
         "archive", view: NavigationStack { LiveArchiveView() }, requiredPath: "/api/archive")
+      try await capture(
+        "liked-posts", view: NavigationStack { LikedPostArchiveList(search: "") },
+        requiredPath: "/api/archive/liked-posts")
+      let pending = try JSONDecoder().decode(ThoughtSummary.self, from: Data(
+        #"{"overallSummaries":[],"contradictions":[],"status":"pending","canRetry":true}"#.utf8))
+      try await capture("analysis-introduction", view: ScrollView { SummarySection(initial: pending).padding() })
       try await capture(
         "onboarding", view: NavigationStack { OnboardingFlow() },
         requiredPath: "/api/onboarding/questions")

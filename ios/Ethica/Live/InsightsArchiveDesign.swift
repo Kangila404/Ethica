@@ -239,6 +239,7 @@ struct PreviewInsightsView: View {
   }
   private var aiInterpretation: some View {
     VStack(alignment: .leading, spacing: 22) {
+      if !store.analysisPreviewReady { AIInterpretationIntroduction() }
       AIAnalysisControl(
         status: store.analysisPreviewReady ? "ready" : "pending",
         canRetry: !store.analysisPreviewReady, busy: previewWorking,
