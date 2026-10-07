@@ -10,6 +10,20 @@ private struct LearningPostRoute: Hashable {
   let author: String
 }
 
+/// Give asynchronous learning content a stable viewport inside the system bars.
+/// The loading view, native scroll view and UIKit reader must receive the same
+/// safe-area-sized proposal; none should lay out against the full screen bounds.
+/// Do not compensate with device-specific status/navigation/tab bar heights.
+private struct LearningViewport: ViewModifier {
+  func body(content: Content) -> some View {
+    GeometryReader { geometry in
+      content
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        .clipped()
+    }
+  }
+}
+
 struct LearningCatalogView: View {
   @EnvironmentObject private var session: AppSession
   @State private var search = ""
@@ -36,7 +50,9 @@ struct LearningCatalogView: View {
           }
         }
       }.listStyle(.plain)
-    }.navigationTitle("학습")
+    }.modifier(LearningViewport())
+      .navigationTitle("학습")
+      .navigationBarTitleDisplayMode(.large)
       // Register destinations outside lazy rows; constructing the catalog cannot mount a reader.
       .navigationDestination(for: LearningProfileRoute.self) { route in
         LivePhilosopherView(id: route.id, name: route.name)
@@ -88,6 +104,7 @@ struct LivePhilosopherView: View {
             ).clipShape(Circle())
             VStack(alignment: .leading, spacing: 8) {
               Text(person.name).font(.title2.bold())
+                .accessibilityIdentifier("learning.profile.name")
               Text(person.era).font(.subheadline).foregroundStyle(.secondary)
               Text(person.school).font(.subheadline).foregroundStyle(.secondary)
             }
@@ -132,6 +149,7 @@ struct LivePhilosopherView: View {
         }
       }.navigationTitle(person.name)
     }
+    .modifier(LearningViewport())
     .navigationTitle(name ?? "프로필").navigationBarTitleDisplayMode(.inline)
     .navigationDestination(for: LearningPostRoute.self) { route in
       LiveReaderView(id: route.id, author: route.author)
@@ -156,6 +174,7 @@ struct LiveReaderView: View {
           Spacer()
           Text(post.segments.isEmpty ? "0 / 0" : "\(page + 1) / \(post.segments.count)")
             .monospacedDigit()
+            .accessibilityIdentifier("learning.reader.pageCount")
         }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 24).padding(.vertical, 12)
         if post.segments.isEmpty {
           EmptyMessage(title: "글을 준비하고 있어요", symbol: "book.closed", detail: "새 글이 등록되면 여기서 읽을 수 있어요")
@@ -167,6 +186,7 @@ struct LiveReaderView: View {
               VStack(alignment: .leading, spacing: 26) {
                 if index == 0 {
                   Text(post.title).font(.system(.largeTitle, design: .serif, weight: .medium))
+                    .accessibilityIdentifier("learning.reader.title")
                 }
                 if let url = AppConfiguration.imageURL(card.imageKey) {
                   LearningSlideImage(url: url, label: post.title + " 관련 자료")
@@ -198,7 +218,8 @@ struct LiveReaderView: View {
           }.padding(24)
         }
       }.toolbar { ToolbarItem(placement: .navigationBarTrailing) { PostLikeButton(postID: id) } }
-    }.navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
+    }.modifier(LearningViewport())
+      .navigationTitle("읽기").navigationBarTitleDisplayMode(.inline)
   }
 }
 /// UIKit's public book-turn transition, not a simulated blur or a private Apple API.

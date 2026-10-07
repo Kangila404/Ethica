@@ -103,6 +103,7 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/navigation-tests.xcresult" \
             -onlyUsePackageVersionsFromResolvedFile \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestSingleTapNavigationAndReaderLifecycle \
+            -only-testing:EthicaUITests/NavigationFlowTests/testLearningContentStartsBelowNavigationAndEndsAboveTabs \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestConfirmationPreservesReaderAndLoginDismissal \
             -only-testing:EthicaUITests/NavigationFlowTests/testAccountHeaderEditingAndEmptyAnalysisExplanation \
             -parallel-testing-enabled NO \
