@@ -36,6 +36,9 @@ export class PostLikeService {
       throw new UnauthorizedException();
     return user.id;
   }
+  async list(uuid: string) {
+    return { items: await this.likes.listForUser(await this.userId(uuid)) };
+  }
   async state(postId: string, uuid?: string) {
     await this.published(postId);
     return this.likes.state(postId, uuid ? await this.userId(uuid) : undefined);

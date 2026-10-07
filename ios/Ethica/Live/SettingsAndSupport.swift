@@ -33,15 +33,9 @@ struct LiveSettingsView: View {
     Form {
       if let user = session.user {
         Section {
-          AccountIdentityHeader(name: user.name, provider: session.provider?.title ?? "소셜 로그인", avatarID: user.avatarId)
-          Button { avatarEditor = true } label: {
-            Label("프로필 이미지", systemImage: "person.crop.circle")
-          }
-          Button {
-            editor = .nickname
-          } label: {
-            AccountRow(title: "닉네임", value: user.name, symbol: "pencil")
-          }.foregroundStyle(.primary)
+          AccountIdentityHeader(
+            name: user.name, provider: session.provider?.title ?? "소셜 로그인", avatarID: user.avatarId,
+            editAvatar: { avatarEditor = true }, editNickname: { editor = .nickname })
           NavigationLink {
             AccountInformationView(
               name: user.name, provider: session.provider?.title ?? "소셜 로그인",
@@ -215,11 +209,26 @@ struct AccountIdentityHeader: View {
   let name: String
   let provider: String
   var avatarID: String? = nil
+  let editAvatar: () -> Void
+  let editNickname: () -> Void
   var body: some View {
     HStack(spacing: 16) {
-      AccountAvatar(avatarID: avatarID).frame(width: 58, height: 58).accessibilityHidden(true)
-      VStack(alignment: .leading, spacing: 5) {
-        Text(name).font(.title3.bold())
+      Button(action: editAvatar) {
+        AccountAvatar(avatarID: avatarID).frame(width: 64, height: 64)
+          .overlay(alignment: .bottomTrailing) {
+            Image(systemName: "pencil.circle.fill").symbolRenderingMode(.palette)
+              .foregroundStyle(.white, .blue).font(.title3)
+          }
+      }.buttonStyle(.borderless)
+        .accessibilityLabel("프로필 이미지 변경").accessibilityIdentifier("account.editAvatar")
+      VStack(alignment: .leading, spacing: 2) {
+        Button(action: editNickname) {
+          HStack(spacing: 8) {
+            Text(name).font(.title3.bold()).foregroundStyle(.primary)
+            Image(systemName: "pencil").font(.caption).foregroundStyle(.secondary)
+          }.frame(minHeight: 44, alignment: .leading).contentShape(Rectangle())
+        }.buttonStyle(.borderless)
+          .accessibilityLabel("닉네임 변경, \(name)").accessibilityIdentifier("account.editNickname")
         Text("\(provider) 계정").font(.caption).foregroundStyle(.secondary)
       }
     }.padding(.vertical, 10)
@@ -499,17 +508,8 @@ struct PreviewAccountView: View {
     Form {
       Section {
         AccountIdentityHeader(
-          name: store.name, provider: "Apple", avatarID: store.profileAvatarID)
-        Button {
-          avatarEditor = true
-        } label: {
-          Label("프로필 이미지", systemImage: "person.crop.circle")
-        }.tint(.blue)
-        Button {
-          editor = .nickname
-        } label: {
-          AccountRow(title: "닉네임", value: store.name, symbol: "pencil")
-        }.foregroundStyle(.primary)
+          name: store.name, provider: "Apple", avatarID: store.profileAvatarID,
+          editAvatar: { avatarEditor = true }, editNickname: { editor = .nickname })
         NavigationLink {
           AccountInformationView(
             name: store.name, provider: "Apple · 예시", userID: "미리보기 계정", role: "user")

@@ -1,3 +1,4 @@
+import { ContentStatus } from 'src/common/content-status';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +11,21 @@ export class PostLikeRepositoryImpl implements PostLikeRepository {
     @InjectRepository(PostLike)
     private readonly repository: Repository<PostLike>,
   ) {}
+
+  async listForUser(userId: string) {
+    const likes = await this.repository.find({
+      where: { userId, post: { status: ContentStatus.PUBLISHED } },
+      relations: { post: { philosopher: true } },
+      order: { postId: 'DESC' },
+    });
+    return likes.map(({ post }) => ({
+      id: post.id,
+      title: post.title,
+      imageKey: post.imageKey,
+      philosopherId: post.philosopherId,
+      philosopherName: post.philosopher.name,
+    }));
+  }
 
   async state(postId: string, userId?: string) {
     const [count, liked] = await Promise.all([

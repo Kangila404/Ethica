@@ -1,3 +1,4 @@
+import { PostLikeService } from 'src/philosopher/application/post-like.service';
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,7 +18,10 @@ import { ArchiveDetailResponse } from '../dto/res/archive-detail-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('/api/archive')
 export class ArchiveController {
-  constructor(private readonly archiveService: ArchiveService) {}
+  constructor(
+    private readonly archiveService: ArchiveService,
+    private readonly postLikes: PostLikeService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '내 대답 목록 조회' })
@@ -29,6 +33,12 @@ export class ArchiveController {
     @CurrentUserId() userId: string,
   ): Promise<ArchiveListResponse> {
     return this.archiveService.getUserAnswers(userId);
+  }
+
+  @Get('liked-posts')
+  @ApiOperation({ summary: '내가 좋아요한 공개 게시글 목록 조회' })
+  getLikedPosts(@CurrentUserId() userId: string) {
+    return this.postLikes.list(userId);
   }
 
   @Get(':userAnswerId')

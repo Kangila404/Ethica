@@ -1,3 +1,4 @@
+import { PhilosopherModule } from 'src/philosopher/philosopher.module';
 import { Module } from '@nestjs/common';
 import { USER_ANSWER_REPOSITORY } from './domain/repository/user-answer.repository';
 import { USER_FOLLOWUP_ANSWER_REPOSITORY } from './domain/repository/user-followup-answer.repository';
@@ -16,6 +17,7 @@ import { ArchiveService } from './application/archive.service';
     TypeOrmModule.forFeature([UserAnswer, UserFollowupAnswer]),
     UserModule,
     QuestionModule,
+    PhilosopherModule,
   ],
   controllers: [ArchiveController],
   providers: [

@@ -57,6 +57,10 @@ import { PostSegmentRepositoryImpl } from './infrastructure/persistence/reposito
       useClass: PostSegmentRepositoryImpl,
     },
   ],
-  exports: [PHILOSOPHER_REPOSITORY, USER_PHILOSOPHER_COUNT_REPOSITORY],
+  exports: [
+    PHILOSOPHER_REPOSITORY,
+    USER_PHILOSOPHER_COUNT_REPOSITORY,
+    PostLikeService,
+  ],
 })
 export class PhilosopherModule {}

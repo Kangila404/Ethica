@@ -3,6 +3,8 @@ import TipKit
 
 struct LoadView<Value, Content: View>: View {
   @EnvironmentObject private var session: AppSession
+  var loadingMessage = "불러오는 중"
+  var loadingIdentifier = "content.loading"
   let load: () async throws -> Value
   @ViewBuilder let content: (Value) -> Content
   @State private var value: Value?
@@ -16,7 +18,8 @@ struct LoadView<Value, Content: View>: View {
           Task { await reload() }
         }
       } else {
-        ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity).accessibilityLabel("불러오는 중")
+        ProgressView(loadingMessage).frame(maxWidth: .infinity, maxHeight: .infinity)
+          .accessibilityIdentifier(loadingIdentifier)
       }
     }.task { await reload() }.refreshable { await reload() }
       .safeAreaInset(edge: .bottom) {
@@ -432,6 +435,7 @@ private struct EthicaWelcomeWordmark: View {
 }
 
 struct WelcomeView: View {
+  var close: (() -> Void)? = nil
   @State private var showIntroduction = false
   @EnvironmentObject private var session: AppSession
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -506,6 +510,11 @@ struct WelcomeView: View {
         }
       }
       .background(Color(uiColor: .systemBackground))
+      .toolbar {
+        if let close {
+          ToolbarItem(placement: .cancellationAction) { Button("닫기", action: close) }
+        }
+      }
       .sheet(isPresented: $showIntroduction) {
         WelcomeConversation { showIntroduction = false }
       }
@@ -573,14 +582,15 @@ private struct LoginButtonStyle: ButtonStyle {
 /// Non-account features remain readable; protected tabs never mount their API views.
 struct GuestTabsView: View {
   @EnvironmentObject private var session: AppSession
+  @State private var learningPath = NavigationPath()
   var body: some View {
-    TabView(selection: Binding(get: { 2 }, set: { session.selectGuestTab($0) })) {
+    TabView(selection: Binding(get: { session.selectedTab }, set: { session.selectGuestTab($0) })) {
       Color.clear.tabItem { Label("오늘", systemImage: "sun.max") }.tag(0)
       Color.clear.tabItem { Label("분석", systemImage: "chart.bar.xaxis") }.tag(1)
-      NavigationStack {
+      NavigationStack(path: $learningPath) {
         LearningCatalogView().toolbar {
           ToolbarItem(placement: .navigationBarTrailing) {
-            Button { session.showLogin = true } label: {
+            Button { session.presentLogin() } label: {
               Label("로그인", systemImage: "person.crop.circle")
             }
           }
@@ -593,6 +603,7 @@ struct GuestTabsView: View {
 
 struct LiveRootView: View {
   @EnvironmentObject private var session: AppSession
+  @Environment(\.dynamicTypeSize) private var typeSize
   @Environment(\.scenePhase) private var scenePhase
   @State private var settings = false
   var body: some View {
@@ -647,7 +658,16 @@ struct LiveRootView: View {
       NavigationStack { LiveSettingsView() }.environmentObject(session)
     }
     .sheet(isPresented: $session.showLogin) {
-      WelcomeView().environmentObject(session)
+      WelcomeView(close: { session.showLogin = false }).environmentObject(session)
+    }
+    .alert("로그인이 필요한 기능이에요", isPresented: Binding(
+      get: { session.loginRequirement != nil },
+      set: { if !$0 { session.cancelLoginRequirement() } }
+    ), presenting: session.loginRequirement) { requirement in
+      Button("취소", role: .cancel) { session.cancelLoginRequirement() }
+      Button("로그인") { session.confirmLoginRequirement(requirement) }
+    } message: { requirement in
+      Text(typeSize.isAccessibilitySize ? requirement.conciseMessage : requirement.message)
     }
     .onChange(of: session.phase) { value in if value == .signedOut { settings = false } }
     .task { if session.phase == .loading { await session.restore() } }
@@ -666,7 +686,8 @@ struct LiveRootView: View {
       Text(session.errorMessage ?? "")
     }
     .onReceive(NotificationCenter.default.publisher(for: .ethicaDailyOpened)) { _ in
-      session.selectedTab = 0
+      // An old notification must not select an empty protected tab in a guest session.
+      if session.user != nil { session.selectedTab = 0 }
     }
     .onOpenURL { session.open($0) }
   }
