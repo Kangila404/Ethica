@@ -2,7 +2,7 @@ name: Upload iOS to TestFlight
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
     paths:
       - 'ios/**'
       - '.github/workflows/ios-testflight.yml'
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   upload:
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-26
     timeout-minutes: 50
     env:

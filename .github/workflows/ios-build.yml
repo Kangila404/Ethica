@@ -8,7 +8,7 @@ on:
       - '.github/workflows/ios-build.yml'
       - '.github/workflows/ios-testflight.yml'
   push:
-    branches: [develop]
+    branches: [develop, main]
     paths:
       - 'ios/**'
       - '.github/workflows/ios-build.yml'
@@ -74,7 +74,9 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/notification-tests.xcresult" \
             -onlyUsePackageVersionsFromResolvedFile \
             -only-testing:EthicaTests/PushNotificationCallbackTests \
-            -only-testing:EthicaTests/APIClientTests/testSignedOutRootLoadsPublicLearningWithoutAccount \
+            -only-testing:EthicaTests/APIClientTests/testSignedOutRootRequiresExplicitGuestEntry \
+            -only-testing:EthicaTests/APIClientTests/testGuestTabsRequireLoginWithoutLeavingLearning \
+            -only-testing:EthicaTests/APIClientTests/testBookReaderBoundariesAndCancelledTurn \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             test 2>&1 | tee "$RUNNER_TEMP/notification-tests.log"
