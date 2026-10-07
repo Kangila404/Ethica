@@ -21,11 +21,21 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from 'src/question/domain/enum/question-type.enum';
 import { QuestionUsage } from 'src/question/domain/enum/question-usage.enum';
 import { PostSegmentType } from 'src/philosopher/domain/model/post-segment.entity';
+import { LearningCategory } from 'src/philosopher/domain/model/learning-profile-category.entity';
 export class CategoryInput {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(50) name!: string;
   @ApiProperty() @IsInt() @Min(0) sortOrder!: number;
 }
 export class PhilosopherInput {
+  @ApiPropertyOptional({ enum: LearningCategory, isArray: true })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(3)
+  @ArrayUnique()
+  @IsEnum(LearningCategory, { each: true })
+  categories?: LearningCategory[];
+
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(50) name!: string;
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(50) era!: string;
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(50) school!: string;

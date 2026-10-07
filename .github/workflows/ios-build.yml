@@ -57,8 +57,8 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee "$RUNNER_TEMP/ethica-ios-build.log"
-      - name: Test compact attribution parsing
-        run: swift test --package-path ios --filter ContentAttributionTests
+      - name: Test transport, guest catalog and attribution parsing
+        run: swift test --package-path ios
       - name: Test notification callbacks on iPhone simulator
         timeout-minutes: 12
         shell: bash
@@ -74,6 +74,7 @@ jobs:
             -resultBundlePath "$RUNNER_TEMP/notification-tests.xcresult" \
             -onlyUsePackageVersionsFromResolvedFile \
             -only-testing:EthicaTests/PushNotificationCallbackTests \
+            -only-testing:EthicaTests/APIClientTests/testSignedOutRootLoadsPublicLearningWithoutAccount \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             test 2>&1 | tee "$RUNNER_TEMP/notification-tests.log"

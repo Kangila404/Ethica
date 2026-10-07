@@ -2,6 +2,7 @@ import { Philosopher } from 'src/philosopher/domain/model/philosopher.entity';
 import { Post } from 'src/philosopher/domain/model/post.entity';
 
 export class PostsResponse {
+  categories!: string[];
   id!: string;
   name!: string;
   era!: string;
@@ -15,6 +16,8 @@ export class PostsResponse {
     const dto = new PostsResponse();
 
     dto.id = philosopher.id;
+    dto.categories =
+      philosopher.learningCategories?.map((item) => item.category) ?? [];
     dto.name = philosopher.name;
     dto.era = philosopher.era;
     dto.school = philosopher.school;

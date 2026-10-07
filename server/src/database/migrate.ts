@@ -6,6 +6,7 @@ import { PublishCamusWorks1791097200000 } from './migrations/1791097200000-Publi
 import { PublishAnalects1791158400000 } from './migrations/1791158400000-PublishAnalects';
 import { PublishCollectedWorks1791172800000 } from './migrations/1791172800000-PublishCollectedWorks';
 import { MultiDevicePush1791266400000 } from './migrations/1791266400000-MultiDevicePush';
+import { LearningAccessAndLikes1791331200000 } from './migrations/1791331200000-LearningAccessAndLikes';
 import { ReplaceLearningPosts1791003600000 } from './migrations/1791003600000-ReplaceLearningPosts';
 import { ThinkerProfiles1791000000000 } from './migrations/1791000000000-ThinkerProfiles';
 import { PublishReviewedContent1790989200000 } from './migrations/1790989200000-PublishReviewedContent';
@@ -61,6 +62,7 @@ const db = new DataSource({
     PublishAnalects1791158400000,
     PublishCollectedWorks1791172800000,
     MultiDevicePush1791266400000,
+    LearningAccessAndLikes1791331200000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

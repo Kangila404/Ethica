@@ -433,6 +433,7 @@ private struct EthicaWelcomeWordmark: View {
 
 struct WelcomeView: View {
   var replayIntroduction: () -> Void = {}
+  @State private var showIntroduction = false
   @EnvironmentObject private var session: AppSession
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @ScaledMetric(relativeTo: .body) private var buttonHeight = 56
@@ -482,6 +483,8 @@ struct WelcomeView: View {
               ) { Task { await session.login(.kakao) } }
             }
             .disabled(session.busy)
+            Button("로그인 없이 둘러보기") { session.showLogin = false }
+              .frame(minHeight: 44).disabled(session.busy)
             ZStack {
               if session.busy {
                 ProgressView().accessibilityLabel("로그인 중")
@@ -492,7 +495,7 @@ struct WelcomeView: View {
               VStack(spacing: 4) { legalLinks }
             }
             .font(.footnote).foregroundStyle(.secondary)
-            Button("소개 다시 보기", action: replayIntroduction)
+            Button("소개 다시 보기") { showIntroduction = true }
               .font(.footnote).foregroundStyle(.secondary)
               .frame(minHeight: 44).padding(.top, 4)
           }
@@ -503,6 +506,9 @@ struct WelcomeView: View {
         }
       }
       .background(Color(uiColor: .systemBackground))
+      .sheet(isPresented: $showIntroduction) {
+        WelcomeConversation { showIntroduction = false }
+      }
     }
   }
 
@@ -577,13 +583,28 @@ struct LiveRootView: View {
           Text("계정을 확인하고 있어요").font(.subheadline).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
           .background(Color(uiColor: .systemBackground))
-      case .signedOut: SignedOutWelcomeView()
+      case .signedOut:
+        NavigationStack {
+          LearningCatalogView()
+            .toolbar {
+              ToolbarItem(placement: .navigationBarTrailing) {
+                Button("로그인") { session.showLogin = true }
+              }
+            }
+        }
       case .unavailable:
         EmptyMessage(
           title: "연결하지 못했어요", symbol: "network", detail: "인터넷 연결을 확인하고 다시 시도해주세요"
         ) { Task { await session.restore() } }
       case .onboarding:
-        NavigationStack { OnboardingFlow().toolbar { profileToolbar } }
+        NavigationStack {
+          OnboardingFlow().toolbar {
+            profileToolbar
+            ToolbarItem(placement: .navigationBarLeading) {
+              NavigationLink("학습 둘러보기") { LearningCatalogView() }
+            }
+          }
+        }
       case .ready:
         TabView(selection: $session.selectedTab) {
           NavigationStack { LiveTodayView().toolbar { profileToolbar } }.tabItem {
@@ -609,6 +630,9 @@ struct LiveRootView: View {
     .id(session.generation)
     .sheet(isPresented: $settings) {
       NavigationStack { LiveSettingsView() }.environmentObject(session)
+    }
+    .sheet(isPresented: $session.showLogin) {
+      WelcomeView().environmentObject(session)
     }
     .onChange(of: session.phase) { value in if value == .signedOut { settings = false } }
     .task { if session.phase == .loading { await session.restore() } }
