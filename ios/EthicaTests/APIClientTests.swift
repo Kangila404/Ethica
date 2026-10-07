@@ -234,7 +234,7 @@ final class APIClientTests: XCTestCase {
   }
 
   #if canImport(Ethica)
-  @MainActor func testSignedOutRootLoadsPublicLearningWithoutAccount() async throws {
+  @MainActor func testSignedOutRootRequiresExplicitGuestEntry() async throws {
     await api.clear()
     let counts = LockedCounter()
     StubURLProtocol.handler = { request in
@@ -254,6 +254,10 @@ final class APIClientTests: XCTestCase {
     window.rootViewController = UIHostingController(rootView: LiveRootView().environmentObject(session))
     window.makeKeyAndVisible()
     defer { window.isHidden = true }
+    try await Task.sleep(nanoseconds: 300_000_000)
+    XCTAssertFalse(session.browsingAsGuest)
+    XCTAssertEqual(counts.count("/api/philosophers"), 0)
+    session.browseWithoutLogin()
     for _ in 0..<100 {
       if counts.count("/api/philosophers") > 0 { break }
       try await Task.sleep(nanoseconds: 50_000_000)
@@ -261,6 +265,53 @@ final class APIClientTests: XCTestCase {
     XCTAssertGreaterThan(counts.count("/api/philosophers"), 0)
     XCTAssertEqual(session.phase, .signedOut)
     XCTAssertNil(session.user)
+  }
+
+  @MainActor func testGuestTabsRequireLoginWithoutLeavingLearning() {
+    let session = AppSession(api: api)
+    session.phase = .signedOut
+    session.browseWithoutLogin()
+    XCTAssertTrue(session.browsingAsGuest)
+    XCTAssertEqual(session.selectedTab, 2)
+    for tab in [0, 1, 3] {
+      session.showLogin = false
+      session.selectGuestTab(tab)
+      XCTAssertTrue(session.showLogin)
+      XCTAssertEqual(session.selectedTab, 2)
+      session.browseWithoutLogin()
+      XCTAssertFalse(session.showLogin)
+    }
+    session.selectGuestTab(2)
+    XCTAssertFalse(session.showLogin)
+    session.phase = .onboarding
+    session.browseWithoutLogin()
+    XCTAssertEqual(session.phase, .onboarding)
+  }
+
+  @MainActor func testBookReaderBoundariesAndCancelledTurn() {
+    var selected = 0
+    let reader = BookPageReader(count: 20,
+      selection: Binding(get: { selected }, set: { selected = $0 }), reduceMotion: true) { index in
+        Text("Page \(index)")
+      }
+    let coordinator = reader.makeCoordinator()
+    XCTAssertNil(coordinator.page(at: -1))
+    XCTAssertNil(coordinator.page(at: 20))
+    let first = coordinator.page(at: 0)!
+    let controller = UIPageViewController(transitionStyle: .pageCurl, navigationOrientation: .horizontal)
+    controller.setViewControllers([first], direction: .forward, animated: false)
+    XCTAssertNil(coordinator.pageViewController(controller, viewControllerBefore: first))
+    XCTAssertNotNil(coordinator.pageViewController(controller, viewControllerAfter: first))
+    coordinator.pageViewController(controller, willTransitionTo: [coordinator.page(at: 1)!])
+    XCTAssertTrue(coordinator.transitioning)
+    coordinator.pageViewController(controller, didFinishAnimating: true,
+      previousViewControllers: [first], transitionCompleted: false)
+    XCTAssertEqual(selected, 0)
+    XCTAssertFalse(coordinator.transitioning)
+    let last = coordinator.page(at: 19)!
+    XCTAssertNil(coordinator.pageViewController(controller, viewControllerAfter: last))
+    coordinator.prune(around: 19)
+    XCTAssertLessThanOrEqual(coordinator.pages.count, 3)
   }
   #endif
   func testImageUploadRetainsMultipartWhenRefreshingSession() async throws {

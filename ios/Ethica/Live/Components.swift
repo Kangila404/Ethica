@@ -173,7 +173,7 @@ struct SignedOutWelcomeView: View {
         replayIntro = false
       }
     } else {
-      WelcomeView { replayIntro = true }
+      WelcomeView()
     }
   }
 }
@@ -432,7 +432,6 @@ private struct EthicaWelcomeWordmark: View {
 }
 
 struct WelcomeView: View {
-  var replayIntroduction: () -> Void = {}
   @State private var showIntroduction = false
   @EnvironmentObject private var session: AppSession
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -483,7 +482,8 @@ struct WelcomeView: View {
               ) { Task { await session.login(.kakao) } }
             }
             .disabled(session.busy)
-            Button("로그인 없이 둘러보기") { session.showLogin = false }
+            Button("로그인 없이 이용하기") { session.browseWithoutLogin() }
+              .accessibilityIdentifier("browseWithoutLogin")
               .frame(minHeight: 44).disabled(session.busy)
             ZStack {
               if session.busy {
@@ -570,6 +570,27 @@ private struct LoginButtonStyle: ButtonStyle {
       .opacity(!isEnabled ? 0.5 : configuration.isPressed ? 0.75 : 1)
   }
 }
+/// Non-account features remain readable; protected tabs never mount their API views.
+struct GuestTabsView: View {
+  @EnvironmentObject private var session: AppSession
+  var body: some View {
+    TabView(selection: Binding(get: { 2 }, set: { session.selectGuestTab($0) })) {
+      Color.clear.tabItem { Label("오늘", systemImage: "sun.max") }.tag(0)
+      Color.clear.tabItem { Label("분석", systemImage: "chart.bar.xaxis") }.tag(1)
+      NavigationStack {
+        LearningCatalogView().toolbar {
+          ToolbarItem(placement: .navigationBarTrailing) {
+            Button { session.showLogin = true } label: {
+              Label("로그인", systemImage: "person.crop.circle")
+            }
+          }
+        }
+      }.tabItem { Label("학습", systemImage: "books.vertical") }.tag(2)
+      Color.clear.tabItem { Label("보관함", systemImage: "tray") }.tag(3)
+    }
+  }
+}
+
 struct LiveRootView: View {
   @EnvironmentObject private var session: AppSession
   @Environment(\.scenePhase) private var scenePhase
@@ -584,14 +605,8 @@ struct LiveRootView: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
           .background(Color(uiColor: .systemBackground))
       case .signedOut:
-        NavigationStack {
-          LearningCatalogView()
-            .toolbar {
-              ToolbarItem(placement: .navigationBarTrailing) {
-                Button("로그인") { session.showLogin = true }
-              }
-            }
-        }
+        if session.browsingAsGuest { GuestTabsView() }
+        else { SignedOutWelcomeView() }
       case .unavailable:
         EmptyMessage(
           title: "연결하지 못했어요", symbol: "network", detail: "인터넷 연결을 확인하고 다시 시도해주세요"

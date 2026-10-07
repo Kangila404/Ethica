@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct LearningCatalogView: View {
   @EnvironmentObject private var session: AppSession
@@ -143,47 +144,35 @@ struct LiveReaderView: View {
         if post.segments.isEmpty {
           EmptyMessage(title: "글을 준비하고 있어요", symbol: "book.closed", detail: "새 글이 등록되면 여기서 읽을 수 있어요")
         } else {
-          TabView(selection: $page) {
-            ForEach(Array(post.segments.enumerated()), id: \.element.id) { index, card in
-              GeometryReader { geometry in
-              let distance = min(1, abs(geometry.frame(in: .named("readerPages")).minX) / max(1, geometry.size.width))
-              ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                  if index == 0 {
-                    Text(post.title).font(.system(.largeTitle, design: .serif, weight: .medium))
-                  }
-                  if let url = AppConfiguration.imageURL(card.imageKey) {
-                    LearningSlideImage(url: url, label: post.title + " 관련 자료")
-                  }
-                  if let body = card.body {
-                    CitedText(text: body).font(.title3).lineSpacing(8)
-                  }
-                  if index == post.segments.count - 1 {
-                    Label("마지막 페이지", systemImage: "checkmark").font(.footnote).foregroundStyle(
-                      .secondary
-                    ).padding(.top, 32)
-                  }
-                }.readingPage()
-              }
-              .blur(radius: reduceMotion ? 0 : distance * 7)
-              .overlay {
-                if !reduceMotion {
-                  Color.black.opacity(distance * 0.12).allowsHitTesting(false).accessibilityHidden(true)
+          BookPageReader(count: post.segments.count, selection: $page, reduceMotion: reduceMotion) { index in
+            let card = post.segments[index]
+            ScrollView {
+              VStack(alignment: .leading, spacing: 26) {
+                if index == 0 {
+                  Text(post.title).font(.system(.largeTitle, design: .serif, weight: .medium))
                 }
-              }
-              .scaleEffect(reduceMotion ? 1 : 1 - distance * 0.025)
-              }.tag(index)
-            }
-          }.tabViewStyle(.page(indexDisplayMode: .never)).coordinateSpace(name: "readerPages")
+                if let url = AppConfiguration.imageURL(card.imageKey) {
+                  LearningSlideImage(url: url, label: post.title + " 관련 자료")
+                }
+                if let body = card.body {
+                  CitedText(text: body).font(.title3).lineSpacing(8)
+                }
+                if index == post.segments.count - 1 {
+                  Label("마지막 페이지", systemImage: "checkmark").font(.footnote)
+                    .foregroundStyle(.secondary).padding(.top, 32)
+                }
+              }.readingPage()
+            }.background(Color(uiColor: .systemBackground))
+          }.id(post.segments.map(\.id))
           HStack {
             Button {
-              withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { page = max(0, page - 1) }
+              page = max(0, page - 1)
             } label: {
               Label("이전", systemImage: "chevron.left")
             }.disabled(page == 0)
             Spacer()
             Button {
-              withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { page = min(post.segments.count - 1, page + 1) }
+              page = min(post.segments.count - 1, page + 1)
             } label: {
               Label("다음", systemImage: "chevron.right")
             }.disabled(page >= post.segments.count - 1)
@@ -194,6 +183,97 @@ struct LiveReaderView: View {
     }
   }
 }
+/// UIKit's public book-turn transition, not a simulated blur or a private Apple API.
+/// Only nearby hosting controllers are retained, even for very long articles.
+struct BookPageReader<Content: View>: UIViewControllerRepresentable {
+  let count: Int
+  @Binding var selection: Int
+  let reduceMotion: Bool
+  @ViewBuilder let content: (Int) -> Content
+
+  func makeCoordinator() -> Coordinator { Coordinator(self) }
+  func makeUIViewController(context: Context) -> UIPageViewController {
+    let controller = UIPageViewController(
+      transitionStyle: .pageCurl, navigationOrientation: .horizontal,
+      options: [.spineLocation: UIPageViewController.SpineLocation.min.rawValue])
+    controller.isDoubleSided = false
+    controller.view.backgroundColor = .systemBackground
+    controller.delegate = context.coordinator
+    controller.dataSource = reduceMotion ? nil : context.coordinator
+    if let first = context.coordinator.page(at: selection) {
+      controller.setViewControllers([first], direction: .forward, animated: false)
+    }
+    return controller
+  }
+  func updateUIViewController(_ controller: UIPageViewController, context: Context) {
+    context.coordinator.parent = self
+    // Reduce Motion retains explicit Previous/Next controls without a curl gesture.
+    controller.dataSource = reduceMotion ? nil : context.coordinator
+    context.coordinator.displaySelection(in: controller)
+  }
+  static func dismantleUIViewController(_ controller: UIPageViewController, coordinator: Coordinator) {
+    controller.dataSource = nil
+    controller.delegate = nil
+  }
+
+  @MainActor final class Coordinator: NSObject, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
+    var parent: BookPageReader
+    var pages: [Int: UIHostingController<Content>] = [:]
+    var transitioning = false
+    init(_ parent: BookPageReader) { self.parent = parent }
+    func page(at index: Int) -> UIHostingController<Content>? {
+      guard index >= 0, index < parent.count else { return nil }
+      if let cached = pages[index] { return cached }
+      let page = UIHostingController(rootView: parent.content(index))
+      page.view.backgroundColor = .systemBackground
+      pages[index] = page
+      return page
+    }
+    func index(of controller: UIViewController) -> Int? {
+      pages.first { $0.value === controller }?.key
+    }
+    func prune(around index: Int) {
+      pages = pages.filter { abs($0.key - index) <= 1 }
+    }
+    func displaySelection(in controller: UIPageViewController) {
+      guard !transitioning, parent.count > 0,
+        let current = controller.viewControllers?.first.flatMap({ index(of: $0) }) else { return }
+      let target = min(max(0, parent.selection), parent.count - 1)
+      guard target != current, let next = page(at: target) else { return }
+      transitioning = true
+      controller.view.isUserInteractionEnabled = false
+      controller.setViewControllers([next], direction: target > current ? .forward : .reverse,
+        animated: !parent.reduceMotion) { [weak self, weak controller] _ in
+          guard let self, let controller else { return }
+          self.transitioning = false
+          controller.view.isUserInteractionEnabled = true
+          self.prune(around: target)
+          // Coalesce rapid button presses after the current UIKit transition completes.
+          self.displaySelection(in: controller)
+        }
+    }
+    func pageViewController(_ controller: UIPageViewController,
+      viewControllerBefore current: UIViewController) -> UIViewController? {
+      guard let index = index(of: current) else { return nil }
+      return page(at: index - 1)
+    }
+    func pageViewController(_ controller: UIPageViewController,
+      viewControllerAfter current: UIViewController) -> UIViewController? {
+      guard let index = index(of: current) else { return nil }
+      return page(at: index + 1)
+    }
+    func pageViewController(_ controller: UIPageViewController,
+      willTransitionTo pendingViewControllers: [UIViewController]) { transitioning = true }
+    func pageViewController(_ controller: UIPageViewController, didFinishAnimating finished: Bool,
+      previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+      transitioning = false
+      guard let visible = controller.viewControllers?.first, let current = index(of: visible) else { return }
+      parent.selection = current
+      prune(around: current)
+    }
+  }
+}
+
 private struct PostLikeState: Decodable { let count: Int; let liked: Bool }
 
 private struct PostLikeButton: View {
