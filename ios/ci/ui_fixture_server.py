@@ -3,6 +3,7 @@
 No account endpoints or credentials; unexpected/private requests fail and are logged.
 """
 import json
+import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -26,6 +27,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         value = None
         if path == "/api/philosophers":
+            time.sleep(float(os.environ.get("ETHICA_CATALOG_DELAY", "0")))
             value = dict(nearest=[], all=PEOPLE)
         elif path in ["/api/philosophers/1", "/api/philosophers/2"]:
             person = PEOPLE[int(path[-1]) - 1]

@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 ios/ci/ui_fixture_server.py > "$RUNNER_TEMP/navigation-fixture.log" 2>&1 &
+          ETHICA_CATALOG_DELAY=1 python3 ios/ci/ui_fixture_server.py > "$RUNNER_TEMP/navigation-fixture.log" 2>&1 &
           FIXTURE_PID=$!
           trap 'kill "$FIXTURE_PID" 2>/dev/null || true' EXIT
           SIMULATOR_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=[d for ds in json.load(sys.stdin)["devices"].values() for d in ds if "iPhone" in d["name"]]; preferred=[d for d in devices if d["name"] == "iPhone 16 Pro"]; print((preferred or devices)[0]["udid"])')
@@ -104,6 +104,8 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestSingleTapNavigationAndReaderLifecycle \
             -only-testing:EthicaUITests/NavigationFlowTests/testLearningContentStartsBelowNavigationAndEndsAboveTabs \
+            -only-testing:EthicaUITests/NavigationFlowTests/testLearningRefreshKeepsHeaderAndNavigation \
+            -only-testing:EthicaUITests/NavigationFlowTests/testProfilePortraitOpensZoomsAndReturnsToSameProfile \
             -only-testing:EthicaUITests/NavigationFlowTests/testGuestConfirmationPreservesReaderAndLoginDismissal \
             -only-testing:EthicaUITests/NavigationFlowTests/testAccountHeaderEditingAndEmptyAnalysisExplanation \
             -parallel-testing-enabled NO \
