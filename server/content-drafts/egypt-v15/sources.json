@@ -1,0 +1,128 @@
+{
+  "legends": {
+    "title": "E. A. Wallis Budge, Legends of the Gods (1912)",
+    "url": "https://www.gutenberg.org/cache/epub/9411/pg9411-images.html",
+    "type": "primary-translation",
+    "note": "공공영역 구역. 고대 텍스트 번역만 참고하며 서문의 시대착오적 인종·문화 평가와 어원 추측은 채택하지 않음. 현대 번역 직접 인용 없음."
+  },
+  "nun": {
+    "title": "Global Egyptian Museum — Nun",
+    "url": "https://www.globalegyptianmuseum.org/glossary.aspx?id=274",
+    "type": "museum"
+  },
+  "creation": {
+    "title": "UCL Digital Egypt — Creation deities",
+    "url": "https://www.ucl.ac.uk/museums-static/digitalegypt/religion/deitiescreation.html",
+    "type": "academic"
+  },
+  "nutpapyrus": {
+    "title": "British Museum — Greenfield Papyrus, EA10554-87",
+    "url": "https://www.britishmuseum.org/collection/object/Y_EA10554-87",
+    "type": "museum"
+  },
+  "shabaka": {
+    "title": "Shabaka Stone — Miriam Lichtheim 번역",
+    "url": "https://www.attalus.org/egypt/shabaka_stone.html",
+    "type": "primary-translation",
+    "note": "직접 인용 없이 독자적 요약. 돌의 제작 시기와 본문의 성립 시기를 구별하며 고문서 복사 주장을 역사적으로 확정하지 않음."
+  },
+  "shabakamuseum": {
+    "title": "British Museum — Shabaka Stone, EA498",
+    "url": "https://www.britishmuseum.org/collection/object/Y_EA498",
+    "type": "museum"
+  },
+  "ogdoadresearch": {
+    "title": "LMU Hermopolis — The Ogdoad of Hermopolis",
+    "url": "https://www.hermopolis.gwi.uni-muenchen.de/the-ogdoad-of-hermopolis/",
+    "type": "academic",
+    "note": "알·연꽃 전승과 쌍의 변동에 한해 참고. 동물 도상의 성별은 이 페이지의 역전된 설명이 아니라 박물관 자료와 대조."
+  },
+  "ogdoadmuseum": {
+    "title": "Global Egyptian Museum — Ogdoad",
+    "url": "https://globalegyptianmuseum.org/glossary.aspx?id=279",
+    "type": "museum"
+  },
+  "amduat": {
+    "title": "Global Egyptian Museum — Amduat",
+    "url": "https://www.globalegyptianmuseum.org/glossary.aspx?id=52",
+    "type": "museum"
+  },
+  "maatmet": {
+    "title": "The Met — Maat, 10.130.1302",
+    "url": "https://www.metmuseum.org/art/collection/search/545360",
+    "type": "museum"
+  },
+  "bookdead": {
+    "title": "British Museum — What is a Book of the Dead?",
+    "url": "https://www.britishmuseum.org/blog/what-book-dead",
+    "type": "museum"
+  },
+  "sekhmet": {
+    "title": "North Carolina Museum of Art — Bust of the Goddess Sekhmet",
+    "url": "https://learn.ncartmuseum.org/artwork/bust-of-the-goddess-sekhmet/",
+    "type": "museum"
+  },
+  "isisra": {
+    "title": "UCL Digital Egypt — Isis and the name of Ra",
+    "url": "https://www.ucl.ac.uk/museums-static/digitalegypt/literature/isisandra.html",
+    "type": "primary-translation"
+  },
+  "osirismet": {
+    "title": "The Met — Osiris",
+    "url": "https://www.metmuseum.org/art/collection/search/570644",
+    "type": "museum"
+  },
+  "metternich": {
+    "title": "The Met — Magical Stela with Horus the Child, 50.85",
+    "url": "https://www.metmuseum.org/art/collection/search/546037",
+    "type": "museum"
+  },
+  "contendings": {
+    "title": "Bibliotheca Alexandrina — The Contending of Horus and Seth",
+    "url": "https://inscriptionslibrary.bibalex.org/presentation/monument.aspx?ins_id=13&lang=en&mon_id=2873",
+    "type": "primary-translation",
+    "note": "체스터 비티 I 서사. 샤바카 석비의 통합 서사를 중간 사건으로 삽입하지 않음. 성적·유혈 장면은 상세 재현하지 않는 선별 요약."
+  },
+  "wedjat": {
+    "title": "British Museum — Wedjat eye amulet, EA23426",
+    "url": "https://www.britishmuseum.org/collection/object/Y_EA23426",
+    "type": "museum"
+  },
+  "amulets": {
+    "title": "Isabel Stünkel, The Met — Ancient Egyptian Amulets",
+    "url": "https://www.metmuseum.org/essays/egyptian-amulets",
+    "type": "museum"
+  },
+  "egyptmetguide": {
+    "title": "The Met — The Art of Ancient Egypt: A Resource for Educators",
+    "url": "https://www.metmuseum.org/-/media/files/learn/for-educators/publications-for-educators/the-art-of-ancient-egypt.pdf",
+    "type": "museum"
+  },
+  "openingmouth": {
+    "title": "UCL Digital Egypt — Opening of the Mouth ritual",
+    "url": "https://www.ucl.ac.uk/museums-static/digitalegypt/religion/wpr2.html",
+    "type": "primary-translation"
+  },
+  "deadprimary": {
+    "title": "P. Le Page Renouf / Edouard Naville, The Egyptian Book of the Dead (1904)",
+    "url": "https://www.gutenberg.org/cache/epub/69566/pg69566-images.html",
+    "type": "primary-translation",
+    "note": "공공영역 구역을 토대로 독자적 한국어 요약. 오래된 해석은 현재 박물관 설명과 대조."
+  },
+  "heartamulet": {
+    "title": "British Museum — Heart scarab, EA29440",
+    "url": "https://www.britishmuseum.org/collection/object/Y_EA29440",
+    "type": "museum"
+  },
+  "amduatprimary": {
+    "title": "E. A. Wallis Budge, The Book of Am-Tuat (1905)",
+    "url": "https://sacred-texts.com/book/the-book-of-am-tuat/shell/chapter-vii-the-seventh-division-of-the-tuat-which-is-called-thephet-asar",
+    "type": "primary-translation",
+    "note": "공공영역 번역. 페이지 목차에서 각 시간으로 이동 가능. 제7시간의 아포피스·주문 설명과 제12시간의 재생을 대조."
+  },
+  "djedpapyrus": {
+    "title": "The Met — Papyrus of Djedmutesankh, 25.3.27",
+    "url": "https://www.metmuseum.org/art/collection/search/550898",
+    "type": "museum"
+  }
+}

@@ -1,0 +1,12 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const {inputs,validate,exportData,validateExport}=require('./export-egypt-v15.cjs');
+test('18 ordered articles, 216 image-bearing slides and local-only status',()=>{const p=exportData(inputs());validateExport(p);assert.equal(p.posts.reduce((n,p)=>n+p.segments.length,0),216)});
+test('duplicate image selection is rejected',()=>{const d=inputs();d.plan['egypt-01'][1]=d.plan['egypt-01'][0];assert.throws(()=>validate(d,false),/duplicate/)});
+test('different photos of the same artwork are rejected',()=>{const d=inputs(),keys=d.plan['egypt-01'].map(v=>v[0]);d.images.find(i=>i.key===keys[1]).artworkId=d.images.find(i=>i.key===keys[0]).artworkId;assert.throws(()=>validate(d,false),/duplicate artworkId/)});
+test('same bytes under different names are rejected',()=>{const d=inputs(),keys=d.plan['egypt-01'].map(v=>v[0]);d.images.find(i=>i.key===keys[1]).sha256=d.images.find(i=>i.key===keys[0]).sha256;assert.throws(()=>validate(d,false),/duplicate sha256/)});
+test('missing body image is rejected',()=>{const d=inputs();d.plan['egypt-01'][2][0]=-1;assert.throws(()=>validate(d,false),/image/)});
+test('unlicensed image is rejected',()=>{const d=inputs();d.images[0].license='All rights reserved';assert.throws(()=>validate(d,false),/license/)});
+test('bad file hashes are rejected',()=>{const d=inputs();d.images[0].sha256='0'.repeat(64);assert.throws(()=>validate(d),/asset integrity/)});
+test('unresolved source references are rejected',()=>{const d=inputs();d.articles[0].sources[0].id='missing';assert.throws(()=>validate(d,false),/source/)});
+test('publication is never inferred',()=>{const p=exportData(inputs());p.posts[0].status='published';assert.throws(()=>validateExport(p),/local draft/)});
+test('DB identifiers cannot be fabricated',()=>{const p=exportData(inputs());p.posts[0].philosopherId=123;assert.throws(()=>validateExport(p),/identifiers/)});

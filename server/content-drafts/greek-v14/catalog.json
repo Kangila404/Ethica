@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "batchKey": "ethica-greek-v14",
+  "categories": [],
+  "philosophers": [
+    {
+      "key": "greek",
+      "name": "그리스·로마 신화",
+      "category": "mythology",
+      "existing": true,
+      "existingEvidence": "server/src/database/migrations/content/greek-series-v13.ts"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "key": 2000,
+    "caption": "은손을 살펴보는 누아다 — AI 생성",
+    "context": "누아다와 장인의 상상 장면. 고대 그림이나 고증 복원품이 아닌 현대 AI 삽화.",
+    "prompt": "Use case: illustration-story. Asset type: one standalone image for a Korean Irish mythology educational article. Subject: Nuada of the Silver Hand seated quietly in an early Irish timber royal hall, contemplating his articulated silver prosthetic hand, with a skilled metalworker beside him. Mythological imagined scene, not a claim of archaeological reconstruction. Medium: dignified Renaissance oil-painting technique, layered glazes, restrained chiaroscuro and tangible brush texture; subject and costumes remain ancient Irish myth, NOT ancient Greek or Renaissance costumes. Square composition, emotionally thoughtful, silver hand clearly readable, natural anatomy, fully clothed. No violence, no text, no collage, no borders, no watermark. Make a single complete illustration.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "해당 장면을 직접 묘사하고 재사용 권한이 확인되는 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2000.png"
+  },
+  {
+    "key": 2001,
+    "caption": "브레스의 궁정, 환대받지 못한 시인 — AI 생성",
+    "context": "빈약한 식탁과 왕의 대비로 환대의 실패를 표현한 AI 삽화. 실제 역사 자료 아님.",
+    "prompt": "Use case: illustration-story. Asset type: single square painting for an Irish mythology learning article. Depict the failure of hospitality under King Bres: a handsome young Irish mythical king in a richly woven cloak seated at the far end of an austere timber hall, a visiting poet at an almost empty guest table with one small loaf and no welcoming feast; attendants uneasy. The focal meaning is inequality and withheld hospitality, not monstrous ancestry. Renaissance oil painting technique, expressive composed figures, warm glaze and cool ambient light, deep tactile paint; ancient Irish myth setting with woven cloaks, wooden cups and simple bronze ornaments, not Renaissance architecture or Greek togas. A restrained narrative composition with the empty guest table prominent. All fully clothed, no violence, no lettering, no collage, no borders or watermark. Original artistic interpretation, not purported ancient artwork.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "해당 장면을 직접 묘사하고 재사용 권한이 확인되는 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2001.png"
+  },
+  {
+    "key": 2002,
+    "caption": "다그다의 풍요로운 솥 — AI 생성",
+    "context": "다그다의 마르지 않는 솥을 상상한 현대 삽화. 실제 유물 아님.",
+    "prompt": "Use case: illustration-story. Single standalone square illustration for an Irish mythology educational slide. Original imaginative myth scene, not a real ancient artwork or archaeological reconstruction. Renaissance oil-painting technique, rich glazes, natural figure proportions, dramatic but restrained illumination, visible fine paint texture. Keep ancient Irish myth subject matter, timber architecture, wool cloaks and bronze ornaments; no Greek/Roman togas, no Renaissance costumes, no modern objects, no text, no borders, no collage, no watermarks. A large bronze cauldron brimming with warm food in the middle of an early Irish timber feast hall. The broad dignified Dagda serves a bowl to a waiting guest; other ordinary guests are visible quietly receiving food. Focus on the rounded cauldron and communal abundance, not a witch's potion. Fully clothed characters, friendly gravitas.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "본문의 특정 장면을 직접 묘사한 재사용 가능한 기존 이미지를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2002.png"
+  },
+  {
+    "key": 2003,
+    "caption": "왕궁 문에서 자신의 재주를 말하는 루 — AI 생성",
+    "context": "루와 문지기의 대화를 표현한 상상 삽화.",
+    "prompt": "Use case: illustration-story. Single standalone square illustration for an Irish mythology educational slide. Original imaginative myth scene, not a real ancient artwork or archaeological reconstruction. Renaissance oil-painting technique, rich glazes, natural figure proportions, dramatic but restrained illumination, visible fine paint texture. Keep ancient Irish myth subject matter, timber architecture, wool cloaks and bronze ornaments; no Greek/Roman togas, no Renaissance costumes, no modern objects, no text, no borders, no collage, no watermarks. Young Lugh in a travel cloak stands before a timber royal gate, speaking thoughtfully with its gatekeeper. The gate is partly open and a distant communal hall is visible. Lugh carries one spear, a small harp and a pouch of craft tools suggesting his many arts. No battle, no weapons raised. Composition emphasizes conversation across the threshold.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "본문의 특정 장면을 직접 묘사한 재사용 가능한 기존 이미지를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2003.png"
+  },
+  {
+    "key": 2004,
+    "caption": "누아다의 손을 치유하는 미아흐 — AI 생성",
+    "context": "미아흐의 치유 전승을 상상한 삽화. 의학적 시술이나 역사적 치료법의 재현 아님.",
+    "prompt": "Use case: illustration-story. Single standalone square illustration for an Irish mythology educational slide. Original imaginative myth scene, not a real ancient artwork or archaeological reconstruction. Renaissance oil-painting technique, rich glazes, natural figure proportions, dramatic but restrained illumination, visible fine paint texture. Keep ancient Irish myth subject matter, timber architecture, wool cloaks and bronze ornaments; no Greek/Roman togas, no Renaissance costumes, no modern objects, no text, no borders, no collage, no watermarks. Young healer Miach carefully holds King Nuada's restored natural hand under warm lamplight in a modest timber chamber. Nuada sits in a woven cloak, relieved but thoughtful. A silver prosthetic hand lies unused on a small nearby table, clearly distinct from the living hand. Intimate focused composition, no surgery, no blood, no open wound, no medical claims.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "본문의 특정 장면을 직접 묘사한 재사용 가능한 기존 이미지를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2004.png"
+  },
+  {
+    "key": 2005,
+    "caption": "미아흐의 무덤에서 약초를 모으는 아르메드 — AI 생성",
+    "context": "치유 지식과 상실의 전승을 표현한 현대 상상 삽화.",
+    "prompt": "Use case: illustration-story. One square standalone original Irish mythology scene for an educational card. Renaissance oil-painting technique and composition, tactile glazes, restrained chiaroscuro, not a modern fantasy poster. Mythical Irish setting with wool cloaks, timber and earth, NOT Renaissance or Greek costumes. Fully clothed, no text, no labels, no collage, no border, no watermark, no graphic injury. Airmed, a young Irish woman in a simple cloak, kneels beside a low grass-covered burial mound in early morning mist. She carefully sorts many different delicate medicinal plants onto her spread cloak. No human remains, no gravestone writing, no royal throne. Quiet grief, close attention to leaves, varied small plants. The image illustrates a myth, not actual medical advice.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "사건을 직접 묘사한 재사용 가능한 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2005.png"
+  },
+  {
+    "key": 2006,
+    "caption": "브레스에게 왕위를 돌려달라고 요구하는 공동체 — AI 생성",
+    "context": "브레스의 퇴위를 요구하는 장면을 상상한 삽화.",
+    "prompt": "Use case: illustration-story. One square standalone original Irish mythology scene for an educational card. Renaissance oil-painting technique and composition, tactile glazes, restrained chiaroscuro, not a modern fantasy poster. Mythical Irish setting with wool cloaks, timber and earth, NOT Renaissance or Greek costumes. Fully clothed, no text, no labels, no collage, no border, no watermark, no graphic injury. An assembly of Irish mythical elders and craftspeople confronts a handsome young king Bres in a timber hall. The king has risen from his seat, one hand resting on a small crown on the table; an elder addresses him while others watch gravely. No riot or violence. Focus on collective judgment of a failed ruler, not on racial difference.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "사건을 직접 묘사한 재사용 가능한 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2006.png"
+  },
+  {
+    "key": 2007,
+    "caption": "발로르의 눈을 향하는 루의 물매 — AI 생성",
+    "context": "《마그 투레드 전투》의 물매 돌 판본을 따른 비유적 삽화.",
+    "prompt": "Use case: illustration-story. One square standalone original Irish mythology scene for an educational card. Renaissance oil-painting technique and composition, tactile glazes, restrained chiaroscuro, not a modern fantasy poster. Mythical Irish setting with wool cloaks, timber and earth, NOT Renaissance or Greek costumes. Fully clothed, no text, no labels, no collage, no border, no watermark, no graphic injury. Lugh seen in profile in an open Irish battlefield, releasing a stone from a sling toward the immense eye of distant Balor. Balor is a gigantic elderly mythical figure whose heavy eyelid is being lifted by attendants. Freeze the instant before impact: no wound or blood, no laser beams, no sword attack, no spear thrown. Scale, smoky light and a clear slinging gesture are central.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "사건을 직접 묘사한 재사용 가능한 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2007.png"
+  },
+  {
+    "key": 2008,
+    "caption": "아들을 잃고 애도하는 브리기드 — AI 생성",
+    "context": "루아단의 죽음 뒤 브리기드의 애도를 상상한 현대 삽화.",
+    "prompt": "Use case: illustration-story. One square standalone original Irish mythology scene for an educational card. Renaissance oil-painting technique and composition, tactile glazes, restrained chiaroscuro, not a modern fantasy poster. Mythical Irish setting with wool cloaks, timber and earth, NOT Renaissance or Greek costumes. Fully clothed, no text, no labels, no collage, no border, no watermark, no graphic injury. Brigit sits on the earth outside a dim bronze-worker's shelter at dusk, mourning her fallen grown son Ruadan. A fully covered body under a plain wool blanket beside her, only folded cloth visible, no exposed injury. She inclines her face in grief; distant forge glow is subdued. A quiet humane lament, not a battle spectacle.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "사건을 직접 묘사한 재사용 가능한 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2008.png"
+  },
+  {
+    "key": 2009,
+    "caption": "에리우와 도래자들의 만남 — AI 생성",
+    "context": "밀의 후손들과 에리우의 만남을 상상한 삽화. 역사적 실재를 주장하지 않음.",
+    "prompt": "Use case: illustration-story. One square standalone original Irish mythology scene for an educational card. Renaissance oil-painting technique and composition, tactile glazes, restrained chiaroscuro, not a modern fantasy poster. Mythical Irish setting with wool cloaks, timber and earth, NOT Renaissance or Greek costumes. Fully clothed, no text, no labels, no collage, no border, no watermark, no graphic injury. Eriu, a dignified woman personifying Ireland in a green woven cloak, meets a small group of sea-weary arrivals led by a poet on an Irish hillside. Distant simple boats by the shore, open grass and clouded sky. The visitors listen as she gestures toward the land. No modern flag, no crown of shamrocks, no combat. A meeting about belonging and the name of the island.",
+    "tool": "built-in image_gen",
+    "generatedAt": "2026-10-09",
+    "reason": "사건을 직접 묘사한 재사용 가능한 기존 삽화를 확보하지 못해 보완.",
+    "imageKey": "irish-v17-2009.png"
+  }
+]

@@ -1,0 +1,134 @@
+{
+  "library1": {
+    "title": "아폴로도로스 전승, 《도서관》 1권",
+    "url": "https://www.theoi.com/Text/Apollodorus1.html"
+  },
+  "library2": {
+    "title": "아폴로도로스 전승, 《도서관》 2권",
+    "url": "https://www.theoi.com/Text/Apollodorus2.html"
+  },
+  "library3": {
+    "title": "아폴로도로스 전승, 《도서관》 3권",
+    "url": "https://www.theoi.com/Text/Apollodorus3.html"
+  },
+  "epitome": {
+    "title": "아폴로도로스 전승, 《도서관》 요약본",
+    "url": "https://www.theoi.com/Text/ApollodorusE.html"
+  },
+  "ovid8": {
+    "title": "오비디우스, 《변신 이야기》 8권",
+    "url": "https://www.theoi.com/Text/OvidMetamorphoses8.html"
+  },
+  "ovid10": {
+    "title": "오비디우스, 《변신 이야기》 10권",
+    "url": "https://www.theoi.com/Text/OvidMetamorphoses10.html"
+  },
+  "ovid11": {
+    "title": "오비디우스, 《변신 이야기》 11권",
+    "url": "https://www.theoi.com/Text/OvidMetamorphoses11.html"
+  },
+  "ovid13": {
+    "title": "오비디우스, 《변신 이야기》 13권",
+    "url": "https://www.theoi.com/Text/OvidMetamorphoses13.html"
+  },
+  "iliad1": {
+    "title": "호메로스, 《일리아스》 1권",
+    "url": "https://www.theoi.com/Text/HomerIliad1.html"
+  },
+  "iliad6": {
+    "title": "호메로스, 《일리아스》 6권",
+    "url": "https://www.theoi.com/Text/HomerIliad6.html"
+  },
+  "iliad9": {
+    "title": "호메로스, 《일리아스》 9권",
+    "url": "https://www.theoi.com/Text/HomerIliad9.html"
+  },
+  "iliad16": {
+    "title": "호메로스, 《일리아스》 16권",
+    "url": "https://www.theoi.com/Text/HomerIliad16.html"
+  },
+  "iliad18": {
+    "title": "호메로스, 《일리아스》 18권",
+    "url": "https://www.theoi.com/Text/HomerIliad18.html"
+  },
+  "iliad22": {
+    "title": "호메로스, 《일리아스》 22권",
+    "url": "https://www.theoi.com/Text/HomerIliad22.html"
+  },
+  "iliad24": {
+    "title": "호메로스, 《일리아스》 24권",
+    "url": "https://www.theoi.com/Text/HomerIliad24.html"
+  },
+  "odyssey5": {
+    "title": "호메로스, 《오디세이아》 5권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey5.html"
+  },
+  "odyssey9": {
+    "title": "호메로스, 《오디세이아》 9권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey9.html"
+  },
+  "odyssey19": {
+    "title": "호메로스, 《오디세이아》 19권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey19.html"
+  },
+  "odyssey23": {
+    "title": "호메로스, 《오디세이아》 23권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey23.html"
+  },
+  "odyssey24": {
+    "title": "호메로스, 《오디세이아》 24권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey24.html"
+  },
+  "aeneid1": {
+    "title": "베르길리우스, 《아이네이스》 1권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid1.html"
+  },
+  "aeneid2": {
+    "title": "베르길리우스, 《아이네이스》 2권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid2.html"
+  },
+  "aeneid3": {
+    "title": "베르길리우스, 《아이네이스》 3권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid3.html"
+  },
+  "aeneid4": {
+    "title": "베르길리우스, 《아이네이스》 4권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid4.html"
+  },
+  "aeneid5": {
+    "title": "베르길리우스, 《아이네이스》 5권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid5.html"
+  },
+  "aeneid6": {
+    "title": "베르길리우스, 《아이네이스》 6권",
+    "url": "https://www.theoi.com/Text/VirgilAeneid6.html"
+  },
+  "aeneidall": {
+    "title": "베르길리우스, 《아이네이스》 전권 (J. W. Mackail 번역)",
+    "url": "https://www.gutenberg.org/files/22456/22456-h/22456-h.htm"
+  },
+  "livy": {
+    "title": "리비우스, 《로마사》 1권",
+    "url": "https://www.gutenberg.org/files/19725/19725-h/19725-h.htm"
+  },
+  "eumenides": {
+    "title": "아이스킬로스, 《자비로운 여신들》",
+    "url": "https://classics.mit.edu/Aeschylus/eumendides.html"
+  },
+  "oedipus": {
+    "title": "소포클레스, 《오이디푸스 왕》",
+    "url": "https://classics.mit.edu/Sophocles/oedipus.html"
+  },
+  "heracles": {
+    "title": "에우리피데스, 《헤라클레스》",
+    "url": "https://classics.mit.edu/Euripides/heracles.html"
+  },
+  "agamemnon": {
+    "title": "아이스킬로스, 《아가멤논》",
+    "url": "https://classics.mit.edu/Aeschylus/agamemnon.html"
+  },
+  "odyssey22": {
+    "title": "호메로스, 《오디세이아》 22권",
+    "url": "https://www.theoi.com/Text/HomerOdyssey22.html"
+  }
+}

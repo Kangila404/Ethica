@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "batchKey": "ethica-irish-v17",
+  "categories": [],
+  "philosophers": [
+    {
+      "key": "irish-mythology",
+      "name": "아일랜드 신화",
+      "category": "mythology",
+      "existing": false,
+      "status": "draft",
+      "era": "중세 아일랜드 문헌과 후대 구전·재화에 이어진 여러 전승",
+      "school": "신화·영웅 서사",
+      "summary": "섬에 찾아온 신들, 홀로 길을 지키는 영웅, 젊음의 나라에서 돌아온 이야기꾼.",
+      "description": "신들의 도래와 왕권 8편, 쿠 훌린과 얼스터 7편, 피온·피아나·오신 5편으로 읽는 20편의 시리즈입니다. 특정 저자 한 사람의 창작물이나 단일한 역사 연대기가 아닙니다. 여러 전승의 차이와 후대 미술의 해석을 구별해 소개합니다. 왕들의 이야기군 전체를 다루는 총서는 아닙니다.",
+      "imageKey": "irish-v17-0013.jpg",
+      "imageCredit": {
+        "key": 13,
+        "artworkId": "duncan-riders-sidhe",
+        "imageKey": "irish-v17-0013.jpg",
+        "kind": "historical",
+        "caption": "시드의 기수들 · 존 덩컨",
+        "context": "1911년 작품. 시드와 다른 세계를 표현한 후대의 미술이며 특정 전투의 현장 복원이 아님.",
+        "creator": "John Duncan",
+        "sourceUrl": "https://commons.wikimedia.org/?curid=46025095",
+        "license": "Public domain",
+        "licenseUrl": "https://commons.wikimedia.org/wiki/File:Riders_of_the_Sidhe.jpg#Licensing",
+        "changes": "Wikimedia Commons 제공 축소본. 원작 구성·색상 변경 없음.",
+        "originalTitle": "File:Riders of the Sidhe.jpg",
+        "description": "",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/32/Riders_of_the_Sidhe.jpg",
+        "sha256": "05a3fc47a81c0ce537ed61c8cf2aadf12237c8ea66e47aff661559ab20914465"
+      },
+      "registrationNote": "운영 등록 전에 mythology 분류와 기존 프로필을 조회할 것. 로컬 편집 교환 형식이며 API payload나 실행 가능한 migration이 아님."
+    }
+  ]
+}
