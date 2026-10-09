@@ -31,6 +31,9 @@ jobs:
       - name: 5. Test
         run: npm run test --workspace=server
 
+      - name: Validate approved mythology sources and image plans
+        run: node --test server/tools/export-greek-v14.test.cjs server/tools/export-egypt-v15.test.cjs server/tools/export-mesopotamia-v16.test.cjs server/tools/export-irish-v17.test.cjs
+
       - name: 6. Build
         run: npm run build --workspace=server
 
@@ -61,6 +64,37 @@ jobs:
         env:
           ETHICA_TEST_DB: ethica_verify_ci
         run: npm run test:mysql --workspace=server
+
+  mythology-integration:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: integration-only
+          MYSQL_DATABASE: ethica_verify_mythology
+          MYSQL_USER: ethica
+          MYSQL_PASSWORD: ethica
+        ports: ['3308:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - name: Verify atomic publication, rollback, retry and preservation
+        env:
+          ETHICA_TEST_DB: ethica_verify_mythology
+          ETHICA_TEST_PORT: '3308'
+          ETHICA_TEST_USER: ethica
+          ETHICA_TEST_PASSWORD: ethica
+        run: npm exec --workspace=server -- jest --config test/jest-pending-mythologies-mysql.json --runInBand
 
   deployment-smoke:
     needs: build-and-test

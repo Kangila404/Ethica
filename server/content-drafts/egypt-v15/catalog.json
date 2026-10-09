@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "batchKey": "ethica-egypt-v15",
+  "categories": [],
+  "philosophers": [
+    {
+      "key": "egypt",
+      "name": "이집트 신화",
+      "category": "mythology",
+      "existing": false,
+      "status": "draft",
+      "era": "고대 이집트 · 지역과 시대에 따라 발전한 여러 전승",
+      "school": "신화·종교 전승",
+      "summary": "끝없는 물에서 떠오른 세계, 죽은 왕의 회복, 밤을 건너 다시 태어나는 태양.",
+      "description": "여러 지역의 창조 신학과 오시리스 전승, 장례 문헌을 함께 읽는 18편의 시리즈입니다. 특정 인물 한 명의 창작물이나 단일한 정본이 아니라, 서로 다른 시대의 문헌과 유물에 남은 이야기들을 구별해 소개합니다.",
+      "imageKey": "egypt-v15-0007.jpg",
+      "imageCredit": {
+        "key": 7,
+        "artworkId": "commons-17699180",
+        "imageKey": "egypt-v15-0007.jpg",
+        "sha256": "1a17fdb03f7dac781d7940db8b6ba183170dad22f0d8db896ed13d22826e7c1b",
+        "kind": "historical",
+        "caption": "Nun Raises the Sun",
+        "creator": "Original author unknown",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nun_Raises_the_Sun.jpg",
+        "license": "Public domain",
+        "licenseUrl": "https://commons.wikimedia.org/wiki/File:Nun_Raises_the_Sun.jpg#Licensing",
+        "changes": "Wikimedia Commons 제공 축소본. 원작 구성·색상 변경 없음.",
+        "description": "Nun, god of the waters of chaos, lifts the barque of the sun god Ra (represented by both the scarab and the sun disk) into the sky at the beginning of time."
+      },
+      "registrationNote": "미등록 제안 프로필. 배포 전 실제 DB에서 중복 프로필을 조회하고 기존 mythology 분류에 연결할 것. 이 파일은 자동 import나 migration이 아니다."
+    }
+  ]
+}

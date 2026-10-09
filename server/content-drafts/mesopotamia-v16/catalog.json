@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "batchKey": "ethica-mesopotamia-v16",
+  "categories": [],
+  "philosophers": [
+    {
+      "key": "mesopotamia",
+      "name": "메소포타미아 신화",
+      "category": "mythology",
+      "existing": false,
+      "status": "draft",
+      "era": "고대 메소포타미아 · 수메르어와 아카드어로 이어진 여러 전승",
+      "school": "신화·종교·영웅 서사",
+      "summary": "세계를 만드는 신들, 저승에서 돌아오는 여신, 죽음을 피하려 길을 떠난 왕.",
+      "description": "에누마 엘리시 4편, 아트라하시스 3편, 이난나 4편, 길가메시 9편으로 읽는 20편의 시리즈입니다. 특정 작가 한 명의 작품이나 모든 지역이 공유한 단일 정본이 아닙니다. 전승별 차이와 문헌의 결락을 구별해 소개합니다.",
+      "imageKey": "mesopotamia-v16-0291.jpg",
+      "imageCredit": {
+        "key": 291,
+        "artworkId": "IraqMuseum-Warka-vase",
+        "imageKey": "mesopotamia-v16-0291.jpg",
+        "sha256": "1e35e69e18096b2ed6b02dbdaf0c46f487b0adbd9dfe12badc8444ae7f498214",
+        "kind": "historical",
+        "caption": "우루크의 와르카 제의 용기",
+        "context": "식물·동물·봉헌 인물이 이어지는 실제 유물. 대홍수나 이난나의 여행을 직접 그린 것은 아님.",
+        "creator": "Solider 16IQ",
+        "sourceUrl": "https://commons.wikimedia.org/?curid=77727824",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "changes": "Wikimedia Commons 제공 축소본. 원작 구성·색상 변경 없음.",
+        "originalTitle": "File:Warka vase Baghdad Museum.jpg",
+        "description": "Warka vase Baghdad Museum",
+        "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/8/89/Warka_vase_Baghdad_Museum.jpg"
+      },
+      "registrationNote": "로컬 프로필 초안. 운영 등록 전에 기존 mythology 분류와 중복 프로필을 조회하고 migration으로 반영할 것. 이 파일은 API payload나 실행 가능한 migration이 아님."
+    }
+  ]
+}

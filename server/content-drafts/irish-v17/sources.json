@@ -1,0 +1,12 @@
+{
+ "cycles":{"title":"University College Cork · The Four Cycles of Irish Mythology","url":"https://www.ucc.ie/en/cscl/","note":"신화·얼스터·피온·왕들의 이야기 무리 구분 참고. 현대 설명문을 번역하거나 길게 인용하지 않음."},
+ "invasions":{"title":"T. W. Rolleston · Myths & Legends of the Celtic Race, 아일랜드 침략·도래 전승","url":"https://www.gutenberg.org/cache/epub/34081/pg34081-images.html","note":"1911년 공공 영역 재화집. 도래 전승의 줄거리만 참고하며 저자의 인종론·태양신 해석·낡은 역사 가설은 채택하지 않음. 전승을 실제 민족 이동의 증거로 다루지 않음."},
+ "rolleston":{"title":"T. W. Rolleston · Myths & Legends of the Celtic Race","url":"https://www.gutenberg.org/cache/epub/34081/pg34081-images.html","note":"1911년 공공 영역 재화집의 얼스터·피온 전승 대조. 현대 연구의 대체물이 아니며 오래된 역사·인종 이론은 사용하지 않음."},
+ "mag":{"title":"Cath Maige Tuired · 제2차 마그 투레드 전투 (UCC CELT)","url":"https://celt.ucc.ie/document/T300010/","note":"Elizabeth A. Gray 편역의 사건·판본 확인. 현대 번역의 문장을 옮기지 않음. 루가 발로르에게 사용하는 무기는 물매 돌이며 Gregory 재화의 창과 구분."},
+ "gods":{"title":"Lady Gregory · Gods and Fighting Men","url":"https://www.gutenberg.org/cache/epub/14465/pg14465-images.html","note":"1904년 초판의 공공 영역 재화집. 여러 전승을 조합한 문학적 재화임을 고려. 특정 시대 전체의 유일한 정본이나 실증 역사로 사용하지 않음."},
+ "joyce":{"title":"P. W. Joyce · Old Celtic Romances","url":"https://www.gutenberg.org/cache/epub/38041/pg38041-images.html","note":"1879년 초판의 공공 영역 재화집. 리르의 아이들과 디어뮈드·그라너의 줄거리 대조. 서문 역사 가설은 채택하지 않음."},
+ "tain":{"title":"Táin Bó Cúalnge · 쿨리의 소 떼 약탈 (Joseph Dunn, 1914)","url":"https://www.gutenberg.org/cache/epub/16464/pg16464-images.html","note":"공공 영역 고전 번역. 렌스터의 서를 중심으로 다른 판본의 대목도 표시해 수록한 판본. 직접 인용 없이 사건을 새 한국어로 요약."},
+ "deirdre":{"title":"Longes mac nUislenn · 데어드레와 우슬리우의 아들들 (UCC CELT)","url":"https://celt.ucc.ie/document/T301020/","note":"초기 이야기의 망명·배신·바위에 부딪혀 죽는 결말 확인. 후대의 무덤에서 죽는 재화와 섞지 않음."},
+ "cuchulain":{"title":"Lady Gregory · Cuchulain of Muirthemne","url":"https://sacred-texts.com/neu/celt/cuch/index.htm","note":"1902년 공공 영역 재화집. 스카하와 아이페, 쿠 훌린의 수련 관련 전승 대조. 현대의 성터를 고대 사건의 증거로 제시하지 않음."},
+ "cu-death":{"title":"Lady Gregory · Cuchulain of Muirthemne, The Death of Cuchulain","url":"https://original.sacred-texts.com/neu/celt/cuch/lgc23.htm","note":"1902년 공공 영역 재화집의 죽음 전승. 게이스의 충돌, 창의 예언, 돌에 몸을 묶는 최후. 《타인》 본편의 결말과 구분."}
+}
