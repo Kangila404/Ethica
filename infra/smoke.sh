@@ -30,6 +30,15 @@ docker run --rm --network "$network" "${env_args[@]}" "$image" node -e '
 const assert=require("node:assert/strict");
 (async()=>{const db=await require("mysql2/promise").createConnection({host:"mysql",user:"root",password:"verification-only",database:"ethica_verify_deploy"});
 try {const [rows]=await db.query("SELECT `usage`, status, COUNT(*) AS count FROM question GROUP BY `usage`, status");
+const [terms]=await db.query("SELECT type, title, content, version FROM term ORDER BY type");
+const legal=require("./dist/database/migrations/content/legal-documents-v1.json");
+assert.equal(terms.length,2);
+for(const expected of legal) assert.deepEqual(terms.find(t=>t.type===expected.type),expected);
+await db.query("UPDATE term SET version=? WHERE type=?",["operator-edited","service"]);
+const legalMigration=new (require("./dist/database/migrations/1791597600000-PublishLegalDocuments").PublishLegalDocuments1791597600000)();
+await legalMigration.up({startTransaction:()=>db.beginTransaction(),commitTransaction:()=>db.commit(),rollbackTransaction:()=>db.rollback(),query:(sql,params)=>db.query(sql,params)});
+const [[preserved]]=await db.query("SELECT version FROM term WHERE type=?",["service"]);assert.equal(preserved.version,"operator-edited");
+await db.query("UPDATE term SET version=? WHERE type=?",[legal.find(d=>d.type==="service").version,"service"]);
 assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),50);
 assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),29);
 const catalog=require("./dist/database/migrations/content/concepts-v2");
@@ -78,6 +87,8 @@ docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/thinker-v1-od
 docker exec "$api" node -e 'fetch("http://127.0.0.1:3000/api/media/learning-v3-harvard.jpg").then(async r=>{if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)process.exit(1)}).catch(()=>process.exit(1))'
 docker exec "$api" node -e 'const {conceptQuestionsV2}=require("./dist/database/migrations/content/concepts-v2");(async()=>{for(const q of conceptQuestionsV2){const r=await fetch("http://127.0.0.1:3000/api/media/"+q.imageKey);if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)throw Error("Missing concept image: "+q.key)}})().catch(e=>{console.error(e);process.exit(1)})'
 docker exec "$api" node -e 'const a=require("./dist/database/migrations/content/norse-series-v12"),b=require("./dist/database/migrations/content/greek-series-v13");(async()=>{for(const image of [...a.norseImagesV12,...b.greekImagesV13,...require("./dist/database/migrations/content/pending-mythologies-v18.json").assets]){const r=await fetch("http://127.0.0.1:3000/api/media/"+image.imageKey);if(r.status!==200||!r.headers.get("content-type").startsWith("image/")||!(await r.arrayBuffer()).byteLength)throw Error("Missing mythology image: "+image.imageKey)}})().catch(e=>{console.error(e);process.exit(1)})'
+
+docker exec "$api" node -e 'const assert=require("node:assert/strict");(async()=>{for(const d of require("./dist/database/migrations/content/legal-documents-v1.json")){const r=await fetch("http://127.0.0.1:3000/api/terms?type="+d.type);assert.equal(r.status,200);assert.equal(r.headers.get("cache-control"),"no-store");const actual=await r.json();for(const k of ["type","title","version","content"])assert.equal(actual[k],d[k]);assert(actual.id)}})().catch(e=>{console.error(e);process.exit(1)})'
 
 docker stop "$db" >/dev/null
 if docker exec "$api" node /app/healthcheck.cjs; then echo 'Health check ignored DB outage' >&2; exit 1; fi
