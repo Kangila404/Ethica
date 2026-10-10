@@ -76,7 +76,8 @@ export class SqlSupportStore implements SupportStore {
     if (item) return item;
     const draft = legalDrafts.find((document) => document.type === type);
     if (!draft) throw new NotFoundException('등록된 약관이 없습니다.');
-    // Never replace operator-authored terms. Missing documents expose a labeled draft only.
+    // The legacy filename is also bundled by iOS. It now holds published text.
+    // Always preserve operator-authored DB documents over the bundled fallback.
     return this.db.getRepository(Term).create(draft);
   }
   @Transactional()

@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -37,7 +38,9 @@ import { PageQuery } from 'src/common/page.dto';
 @Controller('/api')
 export class SupportController {
   constructor(private readonly service: SupportService) {}
-  @Get('terms') term(@Query('type') type = 'service') {
+  @Get('terms')
+  @Header('Cache-Control', 'no-store')
+  term(@Query('type') type = 'service') {
     if (!['service', 'privacy'].includes(type))
       throw new BadRequestException('약관 종류가 올바르지 않습니다.');
     return this.service.term(type);

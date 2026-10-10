@@ -10,6 +10,7 @@ import { LearningAccessAndLikes1791331200000 } from './migrations/1791331200000-
 import { PublishNorseMythology1791417600000 } from './migrations/1791417600000-PublishNorseMythology';
 import { PublishGreekMythology1791504000000 } from './migrations/1791504000000-PublishGreekMythology';
 import { PublishPendingMythologies1791590400000 } from './migrations/1791590400000-PublishPendingMythologies';
+import { PublishLegalDocuments1791597600000 } from './migrations/1791597600000-PublishLegalDocuments';
 import { ReplaceLearningPosts1791003600000 } from './migrations/1791003600000-ReplaceLearningPosts';
 import { ThinkerProfiles1791000000000 } from './migrations/1791000000000-ThinkerProfiles';
 import { PublishReviewedContent1790989200000 } from './migrations/1790989200000-PublishReviewedContent';
@@ -69,6 +70,7 @@ const db = new DataSource({
     PublishNorseMythology1791417600000,
     PublishGreekMythology1791504000000,
     PublishPendingMythologies1791590400000,
+    PublishLegalDocuments1791597600000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

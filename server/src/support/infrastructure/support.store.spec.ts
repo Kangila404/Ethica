@@ -22,11 +22,14 @@ describe('legal document fallback', () => {
     expect(repository.create).not.toHaveBeenCalled();
   });
   it.each(['service', 'privacy'])(
-    'provides an explicitly versioned %s draft when missing',
+    'provides a dated published %s document when missing',
     async (type) => {
       repository.findOneBy.mockResolvedValue(null);
       const draft = await store.term(type);
-      expect(draft.version).toMatch(/^draft-/);
+      expect(draft.version).toBe('2026-10-10');
+      expect(draft.content).not.toMatch(
+        /검토용 초안|정식 공개 전에|운영자 확인 필요/,
+      );
       expect(draft.content).toContain('강일아');
       expect(draft.content).toContain('ia3264666@gmail.com');
     },
@@ -39,7 +42,15 @@ describe('legal document fallback', () => {
     repository.findOneBy.mockResolvedValue(null);
     const draft = await store.term('privacy');
     expect(draft.content).not.toContain('2년');
-    expect(draft.content).toContain('새로운 계정');
-    expect(draft.content).toContain('기존 백업');
+    expect(draft.content).toContain(
+      '재가입 시 삭제된 개인 기록을 복원하지 않습니다',
+    );
+    expect(draft.content).toContain(
+      '고정 보관기간이나 자동 만료·삭제 작업이 설정되어 있지 않고',
+    );
+    expect(draft.content).toContain('운영자가 수동 관리');
+    expect(draft.content).toContain(
+      '자동으로 다시 삭제하는 기능도 현재 구현되어 있지 않습니다',
+    );
   });
 });
