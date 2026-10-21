@@ -1,3 +1,4 @@
+import { RevisePhilosophicalDilemmas1792540800000 } from './migrations/1792540800000-RevisePhilosophicalDilemmas';
 import { IllustrateLearningSlides1791007200000 } from './migrations/1791007200000-IllustrateLearningSlides';
 import { ExpandLearningLibrary1791025200000 } from './migrations/1791025200000-ExpandLearningLibrary';
 import { PublishPhilosopherStories1791028800000 } from './migrations/1791028800000-PublishPhilosopherStories';
@@ -71,6 +72,7 @@ const db = new DataSource({
     PublishGreekMythology1791504000000,
     PublishPendingMythologies1791590400000,
     PublishLegalDocuments1791597600000,
+    RevisePhilosophicalDilemmas1792540800000,
   ],
   migrationsTransactionMode: 'none', // MySQL DDL commits implicitly.
 });

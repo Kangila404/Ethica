@@ -42,6 +42,25 @@ await db.query("UPDATE term SET version=? WHERE type=?",[legal.find(d=>d.type===
 assert.equal(Number(rows.find(r=>r.usage==="onboarding"&&r.status==="published")?.count),50);
 assert.equal(Number(rows.find(r=>r.usage==="daily"&&r.status==="published")?.count),29);
 const catalog=require("./dist/database/migrations/content/concepts-v2");
+const revised=require("./dist/database/migrations/content/dilemmas-v3");
+revised.validateQuestionsV3();
+for(const question of revised.questionsV3){
+ const [[old]]=await db.query("SELECT id,status,isActive FROM question WHERE title=? AND `usage`=?",[question.replaces.title,question.usage]);
+ assert.equal(old.status,"held");assert.equal(Number(old.isActive),0);
+ const [[q]]=await db.query("SELECT id,status,stage1Body,followupBody,imageKey FROM question WHERE title=?",[question.title]);
+ assert.notEqual(String(q.id),String(old.id));assert.equal(q.status,"published");
+ assert.equal(q.stage1Body,question.body);assert.equal(q.followupBody,question.followup?.body??null);assert.equal(q.imageKey,question.imageKey);
+ const [answers]=await db.query("SELECT a.body,a.explanation,p.name FROM answer a JOIN philosopher p ON p.id=a.philosopherId WHERE a.questionId=? ORDER BY a.id",[q.id]);
+ assert.equal(answers.length,2);
+ for(let i=0;i<2;i++){assert.equal(answers[i].body,question.answers[i].body);assert.equal(answers[i].explanation,question.answers[i].explanation);}
+ const [followups]=await db.query("SELECT body,explanation FROM followup_answer WHERE questionId=? ORDER BY id",[q.id]);
+ assert.deepEqual(followups,question.followup?.answers??[]);
+}
+for(const p of revised.thinkers.filter(p=>p.added)){
+ const [[row]]=await db.query("SELECT id,coreThought,lifeRoots FROM philosopher WHERE name=?",[p.name]);
+ assert.equal(row.coreThought,p.coreThought);assert.ok(row.lifeRoots.includes(p.source));
+ const [categories]=await db.query("SELECT category FROM learning_profile_category WHERE philosopher_id=?",[row.id]);assert.deepEqual(categories,[{category:"philosophy"}]);
+}
 const [[categoryCount]]=await db.query("SELECT COUNT(*) AS count FROM category");assert.equal(Number(categoryCount.count),10);
 for(const category of catalog.conceptCategoriesV2){
  const [counts]=await db.query("SELECT q.usage, COUNT(*) AS count FROM question q JOIN question_category qc ON qc.questionId=q.id JOIN category c ON c.id=qc.categoryId WHERE c.name=? AND q.status=? AND q.isActive=1 GROUP BY q.usage",[category.name,"published"]);
