@@ -109,6 +109,8 @@ describe('philosophical dilemmas v3', () => {
     const statuses = ['published', 'draft', 'held'] as const;
     const query = jest.fn(
       async (sql: string, args: unknown[] = []): Promise<unknown> => {
+        // Model the asynchronous query boundary of a real QueryRunner.
+        await Promise.resolve();
         if (sql.includes('FROM philosopher WHERE')) {
           if (options.conflict === 'thinker') return [];
           if (options.conflict === 'duplicate thinker')
